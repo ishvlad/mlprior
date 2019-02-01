@@ -1,10 +1,32 @@
 <div class="card shadow mb-4">
-<div class="card-header py-3">
-  <h6 class="m-0 font-weight-bold text-primary">{{ article.title }}</h6>
-</div>
-<div class="card-body">
-  {{ article.abstract }}
-    <div><a href="{{ article.url }}">Read on ArXiv</a></div>
-</div>
-
+   <div class="card-header py-3">
+      <div class="row">
+         <div class="col-sm-10">
+            <h6 class="m-0 font-weight-bold text-primary">{{ article.title }}</h6>
+         </div>
+         <div class="col-sm-2">{{ article.date }}</div>
+      </div>
+   </div>
+   <div class="card-body">
+      <div><strong>{{ article.authors.all | join:", " }}</strong></div>
+      {{ article.abstract }}
+      <hr>
+      <div class="row">
+         <div class="col-sm-9"><a href="{{ article.url }}" class="btn btn-success btn-icon-split">
+            <span class="icon text-white-50">
+            <i class="fas fa-archive"></i>
+            </span>
+            <span class="text">Read on ArXiv</span>
+            </a>
+         </div>
+         <div class="col-sm-1">
+{#            <div class="card h-100 border-left-primary">#}
+{#               <div class="card-body">#}
+                  {{ article.category }}
+{#               </div>#}
+{#            </div>#}
+         </div>
+         <div class="col-sm-2"><strong>{{ article.date }}</strong></div>
+      </div>
+   </div>
 </div>

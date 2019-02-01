@@ -1,13 +1,23 @@
 from django.shortcuts import render, get_object_or_404
 
 from articles.forms import UserForm
-from articles.models import Article
+from articles.models import Article, Author
 from django.contrib.auth.decorators import login_required
+from el_pagination.decorators import page_template
 
 
-def articles(request):
-    all_articles = Article.objects.all()
-    return render(request, 'articles.html', {'articles': all_articles})
+@page_template('articles_list_page.html')
+def articles(request, template='articles_list.html', extra_context=None):
+    all_articles = Article.objects.order_by('-date')
+
+    context = {
+        'articles': all_articles,
+    }
+
+    if extra_context is not None:
+        context.update(extra_context)
+
+    return render(request, template, context)
 
 
 @login_required(login_url='/login')

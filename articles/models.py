@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 # Create your models here.
@@ -10,7 +11,9 @@ class Article(models.Model):
     abstract = models.TextField(verbose_name='Abstract')
     url = models.URLField(verbose_name='URL')
     date = models.DateField()
-    category = models.CharField(max_length=10)
+    category = models.CharField(max_length=100)
+
+    users = models.ManyToManyField(User, 'articles')
 
     class Meta:
         verbose_name = 'Article'

@@ -188,7 +188,7 @@
             <!-- Nav Item - User Information -->
             <li class="nav-item dropdown no-arrow">
               <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Valerie Luna</span>
+                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ user.username }}</span>
                 <img class="img-profile rounded-circle" src="https://source.unsplash.com/QAB-WJcbgJk/60x60">
               </a>
               <!-- Dropdown - User Information -->
@@ -220,6 +220,8 @@
 
         <!-- Begin Page Content -->
         <div class="container-fluid">
+
+        <h1 class="h3 mb-4 text-gray-800">{{ page_name }}</h1>
 
         {% block page %}
 
@@ -264,7 +266,7 @@
         <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
         <div class="modal-footer">
           <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-          <a class="btn btn-primary" href="login.html">Logout</a>
+          <a class="btn btn-primary" href="{% url 'logout' %}">Logout</a>
         </div>
       </div>
     </div>
@@ -274,18 +276,16 @@
   <script src="{% static  'js/jquery/jquery.min.js'%}"></script>
   <script src="{% static  'js/bootstrap.bundle.min.js'%}"></script>
 
+
+
   <!-- Core plugin JavaScript-->
   <script src="{% static  'js/jquery-easing/jquery.easing.min.js'%}"></script>
 
   <!-- Custom scripts for all pages-->
   <script src="{% static 'js/sb-admin-2.min.js'%}"></script>
-{##}
-{#<!-- Page level plugins -->#}
-{#  <script src="{% static 'js/chart.js/Chart.min.js'%}"></script>#}
-{##}
-{#  <!-- Page level custom scripts -->#}
-{#  <script src="{% static 'js/demo/chart-area-demo.js'%}"></script>#}
-{#  <script src="{% static 'js/demo/chart-pie-demo.js'%}"></script>#}
+    {% block javascript %}
+
+    {% endblock %}
 
 
 

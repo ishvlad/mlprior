@@ -15,20 +15,26 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-# from articles import views
+from articles import views as articles_views
 from django.conf.urls.static import static
 from django.conf import settings
 
 from django.contrib.auth.views import LoginView, LogoutView
-from articles.views import sign_up
+from articles.views import register
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     # path('', views.home, name='home'),
     path('login', LoginView.as_view(template_name='login.html'), name='login'),
-    path('logout', LogoutView.as_view(next_page='/login'), name='logout'),
-    path('articles/', include('articles.urls')),
+    path('logout', LogoutView.as_view(next_page='/'), name='logout'),
 
-    path('sign-up', sign_up, name='sign-up'),
+    # path('articles', include('articles.urls')),
+    path('articles', articles_views.articles),
+    path('articles/like', articles_views.like, name='like'),
+    path('library', articles_views.library, name='library'),
+
+    path('register', register, name='register'),
+
+
 
 ]

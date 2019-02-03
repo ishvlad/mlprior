@@ -12,12 +12,70 @@
     <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
     <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
     <script src="{% static 'el-pagination/js/el-pagination.js'%}"></script>
+     <!-- MY scripts -->
+
+
     <script>
         $.endlessPaginate({
             paginateOnScroll: true,
             paginateOnScrollMargin: 20
         });
+
+
     </script>
+
+
 {% endblock %}
 
+{#    <script src="{% static 'js/main.js'%}"></script>#}
+
 {%  endblock %}
+
+{% block javascript %}
+<script>
+$(".likehuy").click(function () {
+        // console.log('huy');
+      var article_id = $(this).attr("data-article-id");
+      var action = $(this).attr("data-action");
+
+      console.log(article_id);
+      console.log(action);
+
+    if (action == 'del') {
+        $.ajax({
+        url: '/articles/like',
+          type: 'delete',
+          data: {
+            'article_id': article_id,
+              'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        dataType: 'json',
+        success: function (data) {
+            console.log(data);
+        }
+      });
+    } else {
+        $.ajax({
+        url: '/articles/like',
+          type: 'get',
+          data: {
+            'article_id': article_id,
+              'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        dataType: 'json',
+        success: function (data) {
+            console.log(data);
+        }
+      });
+    }
+
+
+
+      console.log('huy2');
+    });
+
+  </script>
+{% endblock %}
+
+
+

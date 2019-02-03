@@ -4,4 +4,6 @@ from articles import views
 urlpatterns = [
     path('', views.articles, name='articles'),
     # path('<int:article_id>/', views.article_detail, name='article-detail'),
+
+    # path('like', views.like, name='like')
 ]

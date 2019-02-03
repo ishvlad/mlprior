@@ -26,8 +26,6 @@
           {% if is_lib %}
 
               <div class="col-sm-8">
-{#                <form method="post" >#}
-{#                    {% csrf_token %}#}
                     <button class="btn btn-danger btn-icon-split likehuy" id="likehuy-{{ article.id }}" data-article-id="{{ article.id }}" data-action="del">
                         <span class="icon text-white-50">
                             <i class="fas fa-trash"></i>
@@ -35,7 +33,6 @@
                         <span class="text">Remove from Library</span>
                     </button>
 
-{#                </form>#}
          </div>
 
           {% else %}

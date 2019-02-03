@@ -1,4 +1,4 @@
-<script>
+<!--script>
 $(".likehuy").click(function () {
         // console.log('huy');
       var article_id = $(this).attr("data-article-id");
@@ -20,7 +20,18 @@ $(".likehuy").click(function () {
       console.log('huy2');
     });
 
-  </script>
+  </script-->
+{##}
+{#{% block javascript %}#}
+{#    #}
+{##}
+{#    #}
+{#{% endblock %}#}
+
+{% load static %}
+{#{% block js %}#}
+{##}
+{#{% endblock %}#}
 
     {% load el_pagination_tags %}
     {% paginate articles %}
@@ -28,6 +39,13 @@ $(".likehuy").click(function () {
 
     {% include 'article_detail.html' %}
 
+
 {% endfor %}
+
+
+
     {% show_more %}
+
+
+
 

@@ -30,7 +30,7 @@ urlpatterns = [
 
     # path('articles', include('articles.urls')),
     path('articles', articles_views.articles),
-    path('articles/like', articles_views.like, name='like'),
+    path('articles/like/<article_id>', articles_views.like, name='like'),
     path('library', articles_views.library, name='library'),
 
     path('register', register, name='register'),

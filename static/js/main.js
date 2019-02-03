@@ -10,28 +10,34 @@ $(function() {
 
         if (action == 'del') {
             $.ajax({
-                url: '/articles/like',
+                url: '/articles/like/' + article_id,
                 type: 'delete',
                 data: {
                     'article_id': article_id,
-                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    // 'csrfmiddlewaretoken': '{{ csrf_token }}'
                 },
                 dataType: 'json',
                 success: function (data) {
-                    console.log(data);
+                    el = document.getElementById('article-'+article_id);
+                    el.parentNode.removeChild(el);
                 }
             });
         } else {
             $.ajax({
-                url: '/articles/like',
-                type: 'get',
+                url: '/articles/like/' + article_id,
+                type: 'post',
                 data: {
                     'article_id': article_id,
-                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    // 'csrfmiddlewaretoken': '{{ csrf_token }}'
                 },
                 dataType: 'json',
                 success: function (data) {
-                    console.log(data);
+                    el = document.getElementById('button-'+article_id);
+                    el.classList.remove('btn-primary');
+                    el.classList.add('btn-secondary');
+                    console.log(el.querySelector('.text').textContent);
+                    el.querySelector('.text').textContent = 'Saved';
+
                 }
             });
         }

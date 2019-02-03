@@ -30,17 +30,19 @@ def articles(request, template='articles_list.html', extra_context=None):
     return render(request, template, context)
 
 
-def like(request):
+def like(request, article_id):
     print('LIKE')
     print(request.method, request.body, request.user)
 
-    if request.method == 'GET':
-        Article.objects.get(id=request.GET.get('article_id')).users.add(request.user)
+    article = get_object_or_404(Article, id=article_id)
+
+    if request.method == 'POST':
+        article.users.add(request.user)
         data = {
             'is_ok': 'ok!'
         }
     elif request.method == 'DELETE':
-        Article.objects.get(id=request.GET.get('article_id')).users.remove(request.user)
+        article.users.remove(request.user)
         data = {
             'is_ok': 'deleted!'
         }

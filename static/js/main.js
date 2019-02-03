@@ -1,47 +1,81 @@
 $(function() {
 
-    $("body").on('click', '.likehuy', function () {
-        console.log('huy');
+    function changeButton(article_id, oldClasses, newClasses, newText) {
+        el = document.getElementById('button-'+article_id);
+          oldClasses.forEach(function(element) {
+            el.classList.remove(element);
+          });
+          newClasses.forEach(function(element) {
+            el.classList.add(element);
+          });
+
+          el.querySelector('.text').textContent = newText;
+    }
+
+    $("body").on('click', '.savetolibrary', function () {
         var article_id = $(this).attr("data-article-id");
         var action = $(this).attr("data-action");
 
         console.log(article_id);
         console.log(action);
 
-        if (action == 'del') {
-            $.ajax({
-                url: '/articles/like/' + article_id,
-                type: 'delete',
-                data: {
-                    'article_id': article_id,
-                    // 'csrfmiddlewaretoken': '{{ csrf_token }}'
-                },
-                dataType: 'json',
-                success: function (data) {
-                    el = document.getElementById('article-'+article_id);
-                    el.parentNode.removeChild(el);
-                }
-            });
-        } else {
+
             $.ajax({
                 url: '/articles/like/' + article_id,
                 type: 'post',
                 data: {
-                    'article_id': article_id,
-                    // 'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    'article_id': article_id
                 },
                 dataType: 'json',
                 success: function (data) {
-                    el = document.getElementById('button-'+article_id);
-                    el.classList.remove('btn-primary');
-                    el.classList.add('btn-secondary');
-                    console.log(el.querySelector('.text').textContent);
-                    el.querySelector('.text').textContent = 'Saved';
+                    var oldClasses = ['btn-primary', 'savetolibrary'];
+                    var newClasses = ['btn-secondary', 'donotsave'];
+
+                    changeButton(article_id, oldClasses, newClasses, 'Saved');
 
                 }
             });
-        }
-        console.log('huy2');
+
+    }).on('click', '.removefromlibrary', function () {
+        var article_id = $(this).attr("data-article-id");
+        var action = $(this).attr("data-action");
+
+        console.log(article_id);
+        console.log(action);
+
+        $.ajax({
+            url: '/articles/like/' + article_id,
+            type: 'delete',
+            data: {
+                'article_id': article_id
+            },
+            dataType: 'json',
+            success: function (data) {
+                el = document.getElementById('article-'+article_id);
+                el.parentNode.removeChild(el);
+            }
+        });
+    }).on('click', '.donotsave', function () {
+        var article_id = $(this).attr("data-article-id");
+        var action = $(this).attr("data-action");
+
+        console.log(article_id);
+        console.log(action);
+
+        $.ajax({
+            url: '/articles/like/' + article_id,
+            type: 'delete',
+            data: {
+                'article_id': article_id
+            },
+            dataType: 'json',
+            success: function (data) {
+                var oldClasses = ['btn-secondary', 'donotsave'];
+                var newClasses = ['btn-primary', 'savetolibrary'];
+
+                changeButton(article_id, oldClasses, newClasses, 'Save to Library');
+            }
+        });
     });
 
     // This function gets cookie with a given name

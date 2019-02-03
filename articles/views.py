@@ -12,15 +12,12 @@ from django.http import JsonResponse
 def articles(request, template='articles_list.html', extra_context=None):
     all_articles = Article.objects.order_by('-date')
 
-    # print(request.method)
-
-    # if request.method == 'POST':
-    #     print(request.body)
+    user_articles = request.user.articles.all()
 
     context = {
         'articles': all_articles,
+        'user_articles': user_articles,
         'page_name': 'Articles',
-        'user': request.user,
         'is_lib': False
     }
 
@@ -30,6 +27,7 @@ def articles(request, template='articles_list.html', extra_context=None):
     return render(request, template, context)
 
 
+@login_required(login_url='/login')
 def like(request, article_id):
     print('LIKE')
     print(request.method, request.body, request.user)

@@ -47,11 +47,12 @@
           </button>
 
           <!-- Topbar Search -->
-          <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+          <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search" method="post">
+              {% csrf_token %}
             <div class="input-group">
-              <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Search" aria-describedby="basic-addon2">
+              <input id="search-input" type="text" class="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Search" aria-describedby="basic-addon2">
               <div class="input-group-append">
-                <button class="btn btn-primary" type="button">
+                <button class="btn btn-primary searchbutton" id="search-button" type="button">
                   <i class="fas fa-search fa-sm"></i>
                 </button>
               </div>
@@ -135,7 +136,7 @@
               <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="fas fa-envelope fa-fw"></i>
                 <!-- Counter - Messages -->
-                <span class="badge badge-danger badge-counter">7</span>
+                <span class="badge badge-danger badge-counter">1</span>
               </a>
               <!-- Dropdown - Messages -->
               <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="messagesDropdown">
@@ -226,7 +227,7 @@
 
         <h1 class="h3 mb-4 text-gray-800">{{ page_name }}</h1>
 
-        {% block page %}
+        {% block content %}
 
         {% endblock %}
         </div>
@@ -276,8 +277,9 @@
   </div>
 
   <!-- Bootstrap core JavaScript-->
-  <script src="{% static  'js/jquery/jquery.min.js'%}"></script>
-  <script src="{% static  'js/bootstrap.bundle.min.js'%}"></script>
+  <script src="{% static 'js/jquery/jquery.min.js'%}"></script>
+  <script src="{% static 'js/bootstrap.bundle.min.js'%}"></script>
+
 
   <script language="JavaScript" type="text/javascript" src="{% static 'js/main.js'%}"></script>
 

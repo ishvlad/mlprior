@@ -16,12 +16,8 @@ $(function() {
         var article_id = $(this).attr("data-article-id");
         var action = $(this).attr("data-action");
 
-        console.log(article_id);
-        console.log(action);
-
-
             $.ajax({
-                url: '/articles/like/' + article_id,
+                url: '/api/articles/library/' + article_id,
                 type: 'post',
                 data: {
                     'article_id': article_id
@@ -40,11 +36,8 @@ $(function() {
         var article_id = $(this).attr("data-article-id");
         var action = $(this).attr("data-action");
 
-        console.log(article_id);
-        console.log(action);
-
         $.ajax({
-            url: '/articles/like/' + article_id,
+            url: '/api/articles/library/' + article_id,
             type: 'delete',
             data: {
                 'article_id': article_id
@@ -59,11 +52,8 @@ $(function() {
         var article_id = $(this).attr("data-article-id");
         var action = $(this).attr("data-action");
 
-        console.log(article_id);
-        console.log(action);
-
         $.ajax({
-            url: '/articles/like/' + article_id,
+            url: '/api/articles/library/' + article_id,
             type: 'delete',
             data: {
                 'article_id': article_id
@@ -77,6 +67,27 @@ $(function() {
             }
         });
     });
+
+        // .on('click', '#search-button', function () {
+        // var search_query = document.getElementById('search-button').parentNode.parentNode;
+        // search_query = search_query.querySelector('#search-input').value;
+        //
+        // console.log(search_query);
+        //
+        // $.ajax({
+        //     url: '/api/articles/search/' + search_query,
+        //     type: 'get',
+        //     data: {'search_query': search_query},
+        //     dataType: 'json',
+        //     success: function (data) {
+        //         print(data)
+        //         // var oldClasses = ['btn-secondary', 'donotsave'];
+        //         // var newClasses = ['btn-primary', 'savetolibrary'];
+        //         //
+        //         // changeButton(article_id, oldClasses, newClasses, 'Save to Library');
+        //     }
+        // });
+    // })
 
     // This function gets cookie with a given name
     function getCookie(name) {
@@ -126,5 +137,7 @@ $(function() {
             }
         }
     });
+
+    $(document);
 
 });

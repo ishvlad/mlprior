@@ -2,3 +2,5 @@ django
 feedparser
 requests
 django-el-pagination
+elasticsearch
+django-elasticsearch-dsl

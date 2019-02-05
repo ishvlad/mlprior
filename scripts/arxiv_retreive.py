@@ -23,7 +23,7 @@ class DBManager(object):
     def add_article(self, arxiv_article):
 
         article, _ = ArticleModel.objects.update_or_create(
-            id=arxiv_article.id,
+            arxiv_id=arxiv_article.id,
             version=arxiv_article.version,
             title=arxiv_article.title,
             abstract=arxiv_article.abstract,
@@ -47,7 +47,7 @@ class DBManager(object):
 def main():
     arxiv_api = ArXivAPI()
 
-    for start in range(0, 10000, 100):
+    for start in range(0, 100, 100):
         print(start)
         entries = arxiv_api.search(categories=[
             'cat:cs.CV',

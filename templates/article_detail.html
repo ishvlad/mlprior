@@ -9,9 +9,9 @@
          <div class="col-sm-10">
             <h6 class="m-0 font-weight-bold text-primary h4">{{ article.title }}</h6>
          </div>
-         <div class="col-sm-2">{{ article.id }} | {{ article.category }}</div>
+         <div class="col-sm-2">{{ article.arxivid }} | {{ article.category }}</div>
       </div>
-       <div class="row col-sm-12">
+       <div class="row col-sm-10">
            <div class="h7 pl-3 pt-2 font-weight-bold text-gray-800">{{ article.authors.all | join:", " }}</div>
        </div>
    </div>
@@ -21,28 +21,25 @@
       {{ article.abstract }}
       <hr>
       <div class="row">
-         <div class="col-sm-2"><a href="{{ article.url }}" class="btn btn-success btn-icon-split">
+         <div class="col-sm-3"><a href="{{ article.url }}" class="btn btn-success btn-icon-split">
             <span class="icon text-white-50">
             <i class="fas fa-archive"></i>
             </span>
             <span class="text">Read on ArXiv</span>
             </a>
          </div>
-          {% if is_lib %}
 
-              <div class="col-sm-8">
+      <div class="col-sm-3">
+          {% if is_lib %}
                     <button class="btn btn-danger btn-icon-split removefromlibrary" id="button-{{ article.id }}" data-article-id="{{ article.id }}">
                         <span class="icon text-white-50">
                             <i class="fas fa-trash"></i>
                         </span>
                         <span class="text">Remove</span>
                     </button>
-
-         </div>
-
           {% else %}
 
-              <div class="col-sm-8">
+
               {% if article in user_articles %}
                    <button class="btn btn-secondary btn-icon-split donotsave" id="button-{{ article.id }}" data-article-id="{{ article.id }}">
                   <span class="icon text-white-50">
@@ -61,14 +58,33 @@
 
 
 
-
-         </div>
-
           {% endif %}
 
+      </div>
+
+      <div class="col-sm-4">
+                    <button class="btn btn-warning btn-icon-split note" type="button" aria-controls="collapseUtilities" aria-expanded="false" data-toggle="collapse" data-target="#note-{{ article.id }}">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-comment"></i>
+                        </span>
+                        <span class="text">Note</span>
+                    </button>
+         </div>
 
          <div class="col-sm-2"><strong>{{ article.date }}</strong></div>
       </div>
+
+   <p>
+
+   <script>
+
+</script>
+
+   <div class="collapse article-note" id="note-{{ article.id }}">
+      <div class="card card-body">
+        Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.
+      </div>
+    </div>
 
 
    </div>

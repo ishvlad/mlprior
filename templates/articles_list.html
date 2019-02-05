@@ -2,7 +2,7 @@
 
 {% load static %}
 
-{% block page %}
+{% block content %}
 
 {% include page_template %}
 
@@ -12,23 +12,19 @@
     <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
     <script src="{% static 'el-pagination/js/el-pagination.js'%}"></script>
 
-
     <script>
         $.endlessPaginate({
-            paginateOnScroll: false,
+            paginateOnScroll: true,
             paginateOnScrollMargin: 20
         });
 
     </script>
 
 
-
-
-
 {% endblock js %}
 
 
-{%  endblock page %}
+{%  endblock content %}
 
 
 

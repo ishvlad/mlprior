@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 class Article(models.Model):
-    id = models.CharField(max_length=50, primary_key=True)
+    arxiv_id = models.CharField(max_length=50)
     version = models.CharField(max_length=10, verbose_name='Version')
 
     title = models.CharField(max_length=1000, verbose_name='Title')

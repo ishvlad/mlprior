@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 'django_elasticsearch_dsl',
     'el_pagination',
     'articles',
 ]
@@ -130,4 +131,10 @@ STATICFILES_DIRS = [
 ]
 
 LOGIN_REDIRECT_URL = '/articles'
+
+ELASTICSEARCH_DSL={
+    'default': {
+        'hosts': 'localhost:9200'
+    },
+}
 

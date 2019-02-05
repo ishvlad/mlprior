@@ -30,10 +30,7 @@ def articles(request, template='articles_list.html', extra_context=None):
 
 
 @login_required(login_url='/login')
-def like(request, article_id):
-    print('LIKE')
-    print(request.method, request.body, request.user)
-
+def add_remove_from_library(request, article_id):
     article = get_object_or_404(Article, id=article_id)
 
     if request.method == 'POST':

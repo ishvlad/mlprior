@@ -17,7 +17,7 @@ $(function() {
         var action = $(this).attr("data-action");
 
             $.ajax({
-                url: '/api/articles/library/' + article_id,
+                url: '/articles/api/v1/library/add/' + article_id,
                 type: 'post',
                 data: {
                     'article_id': article_id
@@ -34,10 +34,9 @@ $(function() {
 
     }).on('click', '.removefromlibrary', function () {
         var article_id = $(this).attr("data-article-id");
-        var action = $(this).attr("data-action");
 
         $.ajax({
-            url: '/api/articles/library/' + article_id,
+            url: '/articles/api/v1/library/remove/' + article_id,
             type: 'delete',
             data: {
                 'article_id': article_id
@@ -50,10 +49,9 @@ $(function() {
         });
     }).on('click', '.donotsave', function () {
         var article_id = $(this).attr("data-article-id");
-        var action = $(this).attr("data-action");
 
         $.ajax({
-            url: '/api/articles/library/' + article_id,
+            url: '/articles/api/v1/library/remove/' + article_id,
             type: 'delete',
             data: {
                 'article_id': article_id
@@ -66,6 +64,27 @@ $(function() {
                 changeButton(article_id, oldClasses, newClasses, 'Save to Library');
             }
         });
+    }).on('input propertychange change', '.note-area', function () {
+        // FUNCTION FOR NOTES
+        var article_id = $(this).attr("data-article-id");
+        var action = $(this).attr("data-action");
+
+            $.ajax({
+                url: '/api/articles/library/' + article_id,
+                type: 'post',
+                data: {
+                    'article_id': article_id
+                },
+                dataType: 'json',
+                success: function (data) {
+                    var oldClasses = ['btn-primary', 'savetolibrary'];
+                    var newClasses = ['btn-secondary', 'donotsave'];
+
+                    changeButton(article_id, oldClasses, newClasses, 'Saved');
+
+                }
+            });
+
     });
 
         // .on('click', '#search-button', function () {
@@ -88,6 +107,8 @@ $(function() {
         //     }
         // });
     // })
+
+
 
     // This function gets cookie with a given name
     function getCookie(name) {

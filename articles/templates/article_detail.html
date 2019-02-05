@@ -63,7 +63,7 @@
       </div>
 
       <div class="col-sm-4">
-                    <button class="btn btn-warning btn-icon-split note" type="button" aria-controls="collapseUtilities" aria-expanded="false" data-toggle="collapse" data-target="#note-{{ article.id }}">
+                    <button class="btn btn-warning btn-icon-split note" type="button" aria-controls="collapseUtilities" aria-expanded="false" data-toggle="collapse" data-target="#note-collapse-{{ article.id }}">
                         <span class="icon text-white-50">
                             <i class="fas fa-comment"></i>
                         </span>
@@ -80,10 +80,9 @@
 
 </script>
 
-   <div class="collapse article-note" id="note-{{ article.id }}">
-      <div class="card card-body">
-        Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.
-      </div>
+   <div class="collapse article-note" id="note-collapse-{{ article.id }}">
+       <textarea class="form-control note-area" id="note-{{ article.id }}" rows="3">{{ article.note }}</textarea>
+
     </div>
 
 

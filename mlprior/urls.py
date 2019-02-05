@@ -26,13 +26,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path('', views.home, name='home'),
     path('login', LoginView.as_view(template_name='login.html'), name='login'),
-    path('logout', LogoutView.as_view(next_page='/'), name='logout'),
+    path('logout', LogoutView.as_view(next_page='/login'), name='logout'),
 
-    # path('articles', include('articles.urls')),
-    path('articles', articles_views.articles),
-    path('api/articles/library/<article_id>', articles_views.like, name='like'),
-    # path('api/articles/search/<searchinput>', articles_views.search, name='search'),
-    path('library', articles_views.library, name='library'),
+    path('articles/', include('articles.urls')),
 
     path('register', register, name='register')
 

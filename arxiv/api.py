@@ -1,5 +1,5 @@
-import requests
 import feedparser
+import requests
 
 
 class ArXivAPI(object):

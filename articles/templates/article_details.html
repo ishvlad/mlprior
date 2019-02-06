@@ -2,115 +2,121 @@
 {% load static %}
 
 {% block content %}
-<div id="article-{{ article.id }}">
+    <div id="article-{{ article.id }}">
 
-<div class="card shadow mb-4">
-   <div class="card-header py-3">
-      <div class="row">
-         <div class="col-sm-10">
-            <h6 class="m-0 font-weight-bold text-primary h4">{{ article.title }}</h6>
-         </div>
-         <div class="col-sm-2">{{ article.arxivid }} | {{ article.category }}</div>
-      </div>
-       <div class="row col-sm-10">
-           <div class="h7 pl-3 pt-2 font-weight-bold text-gray-800">{{ article.authors.all | join:", " }}</div>
-       </div>
-   </div>
-   <div class="card-body">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <div class="row">
+                    <div class="col-sm-10">
+                        <h6 class="m-0 font-weight-bold text-primary h4">{{ article.title }}</h6>
+                    </div>
+                    <div class="col-sm-2">{{ article.arxivid }} | {{ article.category }}</div>
+                </div>
+                <div class="row col-sm-10">
+                    <div class="h7 pl-3 pt-2 font-weight-bold text-gray-800">{{ article.authors.all | join:", " }}</div>
+                </div>
+            </div>
+            <div class="card-body">
 
-      {{ article.abstract }}
-      <hr>
-      <div class="row">
-         <div class="col-sm-3"><a href="{{ article.url }}" class="btn btn-success btn-icon-split">
+                {{ article.abstract }}
+                <hr>
+                <div class="row">
+                    <div class="col-sm-3"><a href="{{ article.url }}" class="btn btn-success btn-icon-split">
             <span class="icon text-white-50">
             <i class="fas fa-archive"></i>
             </span>
-            <span class="text">Read on ArXiv</span>
-            </a>
-         </div>
+                        <span class="text">Read on ArXiv</span>
+                    </a>
+                    </div>
 
-      <div class="col-sm-3">
-          {% if is_lib %}
-                    <button class="btn btn-danger btn-icon-split removefromlibrary" id="button-{{ article.id }}" data-article-id="{{ article.id }}">
+                    <div class="col-sm-3">
+                        {% if is_lib %}
+                            <button class="btn btn-danger btn-icon-split removefromlibrary" id="button-{{ article.id }}"
+                                    data-article-id="{{ article.id }}">
                         <span class="icon text-white-50">
                             <i class="fas fa-trash"></i>
                         </span>
-                        <span class="text">Remove</span>
-                    </button>
-          {% else %}
+                                <span class="text">Remove</span>
+                            </button>
+                        {% else %}
 
 
-              {% if article in user_articles %}
-                   <button class="btn btn-secondary btn-icon-split donotsave" id="button-{{ article.id }}" data-article-id="{{ article.id }}">
+                            {% if article in user_articles %}
+                                <button class="btn btn-secondary btn-icon-split donotsave" id="button-{{ article.id }}"
+                                        data-article-id="{{ article.id }}">
                   <span class="icon text-white-50">
                             <i class="fas fa-bookmark"></i>
                         </span>
-                        <span class="text">Saved</span>
-                    </button>
-                  {% else %}
-                    <button class="btn btn-primary btn-icon-split savetolibrary" id="button-{{ article.id }}" data-article-id="{{ article.id }}">
+                                    <span class="text">Saved</span>
+                                </button>
+                            {% else %}
+                                <button class="btn btn-primary btn-icon-split savetolibrary"
+                                        id="button-{{ article.id }}" data-article-id="{{ article.id }}">
                   <span class="icon text-white-50">
                             <i class="fas fa-bookmark"></i>
                         </span>
-                        <span class="text">Save to Library</span>
-                    </button>
-              {% endif %}
+                                    <span class="text">Save to Library</span>
+                                </button>
+                            {% endif %}
 
-          {% endif %}
+                        {% endif %}
 
-      </div>
-
-         <div class="col-sm-2"><strong>{{ article.date }}</strong></div>
-      </div>
-
-   <p>
-
-
-   <div class="card border-left-warning shadow mb-4">
-                <!-- Card Header - Dropdown -->
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                  <h6 class="m-0 font-weight-bold text-warning">Notes</h6>
-                  <div class="dropdown no-arrow">
-                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
-                      <div class="dropdown-header">Dropdown Header:</div>
-                      <a class="dropdown-item" href="#">Action</a>
-                      <a class="dropdown-item" href="#">Another action</a>
-                      <div class="dropdown-divider"></div>
-                      <a class="dropdown-item" href="#">Something else here</a>
                     </div>
-                  </div>
+
+                    <div class="col-sm-2"><strong>{{ article.date }}</strong></div>
                 </div>
-                <!-- Card Body -->
-                <div class="card-body">
-                    <textarea class="form-control  note-area note-form" id="note-{{ article.id }}" data-article-id="{{ article.id }}" rows="3">{{ article.note }}</textarea>
 
+                <p>
+
+
+                <div class="card border-left-warning shadow mb-4">
+                    <!-- Card Header - Dropdown -->
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-warning">Notes</h6>
+                        <div class="dropdown no-arrow">
+                            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                                 aria-labelledby="dropdownMenuLink">
+                                <div class="dropdown-header">Dropdown Header:</div>
+                                <a class="dropdown-item" href="#">Action</a>
+                                <a class="dropdown-item" href="#">Another action</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#">Something else here</a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card Body -->
+                    <div class="card-body">
+                        <textarea class="form-control  note-area note-form" id="note-{{ article.id }}"
+                                  data-article-id="{{ article.id }}" rows="3">{{ article.note }}</textarea>
+
+                    </div>
                 </div>
-              </div>
 
 
-   </div>
-</div>
+            </div>
+        </div>
 
-</div>
+    </div>
     <h1 class="h3 mb-4 text-gray-800">Related Articles</h1>
     {% include page_template %}
 
-{% block js %}
-    {{ block.super }}
-    <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
-    <script src="{% static 'el-pagination/js/el-pagination.js' %}"></script>
+    {% block js %}
+        {{ block.super }}
+        <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
+        <script src="{% static 'el-pagination/js/el-pagination.js' %}"></script>
 
-    <script>
-        $.endlessPaginate({
-            paginateOnScroll: true,
-            paginateOnScrollMargin: 20
-        });
+        <script>
+            $.endlessPaginate({
+                paginateOnScroll: true,
+                paginateOnScrollMargin: 20
+            });
 
-    </script>
+        </script>
 
-{% endblock js %}
+    {% endblock js %}
 
 {% endblock %}

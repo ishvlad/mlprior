@@ -1,4 +1,5 @@
 from django_elasticsearch_dsl import DocType, Index
+
 from .models import Article
 
 # Name of the Elasticsearch index
@@ -13,7 +14,7 @@ article.settings(
 @article.doc_type
 class ArticleDocument(DocType):
     class Meta:
-        model = Article # The model associated with this DocType
+        model = Article  # The model associated with this DocType
 
         # The fields of the model you want to be indexed in Elasticsearch
         fields = [

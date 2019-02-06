@@ -1,4 +1,5 @@
-import sys, os
+import os
+import sys
 from time import sleep, time
 
 sys.path.append('./')
@@ -21,7 +22,6 @@ class DBManager(object):
         pass
 
     def add_article(self, arxiv_article):
-
         article, _ = ArticleModel.objects.update_or_create(
             arxiv_id=arxiv_article.id,
             version=arxiv_article.version,

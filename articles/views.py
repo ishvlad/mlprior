@@ -1,12 +1,12 @@
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
+from el_pagination.decorators import page_template
 
 from articles.documents import ArticleDocument
 from articles.forms import UserForm
-from articles.models import Article, Author, User
-from django.contrib.auth.decorators import login_required
-from el_pagination.decorators import page_template
-from django.http import JsonResponse
+from articles.models import Article
 
 
 @page_template('articles_list_page.html')
@@ -113,7 +113,6 @@ def search(request, search_query, template='articles_list.html', extra_context=N
 @page_template('articles_list_page.html')
 @login_required(login_url='/login')
 def library(request, template='articles_list.html', extra_context=None):
-
     all_articles = request.user.articles.all()
 
     context = {

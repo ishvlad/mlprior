@@ -4,27 +4,27 @@
 
 {% block content %}
 
-{% include page_template %}
+    {% include page_template %}
 
-{% block js %}
-    {{ block.super }}
-    <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
-    <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
-    <script src="{% static 'el-pagination/js/el-pagination.js' %}"></script>
+    {% block js %}
+        {{ block.super }}
+        <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
+        <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
+        <script src="{% static 'el-pagination/js/el-pagination.js' %}"></script>
 
-    <script>
-        $.endlessPaginate({
-            paginateOnScroll: true,
-            paginateOnScrollMargin: 20
-        });
+        <script>
+            $.endlessPaginate({
+                paginateOnScroll: true,
+                paginateOnScrollMargin: 20
+            });
 
-    </script>
-
-
-{% endblock js %}
+        </script>
 
 
-{%  endblock content %}
+    {% endblock js %}
+
+
+{% endblock content %}
 
 
 

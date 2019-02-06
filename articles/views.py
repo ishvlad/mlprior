@@ -29,17 +29,22 @@ def articles(request, template='articles_list.html', extra_context=None):
     return render(request, template, context)
 
 
-def article_details(request, article_id):
+@page_template('related_articles_page.html')
+@login_required(login_url='/login')
+def article_details(request, article_id, template='article_details.html', extra_context=None):
     article = get_object_or_404(Article, id=article_id)
 
+    related_articles = Article.objects.order_by('-date')
+
     context = {
-        'article': article
+        'article': article,
+        'related_articles': related_articles
     }
 
-    template = 'article_details.html'
+    if extra_context is not None:
+        context.update(extra_context)
 
     return render(request, template, context)
-
 
 
 @login_required(login_url='/login')

@@ -1,7 +1,7 @@
 {% load static %}
 {% load el_pagination_tags %}
-{% paginate articles %}
-{% for article in articles %}
+{% paginate related_articles %}
+{% for article in related_articles %}
     {% include 'article_short.html' %}
 {% endfor %}
 {% show_more %}

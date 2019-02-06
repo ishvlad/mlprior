@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <div id="article-{{ article.id }}">
-
-
 
 <div class="card shadow mb-4">
    <div class="card-header py-3">
@@ -65,13 +64,53 @@
       </div>
 
    <p>
-<div>
-       <textarea class="md-textarea form-control note-area" id="note-{{ article.id }}" data-article-id="{{ article.id }}" rows="3">{{ article.note }}</textarea>
-</div>
+
+
+   <div class="card border-left-warning shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-warning">Notes</h6>
+                  <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                      <div class="dropdown-header">Dropdown Header:</div>
+                      <a class="dropdown-item" href="#">Action</a>
+                      <a class="dropdown-item" href="#">Another action</a>
+                      <div class="dropdown-divider"></div>
+                      <a class="dropdown-item" href="#">Something else here</a>
+                    </div>
+                  </div>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                    <textarea class="form-control  note-area note-form" id="note-{{ article.id }}" data-article-id="{{ article.id }}" rows="3">{{ article.note }}</textarea>
+
+                </div>
+              </div>
 
 
    </div>
 </div>
 
 </div>
+    <h1 class="h3 mb-4 text-gray-800">Related Articles</h1>
+    {% include page_template %}
+
+{% block js %}
+    {{ block.super }}
+    <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'el-pagination/js/el-pagination.js' %}"></script>
+
+    <script>
+        $.endlessPaginate({
+            paginateOnScroll: true,
+            paginateOnScrollMargin: 20
+        });
+
+    </script>
+
+{% endblock js %}
+
 {% endblock %}

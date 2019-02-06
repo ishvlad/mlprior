@@ -83,7 +83,7 @@
           <p>
 
    <div class="collapse article-note" id="note-collapse-{{ article.id }}">
-       <textarea class="form-control note-area note-form" id="note-{{ article.id }}" data-article-id="{{ article.id }}" rows="3">{{ article.note }}</textarea>
+       {% include 'article_note.html' %}
 
     </div>
 

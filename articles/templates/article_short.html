@@ -1,6 +1,6 @@
 
-<div id="article-{{ article.id }}">
 
+<div id="article-{{ article.id }}">
 
 
 <div class="card shadow mb-4">
@@ -17,19 +17,31 @@
    </div>
    <div class="card-body">
 
-
       {{ article.abstract }}
       <hr>
-      <div class="row">
-         <div class="col-sm-3"><a href="{{ article.url }}" class="btn btn-success btn-icon-split">
+      <div class="row form-group">
+{##}
+{#<div class="btn-toolbar">#}
+
+      <div class="col-sm-10">
+
+          <a href="/articles/details/{{ article.id }}" class="btn btn-info btn-icon-split">
+            <span class="icon text-white-50">
+            <i class="fas fa-info-circle"></i>
+            </span>
+            <span class="text">Details</span>
+            </a>
+
+             <a href="{{ article.url }}" class="btn btn-success btn-icon-split">
             <span class="icon text-white-50">
             <i class="fas fa-archive"></i>
             </span>
             <span class="text">Read on ArXiv</span>
             </a>
-         </div>
 
-      <div class="col-sm-3">
+{#</div>#}
+
+{#      <div class="col-sm-3">#}
           {% if is_lib %}
                     <button class="btn btn-danger btn-icon-split removefromlibrary" id="button-{{ article.id }}" data-article-id="{{ article.id }}">
                         <span class="icon text-white-50">
@@ -38,8 +50,6 @@
                         <span class="text">Remove</span>
                     </button>
           {% else %}
-
-
               {% if article in user_articles %}
                    <button class="btn btn-secondary btn-icon-split donotsave" id="button-{{ article.id }}" data-article-id="{{ article.id }}">
                   <span class="icon text-white-50">
@@ -55,33 +65,25 @@
                         <span class="text">Save to Library</span>
                     </button>
               {% endif %}
-
-
-
           {% endif %}
+{#      </div>#}
 
-      </div>
-
-      <div class="col-sm-4">
+{#      <div class="col-sm-3">#}
                     <button class="btn btn-warning btn-icon-split note" type="button" aria-controls="collapseUtilities" aria-expanded="false" data-toggle="collapse" data-target="#note-collapse-{{ article.id }}">
                         <span class="icon text-white-50">
                             <i class="fas fa-comment"></i>
                         </span>
                         <span class="text">Note</span>
                     </button>
-         </div>
+{#         </div>#}
+      </div>
 
          <div class="col-sm-2"><strong>{{ article.date }}</strong></div>
       </div>
-
-   <p>
-
-   <script>
-
-</script>
+          <p>
 
    <div class="collapse article-note" id="note-collapse-{{ article.id }}">
-       <textarea class="form-control note-area" id="note-{{ article.id }}" rows="3">{{ article.note }}</textarea>
+       <textarea class="form-control note-area note-form" id="note-{{ article.id }}" data-article-id="{{ article.id }}" rows="3">{{ article.note }}</textarea>
 
     </div>
 

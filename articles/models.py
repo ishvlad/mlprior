@@ -13,7 +13,7 @@ class Article(models.Model):
     date = models.DateField()
     category = models.CharField(max_length=100)
 
-    notes = models.TextField(name='Note', default='')
+    note = models.TextField(verbose_name='Note', default='')
 
     users = models.ManyToManyField(User, 'articles')
 

@@ -29,6 +29,19 @@ def articles(request, template='articles_list.html', extra_context=None):
     return render(request, template, context)
 
 
+def article_details(request, article_id):
+    article = get_object_or_404(Article, id=article_id)
+
+    context = {
+        'article': article
+    }
+
+    template = 'article_details.html'
+
+    return render(request, template, context)
+
+
+
 @login_required(login_url='/login')
 def add_remove_from_library(request, article_id):
     article = get_object_or_404(Article, id=article_id)
@@ -45,6 +58,24 @@ def add_remove_from_library(request, article_id):
         }
     else:
         data = {}
+
+    return JsonResponse(data)
+
+
+@login_required(login_url='/login')
+def change_note(request, article_id):
+    article = get_object_or_404(Article, id=article_id)
+
+    print('Current notes', article.note)
+
+    if request.method == 'POST':
+        print(request.POST.get('note', ''))
+        article.note = request.POST.get('note', '')
+        article.save()
+
+    data = {
+        'is_ok': 'deleted!'
+    }
 
     return JsonResponse(data)
 
@@ -72,7 +103,6 @@ def search(request, search_query, template='articles_list.html', extra_context=N
 
     rendered_template = render(request, template, context)
     return HttpResponse(rendered_template, content_type='text/html')
-
 
 
 @page_template('articles_list_page.html')

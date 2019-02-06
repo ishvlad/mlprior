@@ -64,23 +64,23 @@ $(function() {
                 changeButton(article_id, oldClasses, newClasses, 'Save to Library');
             }
         });
-    }).on('input propertychange change', '.note-area', function () {
+    }).on('input propertychange change', '.note-form', function () {
         // FUNCTION FOR NOTES
         var article_id = $(this).attr("data-article-id");
-        var action = $(this).attr("data-action");
+
+        console.log('huy');
+        console.log($(this).val() );
 
             $.ajax({
-                url: '/api/articles/library/' + article_id,
+                url: '/articles/api/v1/note/update/' + article_id,
                 type: 'post',
                 data: {
-                    'article_id': article_id
+                    'article_id': article_id,
+                    'note': $(this).val()
                 },
                 dataType: 'json',
                 success: function (data) {
-                    var oldClasses = ['btn-primary', 'savetolibrary'];
-                    var newClasses = ['btn-secondary', 'donotsave'];
 
-                    changeButton(article_id, oldClasses, newClasses, 'Saved');
 
                 }
             });

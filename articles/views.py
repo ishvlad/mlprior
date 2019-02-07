@@ -9,6 +9,20 @@ from articles.forms import UserForm
 from articles.models import Article, User, Author
 
 
+@login_required(login_url='/login')
+def home(request):
+    n_articles = Article.objects.count()
+
+    n_articles_in_lib = request.user.articles.count()
+
+    context = {
+        'n_articles': n_articles,
+        'n_articles_in_lib': n_articles_in_lib
+
+    }
+
+    return render(request, 'home.html', context)
+
 @page_template('articles_list_page.html')
 @login_required(login_url='/login')
 def articles(request, template='articles_list.html', extra_context=None):

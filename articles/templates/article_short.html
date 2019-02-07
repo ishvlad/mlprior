@@ -5,7 +5,7 @@
         <div class="card-header py-3">
             <div class="row">
                 <div class="col-sm-10">
-                    <h6 class="m-0 font-weight-bold text-primary h4">{{ article.title }}</h6>
+                    <a href="/articles/details/{{ article.id }}"><h6 class="m-0 font-weight-bold text-primary h4">{{ article.title }}</h6></a>
                 </div>
                 <div class="col-sm-2 text-danger">
                     <strong>{{ article.date }}</strong>
@@ -85,7 +85,13 @@
                     </button>
                              </div>
                 </div>
-            </div>
+
+            <div class="col-sm-2">
+                    {% include 'share_buttons.html' %}
+                </div>
+                </div>
+
+
             <p>
 
             <div class="collapse article-note" id="note-collapse-{{ article.id }}">

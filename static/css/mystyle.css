@@ -1,23 +1,36 @@
 *.icon-blue {color: #0088cc}
 *.icon-grey {color: grey}
-i {
-    width:100px;
-    text-align:center;
-    vertical-align:middle;
-    position: relative;
-}
-.badge:after{
-    content:"";
-    position: absolute;
-    background: rgba(255,0,0,1);
-    height:2rem;
-    top:1rem;
-    right:1.5rem;
-    width:2rem;
-    text-align: center;
-    line-height: 2rem;;
-    font-size: 1rem;
-    border-radius: 50%;
-    color:white;
-    border:0px solid blue;
-}
+/*i {*/
+    /*width:100px;*/
+    /*text-align:center;*/
+    /*vertical-align:middle;*/
+    /*position: relative;*/
+/*}*/
+/*.badge:after{*/
+    /*content:"";*/
+    /*position: absolute;*/
+    /*background: rgba(255,0,0,1);*/
+    /*height:2rem;*/
+    /*top:1rem;*/
+    /*right:1.5rem;*/
+    /*width:2rem;*/
+    /*text-align: center;*/
+    /*line-height: 2rem;;*/
+    /*font-size: 1rem;*/
+    /*border-radius: 50%;*/
+    /*color:white;*/
+    /*border:0px solid blue;*/
+/*}*/
+
+/*.bg-red, .callout.callout-danger, .alert-danger, .alert-error, .label-danger, .modal-danger .modal-body {*/
+    /*background-color: #dd4b39 !important;*/
+/*}*/
+
+/*.badge {*/
+    /*position: absolute;*/
+    /*top: -3px;*/
+    /*right: -10px;*/
+    /*bottom: -5px;*/
+    /*font-size: 10px;*/
+    /*font-weight: 400;*/
+/*}*/

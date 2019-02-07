@@ -1,0 +1,5 @@
+<div class="h7 pl-3 pt-2 font-weight-bold text-gray-800">
+    {% for author in article.authors.all %}
+    <a href="/articles/authors/{{ author.name }}">{{ author }}</a>{% if not forloop.last %},{% endif %}
+    {% endfor %}
+</div>

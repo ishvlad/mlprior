@@ -5,6 +5,7 @@ from articles import views
 urlpatterns = [
     path('', views.articles, name='articles'),
     path('details/<article_id>', views.article_details, name='article_details'),
+    path('authors/<author_name>', views.author_articles, name='author_articles'),
     path('api/v1/library/add/<article_id>', views.add_remove_from_library, name='lib_add'),
     path('api/v1/library/remove/<article_id>', views.add_remove_from_library, name='lib_remove'),
 

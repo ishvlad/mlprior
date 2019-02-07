@@ -6,7 +6,7 @@ from el_pagination.decorators import page_template
 
 from articles.documents import ArticleDocument
 from articles.forms import UserForm
-from articles.models import Article
+from articles.models import Article, User, Author
 
 
 @page_template('articles_list_page.html')
@@ -35,10 +35,33 @@ def article_details(request, article_id, template='article_details.html', extra_
     article = get_object_or_404(Article, id=article_id)
 
     related_articles = Article.objects.order_by('-date')
+    user_articles = request.user.articles.all()
 
     context = {
         'article': article,
-        'related_articles': related_articles
+        'related_articles': related_articles,
+        'user_articles': user_articles
+    }
+
+    if extra_context is not None:
+        context.update(extra_context)
+
+    return render(request, template, context)
+
+
+@page_template('articles_list_page.html')
+@login_required(login_url='/login')
+def author_articles(request, author_name, template='articles_list.html', extra_context=None):
+    # all_articles = Article.objects.order_by('-date')
+
+    user = Author.objects.get(name=author_name)
+    user_articles = request.user.articles.all()
+
+    context = {
+        'articles': user.articles.all(),
+        'page_name': 'Articles of %s' % user.name,
+        'user_articles': user_articles,
+        'is_lib': False
     }
 
     if extra_context is not None:

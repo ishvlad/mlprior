@@ -71,10 +71,10 @@
                         {% endif %}
                     {% endif %}
 
-<div class="note-button">
-    {% if article.note != '' %}
-    <span class="note-badge"> </span>
-    {% endif %}
+            <div class="note-button">
+                {% if article.note != '' %}
+                <span class="note-badge"> </span>
+                {% endif %}
 
                     <button class="btn btn-warning btn-icon-split note" type="button" aria-controls="collapseUtilities"
                             aria-expanded="false" data-toggle="collapse" data-target="#note-collapse-{{ article.id }}">

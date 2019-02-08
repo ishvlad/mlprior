@@ -1,8 +1,13 @@
+import pandas as pd
+import json
+
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncMonth
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from el_pagination.decorators import page_template
+
 
 from articles.documents import ArticleDocument
 from articles.forms import UserForm
@@ -15,13 +20,33 @@ def home(request):
 
     n_articles_in_lib = request.user.articles.count()
 
+    counts_for_bar = list(Article.objects.all().annotate(month=TruncMonth('date')).values('month', 'category'))
+    df = pd.DataFrame(counts_for_bar, columns = ['category', 'month'])
+    df = df[(df.category == 'cs.CV') | (df.category == 'cs.AI') | (df.category == 'cs.LG') | \
+            (df.category == 'cs.CL') | (df.category == 'cs.NE') | (df.category == 'cs.ML')]
+    df.sort_values('month', inplace=True)
+
+    res = []
+    for month, df_group in df.groupby(['month']):
+        if month.year > 2017:
+            res.append({
+                'Month': month.strftime('%b %y'),
+                'AI': sum(df_group.category == 'cs.AI'),
+                'CL': sum(df_group.category == 'cs.CL'),
+                'CV': sum(df_group.category == 'cs.CV'),
+                'LG': sum(df_group.category == 'cs.LG'),
+                'ML': 1,
+                'NE': sum(df_group.category == 'cs.NE')
+            })
+
     context = {
         'n_articles': n_articles,
-        'n_articles_in_lib': n_articles_in_lib
-
+        'n_articles_in_lib': n_articles_in_lib,
+        'stacked_bar_json': json.dumps(res)
     }
 
     return render(request, 'home.html', context)
+
 
 @page_template('articles_list_page.html')
 @login_required(login_url='/login')

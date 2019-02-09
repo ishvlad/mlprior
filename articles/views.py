@@ -1,17 +1,15 @@
-import pandas as pd
 import json
 
-from django.db.models import Count, Sum
-from django.db.models.functions import TruncMonth
+import pandas as pd
 from django.contrib.auth.decorators import login_required
+from django.db.models.functions import TruncMonth
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from el_pagination.decorators import page_template
 
-
 from articles.documents import ArticleDocument
 from articles.forms import UserForm
-from articles.models import Article, User, Author
+from articles.models import Article, Author, ArticleUser
 
 
 @login_required(login_url='/login')
@@ -21,7 +19,7 @@ def home(request):
     n_articles_in_lib = request.user.articles.count()
 
     counts_for_bar = list(Article.objects.all().annotate(month=TruncMonth('date')).values('month', 'category'))
-    df = pd.DataFrame(counts_for_bar, columns = ['category', 'month'])
+    df = pd.DataFrame(counts_for_bar, columns=['category', 'month'])
     df = df[(df.category == 'cs.CV') | (df.category == 'cs.AI') | (df.category == 'cs.LG') | \
             (df.category == 'cs.CL') | (df.category == 'cs.NE') | (df.category == 'cs.ML')]
     df.sort_values('month', inplace=True)
@@ -64,13 +62,12 @@ def home(request):
 def articles(request, template='articles_list.html', extra_context=None):
     all_articles = Article.objects.order_by('-date')
 
-    user_articles = request.user.articles.all()
+    lib_articles_ids = ArticleUser.objects.filter(user=request.user, in_lib=True).values_list('article', flat=True)
 
     context = {
         'articles': all_articles,
-        'user_articles': user_articles,
-        'page_name': 'Articles',
-        'is_lib': False
+        'lib_articles_ids': lib_articles_ids,
+        'page_name': 'Articles'
     }
 
     if extra_context is not None:
@@ -85,12 +82,12 @@ def article_details(request, article_id, template='article_details.html', extra_
     article = get_object_or_404(Article, id=article_id)
 
     related_articles = Article.objects.order_by('-date')
-    user_articles = request.user.articles.all()
+    lib_articles_ids = ArticleUser.objects.filter(user=request.user, in_lib=True).values_list('article', flat=True)
 
     context = {
         'article': article,
         'related_articles': related_articles,
-        'user_articles': user_articles
+        'lib_articles_ids': lib_articles_ids
     }
 
     if extra_context is not None:
@@ -110,8 +107,7 @@ def author_articles(request, author_name, template='articles_list.html', extra_c
     context = {
         'articles': user.articles.all(),
         'page_name': 'Articles of %s' % user.name,
-        'user_articles': user_articles,
-        'is_lib': False
+        'user_articles': user_articles
     }
 
     if extra_context is not None:
@@ -125,12 +121,12 @@ def add_remove_from_library(request, article_id):
     article = get_object_or_404(Article, id=article_id)
 
     if request.method == 'POST':
-        article.users.add(request.user)
+        ArticleUser.objects.update_or_create(article=article, user=request.user, in_lib=True)
         data = {
             'is_ok': 'ok!'
         }
     elif request.method == 'DELETE':
-        article.users.remove(request.user)
+        ArticleUser.objects.filter(article=article, user=request.user).update(in_lib=False)
         data = {
             'is_ok': 'deleted!'
         }
@@ -186,7 +182,7 @@ def search(request, search_query, template='articles_list.html', extra_context=N
 @page_template('articles_list_page.html')
 @login_required(login_url='/login')
 def library(request, template='articles_list.html', extra_context=None):
-    all_articles = request.user.articles.all()
+    all_articles = Article.objects.filter(articleuser__user=request.user, articleuser__in_lib=True)
 
     context = {
         'articles': all_articles,

@@ -68,24 +68,36 @@ $(function() {
         // FUNCTION FOR NOTES
         var article_id = $(this).attr("data-article-id");
 
-        console.log('huy');
-        console.log($(this).val() );
+        var note = $(this).val();
 
             $.ajax({
                 url: '/articles/api/v1/note/update/' + article_id,
                 type: 'post',
                 data: {
                     'article_id': article_id,
-                    'note': $(this).val()
+                    'note': note
                 },
                 dataType: 'json',
                 success: function (data) {
-
-
+                    if (note != ''){
+                        var span = document.createElement('span');
+                        span.className = 'note-badge';
+                        span.innerHTML = ' ';
+                        document.getElementById('note-button').appendChild(span);
+                    } else {
+                        // badge = document.getElementsByClassName('note-badge').item(0);
+                        // console.log(badge)
+                        // document.getElementById('note-button').removeChild(badge);
+                    }
                 }
             });
 
+
+
     });
+
+    $('#popoverData').popover();
+    $('#popoverOption').popover({ trigger: "hover" });
 
         // .on('click', '#search-button', function () {
         // var search_query = document.getElementById('search-button').parentNode.parentNode;

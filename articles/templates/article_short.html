@@ -27,7 +27,7 @@
             <hr>
             <div class="row form-group">
 
-                <div class="col-sm-10">
+                <div class="col-sm-8">
 
                     <a href="/articles/details/{{ article.id }}" class="btn btn-info btn-icon-split">
             <span class="icon text-white-50">
@@ -43,16 +43,7 @@
                         <span class="text">Read on ArXiv</span>
                     </a>
 
-                    {% if is_lib %}
-                        <button class="btn btn-danger btn-icon-split removefromlibrary" id="button-{{ article.id }}"
-                                data-article-id="{{ article.id }}">
-                        <span class="icon text-white-50">
-                            <i class="fas fa-trash"></i>
-                        </span>
-                            <span class="text">Remove</span>
-                        </button>
-                    {% else %}
-                        {% if article in user_articles %}
+                        {% if article.id in lib_articles_ids or is_lib %}
                             <button class="btn btn-secondary btn-icon-split donotsave" id="button-{{ article.id }}"
                                     data-article-id="{{ article.id }}">
                   <span class="icon text-white-50">
@@ -69,9 +60,8 @@
                                 <span class="text">Save to Library</span>
                             </button>
                         {% endif %}
-                    {% endif %}
 
-            <div class="note-button">
+            <div class="note-button" id="note-button">
                 {% if article.note != '' %}
                 <span class="note-badge"> </span>
                 {% endif %}
@@ -84,6 +74,21 @@
                         <span class="text">Note</span>
                     </button>
                              </div>
+
+                </div>
+
+            <div class="col-md-2">
+
+                <a href="#" data-content="Popover with data-trigger" rel="popover" data-placement="bottom" data-original-title="Title" data-trigger="hover" class="btn btn-primary btn-circle">
+                    <i class="fas fa-thumbs-up"></i>
+                  </a>
+
+{#                <a id="popoverData" class="btn" href="#" data-content="Popover with data-trigger" rel="popover" data-placement="bottom" data-original-title="Title" data-trigger="hover">Popover with data-trigger</a>#}
+
+                <a href="#" class="btn btn-primary btn-circle">
+                    <i class="fas fa-thumbs-down"></i>
+                  </a>
+
                 </div>
 
             <div class="col-sm-2">

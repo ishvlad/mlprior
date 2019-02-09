@@ -42,19 +42,8 @@ def home(request):
             'data': []
         })
 
-    res = []
     for month, df_group in df.groupby(['month']):
         if month.year > 2017:
-            res.append({
-                'Month': month.strftime('%b %y'),
-                'AI': sum(df_group.category == 'cs.AI'),
-                'CL': sum(df_group.category == 'cs.CL'),
-                'CV': sum(df_group.category == 'cs.CV'),
-                'LG': sum(df_group.category == 'cs.LG'),
-                'ML': 1,
-                'NE': sum(df_group.category == 'cs.NE')
-            })
-
             bar_chart_data['labels'].append(month.strftime('%b %y'))
             for i, cat in enumerate(categories):
                 bar_chart_data['datasets'][i]['data'].append(
@@ -64,7 +53,6 @@ def home(request):
     context = {
         'n_articles': n_articles,
         'n_articles_in_lib': n_articles_in_lib,
-        'stacked_bar_json': json.dumps(res),
         'stacked_bar_chart': json.dumps(bar_chart_data)
     }
 

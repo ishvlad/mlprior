@@ -47,7 +47,7 @@ class DBManager(object):
 def main():
     arxiv_api = ArXivAPI()
 
-    for start in range(0, 100, 100):
+    for start in range(0, 1000, 100):
         print(start)
         entries = arxiv_api.search(categories=[
             'cat:cs.CV',

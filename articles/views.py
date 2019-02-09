@@ -1,6 +1,11 @@
+import re
 import json
-
+import operator
+import datetime
 import pandas as pd
+from nltk import ngrams
+
+
 from django.contrib.auth.decorators import login_required
 from django.db.models.functions import TruncMonth
 from django.http import HttpResponse, JsonResponse
@@ -16,18 +21,11 @@ from articles.models import Article, Author, ArticleUser
 def home(request):
     n_articles = Article.objects.count()
 
-    n_articles_in_lib = request.user.articles.count()
+    articles_lib = Article.objects.filter(articleuser__user=request.user, articleuser__in_lib=True)
+    n_articles_in_lib = articles_lib.count()
 
-    counts_for_bar = list(Article.objects.all().annotate(month=TruncMonth('date')).values('month', 'category'))
-    df = pd.DataFrame(counts_for_bar, columns=['category', 'month'])
-    df = df[(df.category == 'cs.CV') | (df.category == 'cs.AI') | (df.category == 'cs.LG') | \
-            (df.category == 'cs.CL') | (df.category == 'cs.NE') | (df.category == 'cs.ML')]
-    df.sort_values('month', inplace=True)
-
-    categories = [
-        'cs.AI', 'cs.CL', 'cs.CV', 'cs.LG', 'cs.ML', 'cs.NE'
-    ]
-    colors = ["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c"]
+    categories = ['cs.AI', 'cs.CL', 'cs.CV', 'cs.LG', 'cs.ML', 'cs.NE']
+    colors = ["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#dd0000", "#00dd00", "#0000dd"]
 
     bar_chart_data = {
         'labels': [],
@@ -40,6 +38,17 @@ def home(request):
             'data': []
         })
 
+
+    ##########################
+    ### Should be preprocessed
+    ##########################
+
+    counts_for_bar = list(Article.objects.all().annotate(month=TruncMonth('date')).values('month', 'category'))
+    df = pd.DataFrame(counts_for_bar, columns=['category', 'month'])
+    df = df[(df.category == 'cs.CV') | (df.category == 'cs.AI') | (df.category == 'cs.LG') | \
+            (df.category == 'cs.CL') | (df.category == 'cs.NE') | (df.category == 'cs.ML')]
+    df.sort_values('month', inplace=True)
+
     for month, df_group in df.groupby(['month']):
         if month.year > 2017:
             bar_chart_data['labels'].append(month.strftime('%b %y'))
@@ -48,10 +57,104 @@ def home(request):
                     sum(df_group.category == cat)
                 )
 
+    #################################
+    ### END OF Should be preprocessed
+    #################################
+
+    keywords = [
+        # 'Supervised', 'Unsupervised', 'Reinforcement',
+        'Generative Adversarial Networks',
+        'Recurrent Neural Networks',
+        'Convolutional Neural Networks',
+        # 'Graph Neural Networks',
+        # 'GPU', 'CPU'
+    ]
+    line_data = {
+        'labels': [],
+        'datasets': [{
+            'label': k,
+            'fill': False,
+            'backgroundColor': c,
+            'borderColor': c,
+            'data': []
+        } for k, c in zip(keywords, colors)]
+    }
+
+    start_date = 201500
+
+    ##########################
+    ### Should be preprocessed
+    ##########################
+
+    def get_grams_dict(sentences, max_ngram_len = 4):
+        # stop_words = [
+        #     'a', 'the', 'in', 'of', 'in', 'this', 'and',
+        #     'to', 'we', 'for', 'is', 'that', 'on', 'with'
+        #     'are', 'by', 'as', 'an', 'from', 'our', 'be'
+        # ]
+
+        p = re.compile('\w+[\-\w+]*', re.IGNORECASE)
+        dic = [{} for _ in range(max_ngram_len)]
+
+        for n in range(1, max_ngram_len + 1):
+            for s in sentences:
+                grams = ngrams(p.findall(s.lower()), n)
+
+                for key in set(grams):
+                    # miss = False
+                    # for sw in stop_words:
+                    #     if sw in key:
+                    #         miss = True
+                    #         break
+                    # if miss:
+                    #     continue
+
+                    key = ' '.join(key)
+                    if key in dic[n - 1]:
+                        dic[n - 1][key] += 1
+                    else:
+                        dic[n - 1][key] = 1
+
+        return dic
+
+    articles = pd.DataFrame(Article.objects.all().values())
+    articles['date'] = pd.to_datetime(articles['date'])
+    articles['idx_sort'] = articles.date.dt.month + articles.date.dt.year * 100
+    articles.sort_values('idx_sort', inplace=True)
+
+    grouped = articles[articles.idx_sort > start_date].groupby('idx_sort')
+    for d, df_group in sorted(grouped, key=operator.itemgetter(0)):
+        line_data['labels'].append(datetime.date(d // 100, d % 100, 1).strftime('%b %y'))
+
+        dics = get_grams_dict(df_group.abstract.values)
+
+        for i, kw in enumerate(keywords):
+            idx = len(kw.split()) - 1
+            kw = kw.lower()
+            if kw in dics[idx]:
+                line_data['datasets'][i]['data'].append(dics[idx][kw])
+            else:
+                line_data['datasets'][i]['data'].append(0)
+
+    full_data = {
+        'labels': line_data['labels'],
+        'datasets': [x['data'] for x in line_data['datasets']]
+    }
+    line_data['labels'] = line_data['labels'][-12:]
+    for x in line_data['datasets']:
+        x['data'] = x['data'][-12:]
+
+
+    #################################
+    ### END OF Should be preprocessed
+    #################################
+
     context = {
         'n_articles': n_articles,
         'n_articles_in_lib': n_articles_in_lib,
-        'stacked_bar_chart': json.dumps(bar_chart_data)
+        'stacked_bar_chart': json.dumps(bar_chart_data),
+        'trend_data': json.dumps(line_data),
+        'trend_data_full': json.dumps(full_data)
     }
 
     return render(request, 'home.html', context)

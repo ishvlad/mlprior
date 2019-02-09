@@ -107,6 +107,23 @@
             </div>
         </div>
 
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Basic Card Example</h6>
+            </div>
+            <div class="card-body">
+                <div class="trend-chart">
+                    <canvas id="myTrend" width="1000" height="500"></canvas>
+                    <button id="addData">+ Month</button>
+                    <button id="removeData">- Month</button>
+                    <script type="text/javascript">
+                        trend_line({{ trend_data|safe }}, {{ trend_data_full|safe }})
+                    </script>
+
+                </div>
+            </div>
+        </div>
+
 {% endblock content %}
 
 

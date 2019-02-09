@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+
 # Create your models here.
 class Article(models.Model):
     arxiv_id = models.CharField(max_length=50)
@@ -14,7 +15,7 @@ class Article(models.Model):
 
     note = models.TextField(verbose_name='Note', default='')
 
-    users = models.ManyToManyField(User, 'articles')
+    users = models.ManyToManyField(User, 'articles', through='ArticleUser')
 
     class Meta:
         verbose_name = 'Article'
@@ -37,6 +38,15 @@ class Author(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ArticleUser(models.Model):
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    like_dislike = models.NullBooleanField()
+    in_lib = models.BooleanField(default=False)
+
 
 #
 # class Authorship(models.Model):

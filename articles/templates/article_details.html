@@ -50,7 +50,7 @@
                             <span class="text">Remove</span>
                         </button>
                     {% else %}
-                        {% if article in user_articles %}
+                        {% if article.id in lib_articles_ids %}
                             <button class="btn btn-secondary btn-icon-split donotsave" id="button-{{ article.id }}"
                                     data-article-id="{{ article.id }}">
                   <span class="icon text-white-50">
@@ -75,12 +75,8 @@
             <div class="col-sm-2">
                     {% include 'share_buttons.html' %}
                 </div>
-
             </div>
-
                 <p>
-
-
                 <div class="card border-left-warning shadow mb-4">
                     <!-- Card Header - Dropdown -->
                     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">

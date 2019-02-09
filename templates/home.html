@@ -114,8 +114,16 @@
             <div class="card-body">
                 <div class="trend-chart">
                     <canvas id="myTrend" width="1000" height="500"></canvas>
-                    <button id="addData">+ Month</button>
-                    <button id="removeData">- Month</button>
+
+                    <hr>
+
+                    <button id="addData" class="btn btn-primary btn-icon-split">
+                        <span class="icon text-white-50"><i class="fas fa-plus"></i></span>
+                        <span class="text">Month</span>
+                    </button>
+                    <button id="removeData" class="btn btn-primary btn-icon-split">
+                        <span class="icon text-white-50"><i class="fas fa-minus"></i></span>
+                        <span class="text">Month</span></button>
                     <script type="text/javascript">
                         trend_line({{ trend_data|safe }}, {{ trend_data_full|safe }})
                     </script>

@@ -4,3 +4,6 @@ requests
 django-el-pagination
 elasticsearch
 django-elasticsearch-dsl
+nltk
+pandas
+numpy

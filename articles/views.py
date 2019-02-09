@@ -94,12 +94,12 @@ def article_details(request, article_id, template='article_details.html', extra_
     article = get_object_or_404(Article, id=article_id)
 
     related_articles = Article.objects.order_by('-date')
-    user_articles = request.user.articles.all()
+    lib_articles_ids = ArticleUser.objects.filter(user=request.user, in_lib=True).values_list('article', flat=True)
 
     context = {
         'article': article,
         'related_articles': related_articles,
-        'user_articles': user_articles
+        'lib_articles_ids': lib_articles_ids
     }
 
     if extra_context is not None:

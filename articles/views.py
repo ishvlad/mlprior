@@ -26,6 +26,22 @@ def home(request):
             (df.category == 'cs.CL') | (df.category == 'cs.NE') | (df.category == 'cs.ML')]
     df.sort_values('month', inplace=True)
 
+    categories = [
+        'cs.AI', 'cs.CL', 'cs.CV', 'cs.LG', 'cs.ML', 'cs.NE'
+    ]
+    colors = ["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c"]
+
+    bar_chart_data = {
+        'labels': [],
+        'datasets': []
+    }
+    for cat, color in zip(categories, colors):
+        bar_chart_data['datasets'].append({
+            'label': cat,
+            'backgroundColor': color,
+            'data': []
+        })
+
     res = []
     for month, df_group in df.groupby(['month']):
         if month.year > 2017:
@@ -39,10 +55,17 @@ def home(request):
                 'NE': sum(df_group.category == 'cs.NE')
             })
 
+            bar_chart_data['labels'].append(month.strftime('%b %y'))
+            for i, cat in enumerate(categories):
+                bar_chart_data['datasets'][i]['data'].append(
+                    sum(df_group.category == cat)
+                )
+
     context = {
         'n_articles': n_articles,
         'n_articles_in_lib': n_articles_in_lib,
-        'stacked_bar_json': json.dumps(res)
+        'stacked_bar_json': json.dumps(res),
+        'stacked_bar_chart': json.dumps(bar_chart_data)
     }
 
     return render(request, 'home.html', context)

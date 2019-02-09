@@ -6,7 +6,9 @@
 
     <!-- Visualization -->
     <script src="{% static 'js/d3.v3.min.js' %}", charset="utf-8"></script>
+    <script src="{% static 'js/chart.js/Chart.min.js' %}", charset="utf-8"></script>
     <script src="{% static 'js/visualization.js' %}", charset="utf-8"></script>
+
 
     <!-- Content Row -->
           <div class="row">
@@ -92,6 +94,12 @@
           <div class="stacked-bar">
               <script type="text/javascript">
                   stacked_bar({{ stacked_bar_json|safe }})
+              </script>
+          </div>
+          <div class="stacked-bar-chart">
+              <canvas id="myChart" width="1000" height="500"></canvas>
+              <script type="text/javascript">
+                  chart_bar({{ stacked_bar_chart|safe }})
               </script>
           </div>
 

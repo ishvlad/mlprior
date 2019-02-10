@@ -10,7 +10,7 @@ import django
 
 django.setup()
 
-from articles.models import Article as ArticleModel, Author
+from articles.models import Article as ArticleModel, Author, ArticleArticleRelation
 from arxiv import ArXivArticle, ArXivAPI
 
 
@@ -43,11 +43,14 @@ class DBManager(object):
 
             article.authors.add(author)
 
+    def create_articles_relation(self, items):
+        ArticleArticleRelation.objects.bulk_create(items)
+
 
 def main():
     arxiv_api = ArXivAPI()
 
-    for start in range(0, 1000, 100):
+    for start in range(0, 10000, 100):
         print(start)
         entries = arxiv_api.search(categories=[
             'cat:cs.CV',

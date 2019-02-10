@@ -16,6 +16,8 @@ class Article(models.Model):
     note = models.TextField(verbose_name='Note', default='')
 
     users = models.ManyToManyField(User, 'articles', through='ArticleUser')
+    related = models.ManyToManyField('self', 'related_articles', through='ArticleArticleRelation',
+          symmetrical=False)
 
     class Meta:
         verbose_name = 'Article'
@@ -47,6 +49,12 @@ class ArticleUser(models.Model):
     like_dislike = models.NullBooleanField()
     in_lib = models.BooleanField(default=False)
 
+
+class ArticleArticleRelation(models.Model):
+    left = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='from_article')
+    right = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='to_article')
+
+    distance = models.FloatField()
 
 #
 # class Authorship(models.Model):

@@ -27,8 +27,8 @@ def get_features(articles):
     vectorizer = HashingVectorizer(ngram_range=(1, 3), n_features=40)
     title_hash = vectorizer.fit_transform(articles.title.values).toarray()
 
-    encoder = OneHotEncoder(n_values=len(set(articles.category.values)), categories='auto', sparse=False)
-    category_onehot = encoder.fit_transform(articles.category.values.reshape(-1, 1))
+    # encoder = OneHotEncoder(n_values=len(set(articles.category.values)), categories='auto', sparse=False)
+    # category_onehot = encoder.fit_transform(articles.category.values.reshape(-1, 1))
 
     features = [
         title_tfidf,

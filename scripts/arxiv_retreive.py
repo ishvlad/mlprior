@@ -10,7 +10,8 @@ import django
 
 django.setup()
 
-from articles.models import Article as ArticleModel, Author, ArticleArticleRelation
+from articles.models import Article as ArticleModel, Author, ArticleArticleRelation, \
+                            NGramsCorporaByMonth, NGramsCorporaItem, CorporaItem
 from arxiv import ArXivArticle, ArXivAPI
 
 
@@ -47,10 +48,20 @@ class DBManager(object):
         ArticleArticleRelation.objects.bulk_create(items)
 
 
+    def create_ngram_corpora(self, items):
+        NGramsCorporaByMonth.objects.bulk_create(items)
+
+    def create_ngram_item(self, items):
+        NGramsCorporaItem.objects.bulk_create(items)
+
+    def create_corpora_item_link(self, items):
+        CorporaItem.objects.bulk_create(items)
+
+
 def main():
     arxiv_api = ArXivAPI()
 
-    for start in range(0, 10000, 100):
+    for start in range(0, 500, 100):
         print(start)
         entries = arxiv_api.search(categories=[
             'cat:cs.CV',

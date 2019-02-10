@@ -1,3 +1,10 @@
+##########################################################
+### If it is not the first start, you have to clear table:
+### python manage.py dbshell
+### DELETE FROM articles_articlearticlerelation;
+### .exit 0
+##########################################################
+
 import os
 import sys
 import tqdm
@@ -52,13 +59,6 @@ def get_knn_list(features, n_neighbors=200):
 
 
 def main():
-    ##########################################################
-    ### If it is not the first start, you have to clear table:
-    ### python manage.py dbshell
-    ### DELETE FROM articles_articlearticlerelation;
-    ### .exit 0
-    ##########################################################
-
     print('START loading articles', end=' ')
     articles = pd.DataFrame(Article.objects.all().values('id','title', 'category', 'version', 'date'))
     print('OK')

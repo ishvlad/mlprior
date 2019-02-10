@@ -56,6 +56,28 @@ class ArticleArticleRelation(models.Model):
 
     distance = models.FloatField()
 
+
+class NGramsCorporaByMonth(models.Model):
+    length = models.IntegerField()
+    label = models.CharField(max_length=6)
+    label_code = models.IntegerField()
+
+    related = models.ManyToManyField('NGramsCorporaItem', through='CorporaItem')
+
+
+class NGramsCorporaItem(models.Model):
+    sentence = models.CharField(max_length=250, primary_key=True)
+
+    corpora = models.ManyToManyField(NGramsCorporaByMonth, through='CorporaItem')
+
+
+class CorporaItem(models.Model):
+    freq = models.IntegerField(default=0)
+
+    from_corpora = models.ForeignKey(NGramsCorporaByMonth, on_delete=models.CASCADE)
+    from_item = models.ForeignKey(NGramsCorporaItem, on_delete=models.CASCADE)
+
+
 #
 # class Authorship(models.Model):
 #     author = models.ForeignKey(Author, on_delete=models.CASCADE)

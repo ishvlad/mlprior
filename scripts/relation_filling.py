@@ -32,9 +32,7 @@ def get_features(articles):
 
     features = [
         title_tfidf,
-        title_hash,
-        category_onehot,
-        articles.version.values.astype(int).reshape(-1, 1)
+        title_hash
     ]
     all_features = StandardScaler().fit_transform(np.hstack(features))
 
@@ -69,7 +67,7 @@ def main():
     features = get_features(articles)
     print('OK')
 
-    n_neighbors = 20
+    n_neighbors = 50
     print('START obtain ' + str(n_neighbors) + ' neighbors', end=' ')
     sys.stdout.flush()
     knn_list = get_knn_list(features, n_neighbors)

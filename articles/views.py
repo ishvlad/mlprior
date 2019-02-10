@@ -63,14 +63,14 @@ def home(request):
 
     keywords = [
         # 'Supervised', 'Unsupervised', 'Reinforcement',
-        'we propose',
-        'we assume',
-        'we show',
-        'we present'
-        # 'Generative Adversarial Networks',
-        # 'Recurrent Neural Networks',
-        # 'Convolutional Neural Networks',
-        # 'Graph Neural Networks',
+        # 'we propose',
+        # 'we assume',
+        # 'we show',
+        # 'we present'
+        'Generative Adversarial Networks',
+        'Recurrent Neural Networks',
+        'Convolutional Neural Networks',
+        'Graph Neural Networks',
         # 'GPU', 'CPU'
     ]
     line_data = {
@@ -187,7 +187,7 @@ def articles(request, template='articles_list.html', extra_context=None):
 @login_required(login_url='/login')
 def article_details(request, article_id, template='article_details.html', extra_context=None):
     article = get_object_or_404(Article, id=article_id)
-    related_articles = article.related.order_by('related__from_article__distance')
+    related_articles = article.related.order_by('related_articles__distance')
     lib_articles_ids = ArticleUser.objects.filter(user=request.user, in_lib=True).values_list('article', flat=True)
 
     context = {

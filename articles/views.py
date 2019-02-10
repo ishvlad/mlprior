@@ -1,3 +1,4 @@
+import datetime
 import json
 import pickle
 
@@ -8,7 +9,7 @@ from el_pagination.decorators import page_template
 
 from articles.documents import ArticleDocument
 from articles.forms import UserForm
-from articles.models import Article, Author, ArticleUser
+from articles.models import Article, Author, ArticleUser, NGramsCorporaItem, CorporaItem
 
 
 @login_required(login_url='/login')
@@ -20,7 +21,7 @@ def home(request):
 
     colors = ["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#dd0000", "#00dd00", "#0000dd"]
 
-    bar_chart_data, store = pickle.load(open('visualization.pkl', 'rb'))
+    bar_chart_data = pickle.load(open('visualization.pkl', 'rb'))
 
     full_bar_data = {
         'labels': bar_chart_data['labels'],
@@ -35,7 +36,29 @@ def home(request):
         'we propose',
         'we assume',
         'we have',
+        'qwhdsnjfna'
     ]
+
+    res = {}
+    min_tick = 300000
+    for kw in keywords:
+        res[kw] = {}
+        item = NGramsCorporaItem.objects.filter(sentence=kw)
+        if item.count() == 0:
+            continue
+        assert item.count() == 1
+
+        freq = CorporaItem.objects.filter(from_item=item[0]).order_by('from_corpora__label_code')
+        freq = list(freq.values_list('freq', 'from_corpora__label', 'from_corpora__label_code'))
+        for f in freq:
+            res[kw][f[1]] = f[0]
+
+        min_tick = min(min_tick, min([x[2] for x in freq]))
+
+    month = min_tick % 100
+    year = min_tick // 100
+    now = datetime.datetime.now()
+
     line_data = {
         'labels': [],
         'datasets': [{
@@ -47,17 +70,20 @@ def home(request):
         } for k, c in zip(keywords, colors)]
     }
 
-    for key in store:
-        dics = store[key]
-        line_data['labels'].append(key)
-
+    while not (year == now.year and month > now.month):
+        label = datetime.date(year, month, 1).strftime('%b %y')
+        line_data['labels'].append(label)
         for i, kw in enumerate(keywords):
-            idx = len(kw.split()) - 1
-            kw = kw.lower()
-            if kw in dics[idx]:
-                line_data['datasets'][i]['data'].append(dics[idx][kw])
+            if label in res[kw]:
+                line_data['datasets'][i]['data'].append(res[kw][label])
             else:
                 line_data['datasets'][i]['data'].append(0)
+
+        if month == 12:
+            year += 1
+            month = 1
+        else:
+            month += 1
 
     full_data = {
         'labels': line_data['labels'],

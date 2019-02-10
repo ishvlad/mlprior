@@ -1,5 +1,16 @@
+##########################################################
+### If it is not the first start, you have to clear table:
+### python manage.py dbshell
+### DELETE FROM articles_ngramscorporabymonth;
+### DELETE FROM articles_ngramscorporaitem;
+### DELETE FROM articles_corporaitem;
+### .exit 0
+##########################################################
+
+import datetime
 import operator
 import os
+import pickle
 import re
 import sys
 import tqdm
@@ -10,15 +21,13 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mlprior.settings")
 import django
 django.setup()
 
-import datetime
-import pickle
 import pandas as pd
 from django.db.models.functions import TruncMonth
 from nltk import ngrams
 from time import time
 
-from articles.models import Article
-
+from articles.models import Article, NGramsCorporaByMonth, NGramsCorporaItem, CorporaItem
+from scripts.arxiv_retreive import DBManager
 
 def get_grams_dict(sentences, max_ngram_len=5):
     # stop_words = [
@@ -52,12 +61,6 @@ def get_grams_dict(sentences, max_ngram_len=5):
     return dic
 
 def main():
-    ##########################################################
-    ### If it is not the first start, you have to clear table:
-    ### python manage.py dbshell
-    ### DELETE FROM articles_articlearticlerelation;
-    ### .exit 0
-    ##########################################################
 
     print('START stacked bar chart', end=' ')
     ###############
@@ -125,20 +128,65 @@ def main():
     articles['idx_sort'] = articles.date.dt.month + articles.date.dt.year * 100
     articles.sort_values('idx_sort', inplace=True)
 
-    huge_store = {}
+    max_n_for_grams = 5
+    month = min(articles.idx_sort) % 100
+    year = min(articles.idx_sort) // 100
+
+    corpora = []
+    while not (year == now.year and month > now.month):
+        label = datetime.date(year, month, 1).strftime('%b %y')
+        label_code = month + year * 100
+
+        for i in range(1, max_n_for_grams + 1):
+            corpora.extend([NGramsCorporaByMonth(
+                length=i, label=label, label_code=label_code
+            )])
+
+        if month == 12:
+            year += 1
+            month = 1
+        else:
+            month += 1
+
+    dics = get_grams_dict(articles.abstract.values, max_n_for_grams)
+    items = []
+    for d in dics:
+        items.extend([NGramsCorporaItem(sentence=s) for s in d])
+
+    db = DBManager()
+    db.create_ngram_item(items)
+    db.create_ngram_corpora(corpora)
+
+    links = []
     grouped = sorted(articles.groupby('idx_sort'), key=operator.itemgetter(0))
-
     for date, df_group in tqdm.tqdm(grouped):
-        key = datetime.date(date // 100, date % 100, 1).strftime('%b %y')
-        huge_store[key] = get_grams_dict(df_group.abstract.values)
+        dics = get_grams_dict(df_group.abstract.values, max_n_for_grams)
 
+        for i, dic in enumerate(dics):
+            corpora = NGramsCorporaByMonth.objects.filter(label_code=date, length=i+1)
+            if len(corpora) == 0:
+                continue
+            assert len(corpora) == 1
+            corpus = corpora[0]
+
+            for key in dic:
+                item = NGramsCorporaItem.objects.filter(sentence=key)
+                assert len(item) == 1
+                item = item[0]
+
+                links.append(CorporaItem(
+                    freq=dic[key],
+                    from_corpora=corpus,
+                    from_item=item
+                ))
+
+    db.create_corpora_item_link(links)
     print('OK')
     ##########
     ### Saving
     ##########
     print('START Saving')
-    pickle.dump((bar_chart_data, huge_store), open('visualization.pkl', 'wb+'))
-
+    pickle.dump(bar_chart_data, open('visualization.pkl', 'wb+'))
 
 
 if __name__ == '__main__':

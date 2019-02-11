@@ -19,6 +19,7 @@ sys.path.append('./')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mlprior.settings")
 
 import django
+
 django.setup()
 
 import pandas as pd
@@ -28,6 +29,7 @@ from time import time
 
 from articles.models import Article, NGramsCorporaByMonth, NGramsCorporaItem, CorporaItem
 from scripts.arxiv_retreive import DBManager
+
 
 def get_grams_dict(sentences, max_ngram_len=5):
     # stop_words = [
@@ -60,8 +62,8 @@ def get_grams_dict(sentences, max_ngram_len=5):
 
     return dic
 
-def main():
 
+def main():
     print('START stacked bar chart', end=' ')
     ###############
     ### Stacked Bar
@@ -105,7 +107,7 @@ def main():
         if key in store:
             for i, cat in enumerate(categories):
                 bar_chart_data['datasets'][i]['data'].append(
-                        sum(store[key].category == cat)
+                    sum(store[key].category == cat)
                 )
         else:
             for i in range(len(categories)):
@@ -163,7 +165,7 @@ def main():
         dics = get_grams_dict(df_group.abstract.values, max_n_for_grams)
 
         for i, dic in enumerate(dics):
-            corpora = NGramsCorporaByMonth.objects.filter(label_code=date, length=i+1)
+            corpora = NGramsCorporaByMonth.objects.filter(label_code=date, length=i + 1)
             if len(corpora) == 0:
                 continue
             assert len(corpora) == 1

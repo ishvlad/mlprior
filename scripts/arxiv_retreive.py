@@ -1,6 +1,8 @@
+import argparse
 import os
 import sys
 from time import sleep, time
+import tqdm
 
 sys.path.append('./')
 
@@ -11,7 +13,7 @@ import django
 django.setup()
 
 from articles.models import Article as ArticleModel, Author, ArticleArticleRelation, \
-                            NGramsCorporaByMonth, NGramsCorporaItem, CorporaItem
+    NGramsCorporaByMonth, NGramsCorporaItem, CorporaItem
 from arxiv import ArXivArticle, ArXivAPI
 
 
@@ -47,7 +49,6 @@ class DBManager(object):
     def create_articles_relation(self, items):
         ArticleArticleRelation.objects.bulk_create(items)
 
-
     def create_ngram_corpora(self, items):
         NGramsCorporaByMonth.objects.bulk_create(items)
 
@@ -58,11 +59,20 @@ class DBManager(object):
         CorporaItem.objects.bulk_create(items)
 
 
-def main():
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--article_per_it', type=int, help='Articles per iteration', default=100)
+    parser.add_argument('--n_articles', type=int, help='number of data loading workers', default=1000)
+    parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=5)
+
+    args = parser.parse_args()
+    return args
+
+
+def main(args):
     arxiv_api = ArXivAPI()
 
-    for start in range(0, 5000, 100):
-        print(start)
+    for start in tqdm.tgrange(0, args.n_articles, args.article_per_it):
         entries = arxiv_api.search(categories=[
             'cat:cs.CV',
             'cat:cs.AI',
@@ -70,7 +80,7 @@ def main():
             'cat:cs.CL',
             'cat:cs.NE',
             'cat:cs.ML',
-        ], start=start, max_result=100)
+        ], start=start, max_result=args.article_per_it)
 
         db = DBManager()
 
@@ -78,10 +88,11 @@ def main():
             arxiv_article = ArXivArticle(record)
             db.add_article(arxiv_article)
 
-        sleep(5.)
+        sleep(args.sleep_time)
 
 
 if __name__ == '__main__':
+    args = parse_args()
     total_start_time = time()
     main()
 

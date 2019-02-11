@@ -2,7 +2,6 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
-# Create your models here.
 class Article(models.Model):
     arxiv_id = models.CharField(max_length=50)
     version = models.CharField(max_length=10, verbose_name='Version')
@@ -17,7 +16,7 @@ class Article(models.Model):
 
     users = models.ManyToManyField(User, 'articles', through='ArticleUser')
     related = models.ManyToManyField('self', 'related_articles', through='ArticleArticleRelation',
-          symmetrical=False)
+                                     symmetrical=False)
 
     class Meta:
         verbose_name = 'Article'
@@ -49,6 +48,9 @@ class ArticleUser(models.Model):
     like_dislike = models.NullBooleanField()
     in_lib = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = (('article', 'user'),)
+
 
 class ArticleArticleRelation(models.Model):
     left = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='from_article')
@@ -76,7 +78,6 @@ class CorporaItem(models.Model):
 
     from_corpora = models.ForeignKey(NGramsCorporaByMonth, on_delete=models.CASCADE)
     from_item = models.ForeignKey(NGramsCorporaItem, on_delete=models.CASCADE)
-
 
 #
 # class Authorship(models.Model):

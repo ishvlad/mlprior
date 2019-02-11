@@ -111,10 +111,14 @@ def articles(request, template='articles_list.html', extra_context=None):
     all_articles = Article.objects.order_by('-date')
 
     lib_articles_ids = ArticleUser.objects.filter(user=request.user, in_lib=True).values_list('article', flat=True)
+    like_articles_ids = ArticleUser.objects.filter(user=request.user, like_dislike=True).values_list('article', flat=True)
+    dislike_articles_ids = ArticleUser.objects.filter(user=request.user, like_dislike=False).values_list('article', flat=True)
 
     context = {
         'articles': all_articles,
         'lib_articles_ids': lib_articles_ids,
+        'like_articles_ids': like_articles_ids,
+        'dislike_articles_ids': dislike_articles_ids,
         'page_name': 'Articles'
     }
 
@@ -131,10 +135,17 @@ def article_details(request, article_id, template='article_details.html', extra_
     related_articles = article.related.order_by('related_articles__distance')
     lib_articles_ids = ArticleUser.objects.filter(user=request.user, in_lib=True).values_list('article', flat=True)
 
+    like_articles_ids = ArticleUser.objects.filter(user=request.user,
+                                                   like_dislike=True).values_list('article', flat=True)
+    dislike_articles_ids = ArticleUser.objects.filter(user=request.user,
+                                                      like_dislike=False).values_list('article', flat=True)
+
     context = {
         'article': article,
         'related_articles': related_articles,
-        'lib_articles_ids': lib_articles_ids
+        'lib_articles_ids': lib_articles_ids,
+        'like_articles_ids': like_articles_ids,
+        'dislike_articles_ids': dislike_articles_ids,
     }
 
     if extra_context is not None:
@@ -167,20 +178,16 @@ def author_articles(request, author_name, template='articles_list.html', extra_c
 def add_remove_from_library(request, article_id):
     article = get_object_or_404(Article, id=article_id)
 
-    if request.method == 'POST':
-        ArticleUser.objects.update_or_create(article=article, user=request.user, in_lib=True)
-        data = {
-            'is_ok': 'ok!'
-        }
-    elif request.method == 'DELETE':
-        ArticleUser.objects.filter(article=article, user=request.user).update(in_lib=False)
-        data = {
-            'is_ok': 'deleted!'
-        }
-    else:
-        data = {}
+    article_user, _ = ArticleUser.objects.get_or_create(article=article, user=request.user)
 
-    return JsonResponse(data)
+    if request.method == 'POST':
+        article_user.in_lib = True
+        article_user.save()
+    elif request.method == 'DELETE':
+        article_user.in_lib = False
+        article_user.save()
+
+    return JsonResponse({})
 
 
 @login_required(login_url='/login')
@@ -199,6 +206,23 @@ def change_note(request, article_id):
     }
 
     return JsonResponse(data)
+
+
+@login_required(login_url='/login')
+def like_dislike(request, article_id):
+    article = get_object_or_404(Article, id=article_id)
+    article_user, _ = ArticleUser.objects.get_or_create(article=article, user=request.user)
+
+    if request.POST['like'] == '1':
+        article_user.like_dislike = True
+    elif request.POST['like'] == '-1':
+        article_user.like_dislike = False
+    else:
+        article_user.like_dislike = None
+
+    article_user.save()
+
+    return JsonResponse({})
 
 
 @page_template('articles_list_page.html')
@@ -231,10 +255,17 @@ def search(request, search_query, template='articles_list.html', extra_context=N
 def library(request, template='articles_list.html', extra_context=None):
     all_articles = Article.objects.filter(articleuser__user=request.user, articleuser__in_lib=True)
 
+    like_articles_ids = ArticleUser.objects.filter(user=request.user,
+                                                   like_dislike=True).values_list('article', flat=True)
+    dislike_articles_ids = ArticleUser.objects.filter(user=request.user,
+                                                      like_dislike=False).values_list('article', flat=True)
+
     context = {
         'articles': all_articles,
         'page_name': 'Library',
-        'is_lib': True
+        'is_lib': True,
+        'like_articles_ids': like_articles_ids,
+        'dislike_articles_ids': dislike_articles_ids,
     }
 
     if extra_context is not None:

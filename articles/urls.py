@@ -8,8 +8,9 @@ urlpatterns = [
     path('authors/<author_name>', views.author_articles, name='author_articles'),
     path('api/v1/library/add/<article_id>', views.add_remove_from_library, name='lib_add'),
     path('api/v1/library/remove/<article_id>', views.add_remove_from_library, name='lib_remove'),
-
     path('api/v1/note/update/<article_id>', views.change_note, name='change_note'),
+    path('api/v1/like/<article_id>', views.like_dislike, name='like'),
+    path('api/v1/dislike/<article_id>', views.like_dislike, name='dislike'),
     # path('api/articles/search/<searchinput>', articles_views.search, name='search'),
     path('library', views.library, name='library'),
 ]

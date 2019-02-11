@@ -12,6 +12,28 @@ $(function() {
           el.querySelector('.text').textContent = newText;
     }
 
+    function changeLikes(article_id, like) {
+        // far = empty
+        // fas = full
+        like_icon = document.getElementById('like-'+article_id);
+        like_icon.classList.remove('far');
+        like_icon.classList.remove('fas');
+
+        dislike_icon = document.getElementById('dislike-'+article_id);
+        dislike_icon.classList.remove('far');
+        dislike_icon.classList.remove('fas');
+        if (like == -1) {
+            like_icon.classList.add('far');
+            dislike_icon.classList.add('fas');
+        } else if (like == 0) {
+            like_icon.classList.add('far');
+            dislike_icon.classList.add('far');
+        } else {
+            like_icon.classList.add('fas');
+            dislike_icon.classList.add('far');
+        }
+    }
+
     $("body").on('click', '.savetolibrary', function () {
         var article_id = $(this).attr("data-article-id");
         var action = $(this).attr("data-action");
@@ -64,6 +86,56 @@ $(function() {
                 changeButton(article_id, oldClasses, newClasses, 'Save to Library');
             }
         });
+    }).on('click', '.likebutton', function() {
+        var article_id = $(this).attr("data-article-id");
+
+        icon = document.getElementById('like-'+article_id);
+        console.log(icon.classList);
+        console.log(icon.classList.contains('far'));
+        if (icon.classList.contains('far')) {
+            // set like
+            var is_like = 1;
+
+        } else {
+            // remove like
+            var is_like = 0;
+        }
+
+        $.ajax({
+            url: '/articles/api/v1/like/' + article_id,
+            type: 'post',
+            data: {
+                'article_id': article_id,
+                'like': is_like
+            },
+            dataType: 'json',
+            success: function (data) {
+                changeLikes(article_id, is_like);
+            }
+        });
+    }).on('click', '.dislikebutton', function() {
+        var article_id = $(this).attr("data-article-id");
+        icon = document.getElementById('dislike-'+article_id);
+
+        if (icon.classList.contains('far')) {
+            // set dislike
+            var is_like = -1;
+        } else {
+            // remove dislike
+            var is_like = 0;
+        }
+            $.ajax({
+                url: '/articles/api/v1/like/' + article_id,
+                type: 'post',
+                data: {
+                    'article_id': article_id,
+                    'like': is_like
+                },
+                dataType: 'json',
+                success: function (data) {
+                    changeLikes(article_id, is_like);
+                }
+            });
     }).on('input propertychange change', '.note-form', function () {
         // FUNCTION FOR NOTES
         var article_id = $(this).attr("data-article-id");
@@ -91,9 +163,6 @@ $(function() {
                     }
                 }
             });
-
-
-
     });
 
     $('#popoverData').popover();

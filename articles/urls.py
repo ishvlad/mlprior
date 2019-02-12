@@ -13,4 +13,6 @@ urlpatterns = [
     path('api/v1/dislike/<article_id>', views.like_dislike, name='dislike'),
     # path('api/articles/search/<searchinput>', articles_views.search, name='search'),
     path('library', views.library, name='library'),
+    path('liked', views.liked_disliked, name='liked'),
+    path('disliked', views.liked_disliked, name='disliked'),
 ]

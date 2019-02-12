@@ -274,6 +274,33 @@ def library(request, template='articles_list.html', extra_context=None):
     return render(request, template, context)
 
 
+@page_template('articles_list_page.html')
+@login_required(login_url='/login')
+def liked_disliked(request, template='articles_list.html', extra_context=None):
+
+    liked = 'disliked' not in request.get_raw_uri()
+
+    all_articles = Article.objects.filter(articleuser__user=request.user, articleuser__like_dislike=liked)
+
+    like_articles_ids = ArticleUser.objects.filter(user=request.user,
+                                                   like_dislike=True).values_list('article', flat=True)
+    dislike_articles_ids = ArticleUser.objects.filter(user=request.user,
+                                                      like_dislike=False).values_list('article', flat=True)
+
+    context = {
+        'articles': all_articles,
+        'page_name': 'Liked' if liked else 'Disliked',
+        'is_lib': True,
+        'like_articles_ids': like_articles_ids,
+        'dislike_articles_ids': dislike_articles_ids,
+    }
+
+    if extra_context is not None:
+        context.update(extra_context)
+
+    return render(request, template, context)
+
+
 def register(request):
     user_form = UserForm()
     return render(request, 'register.html', {

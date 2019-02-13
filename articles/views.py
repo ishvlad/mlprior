@@ -129,7 +129,6 @@ def articles(request, template='articles_list.html', extra_context=None):
 
 
 @page_template('related_articles_page.html')
-@login_required(login_url='/login')
 def article_details(request, article_id, template='article_details.html', extra_context=None):
     article = get_object_or_404(Article, id=article_id)
     related_articles = article.related.order_by('related_articles__distance')

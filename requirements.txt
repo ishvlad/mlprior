@@ -7,3 +7,4 @@ django-elasticsearch-dsl
 nltk
 pandas
 numpy
+social-auth-app-django

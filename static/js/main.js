@@ -139,7 +139,6 @@ $(function() {
     }).on('input propertychange change', '.note-form', function () {
         // FUNCTION FOR NOTES
         var article_id = $(this).attr("data-article-id");
-
         var note = $(this).val();
 
             $.ajax({

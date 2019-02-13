@@ -151,15 +151,12 @@ $(function() {
                 },
                 dataType: 'json',
                 success: function (data) {
+                    span = document.getElementById('note-badge-' + article_id);
+
                     if (note != ''){
-                        var span = document.createElement('span');
-                        span.className = 'note-badge';
-                        span.innerHTML = ' ';
-                        document.getElementById('note-button').appendChild(span);
+                        span.classList.remove('d-none');
                     } else {
-                        // badge = document.getElementsByClassName('note-badge').item(0);
-                        // console.log(badge)
-                        // document.getElementById('note-button').removeChild(badge);
+                        span.classList.add('d-none');
                     }
                 }
             });

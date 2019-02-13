@@ -61,9 +61,11 @@
                             </button>
                         {% endif %}
 
-            <div class="note-button" id="note-button">
+            <div class="note-button" id="note-button-{{ article.id }}">
                 {% if article.note != '' %}
-                <span class="note-badge"> </span>
+                <span class="note-badge" id="note-badge-{{ article.id }}"> </span>
+                {% else %}
+                <span class="note-badge d-none" id="note-badge-{{ article.id }}"> </span>
                 {% endif %}
 
                     <button class="btn btn-warning btn-icon-split note" type="button" aria-controls="collapseUtilities"

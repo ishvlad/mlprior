@@ -99,7 +99,7 @@
                     <!-- Card Body -->
                     <div class="card-body">
                         <textarea class="form-control  note-area note-form" id="note-{{ article.id }}"
-                                  data-article-id="{{ article.id }}" rows="3">{{ article.note }}</textarea>
+                                  data-article-id="{{ article.id }}" rows="3">{{ notes|lookup:article.id }}</textarea>
 
                     </div>
                 </div>

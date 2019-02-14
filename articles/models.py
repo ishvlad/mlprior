@@ -12,8 +12,6 @@ class Article(models.Model):
     date = models.DateField()
     category = models.CharField(max_length=100)
 
-    note = models.TextField(verbose_name='Note', default='')
-
     users = models.ManyToManyField(User, 'articles', through='ArticleUser')
     related = models.ManyToManyField('self', 'related_articles', through='ArticleArticleRelation',
                                      symmetrical=False)
@@ -45,6 +43,7 @@ class ArticleUser(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    note = models.TextField(verbose_name='Note', default='')
     like_dislike = models.NullBooleanField()
     in_lib = models.BooleanField(default=False)
 

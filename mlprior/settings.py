@@ -71,6 +71,9 @@ TEMPLATES = [
                 'social_django.context_processors.backends',  # auth
                 'social_django.context_processors.login_redirect' # auth
             ],
+        'builtins': [
+            'articles.templatetags.articles_extras'
+        ],
         },
     },
 ]

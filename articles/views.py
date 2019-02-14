@@ -110,15 +110,23 @@ def home(request):
 def articles(request, template='articles_list.html', extra_context=None):
     all_articles = Article.objects.order_by('-date')
 
+    # all_articles.
+
+    print(ArticleUser.objects.filter(user=request.user).values_list('article', 'note'))
+
     lib_articles_ids = ArticleUser.objects.filter(user=request.user, in_lib=True).values_list('article', flat=True)
     like_articles_ids = ArticleUser.objects.filter(user=request.user, like_dislike=True).values_list('article', flat=True)
     dislike_articles_ids = ArticleUser.objects.filter(user=request.user, like_dislike=False).values_list('article', flat=True)
 
+    notes = dict(ArticleUser.objects.filter(user=request.user, note__isnull=False).values_list('article', 'note'))
+
+    # print(dict(ArticleUser.objects.filter(user=request.user, note__isnull=False).values_list('article', 'note')))
     context = {
         'articles': all_articles,
         'lib_articles_ids': lib_articles_ids,
         'like_articles_ids': like_articles_ids,
         'dislike_articles_ids': dislike_articles_ids,
+        'notes': notes,
         'page_name': 'Articles'
     }
 
@@ -130,8 +138,12 @@ def articles(request, template='articles_list.html', extra_context=None):
 
 @page_template('related_articles_page.html')
 def article_details(request, article_id, template='article_details.html', extra_context=None):
+    # todo check if user is authorised
+
     article = get_object_or_404(Article, id=article_id)
+    # related_articles = article.related.order_by('related__from_article__distance')# article.related.order_by('related_articles__distance')
     related_articles = article.related.order_by('related_articles__distance')
+
     lib_articles_ids = ArticleUser.objects.filter(user=request.user, in_lib=True).values_list('article', flat=True)
 
     like_articles_ids = ArticleUser.objects.filter(user=request.user,
@@ -139,12 +151,15 @@ def article_details(request, article_id, template='article_details.html', extra_
     dislike_articles_ids = ArticleUser.objects.filter(user=request.user,
                                                       like_dislike=False).values_list('article', flat=True)
 
+    notes = dict(ArticleUser.objects.filter(user=request.user, note__isnull=False).values_list('article', 'note'))
+
     context = {
         'article': article,
         'related_articles': related_articles,
         'lib_articles_ids': lib_articles_ids,
         'like_articles_ids': like_articles_ids,
         'dislike_articles_ids': dislike_articles_ids,
+        'notes': notes
     }
 
     if extra_context is not None:
@@ -193,18 +208,17 @@ def add_remove_from_library(request, article_id):
 def change_note(request, article_id):
     article = get_object_or_404(Article, id=article_id)
 
-    print('Current notes', article.note)
+    # print('Current notes', article.note)
 
     if request.method == 'POST':
         print(request.POST.get('note', ''))
-        article.note = request.POST.get('note', '')
-        article.save()
 
-    data = {
-        'is_ok': 'deleted!'
-    }
+        article_user, _ = ArticleUser.objects.get_or_create(article=article, user=request.user)
+        print(article_user)
+        article_user.note = request.POST.get('note', '')
+        article_user.save()
 
-    return JsonResponse(data)
+    return JsonResponse({})
 
 
 @login_required(login_url='/login')
@@ -259,12 +273,15 @@ def library(request, template='articles_list.html', extra_context=None):
     dislike_articles_ids = ArticleUser.objects.filter(user=request.user,
                                                       like_dislike=False).values_list('article', flat=True)
 
+    notes = dict(ArticleUser.objects.filter(user=request.user, note__isnull=False).values_list('article', 'note'))
+
     context = {
         'articles': all_articles,
         'page_name': 'Library',
         'is_lib': True,
         'like_articles_ids': like_articles_ids,
         'dislike_articles_ids': dislike_articles_ids,
+        'notes': notes
     }
 
     if extra_context is not None:
@@ -286,12 +303,15 @@ def liked_disliked(request, template='articles_list.html', extra_context=None):
     dislike_articles_ids = ArticleUser.objects.filter(user=request.user,
                                                       like_dislike=False).values_list('article', flat=True)
 
+    notes = dict(ArticleUser.objects.filter(user=request.user, note__isnull=False).values_list('article', 'note'))
+
     context = {
         'articles': all_articles,
         'page_name': 'Liked' if liked else 'Disliked',
         'is_lib': True,
         'like_articles_ids': like_articles_ids,
         'dislike_articles_ids': dislike_articles_ids,
+        'notes': notes
     }
 
     if extra_context is not None:

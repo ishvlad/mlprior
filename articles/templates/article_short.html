@@ -1,5 +1,5 @@
 <div id="article-{{ article.id }}">
-
+{% load articles_extras %}
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
@@ -62,7 +62,8 @@
                         {% endif %}
 
             <div class="note-button" id="note-button-{{ article.id }}">
-                {% if article.note != '' %}
+
+                {% if notes|lookup:article.id != '' %}
                 <span class="note-badge" id="note-badge-{{ article.id }}"> </span>
                 {% else %}
                 <span class="note-badge d-none" id="note-badge-{{ article.id }}"> </span>

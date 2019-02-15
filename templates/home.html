@@ -123,7 +123,17 @@
             </div>
             <div class="card-body">
                 <div class="trend-chart">
-                    <canvas id="myTrend" width="1000" height="500"></canvas>
+                    <div class="input-group">
+                        <input id="trend-input" type="text" class="form-control bg-light border-0 small"
+                               placeholder="Machine Learning, Neural Networks, Computer Vision, Deep Learning" aria-label="Search" aria-describedby="basic-addon2">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary trendbutton" id="trend-button" type="button" onclick="">
+                                <i class="fas fa-search fa-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <canvas id="Trends" width="1000" height="500"></canvas>
 
                     <hr>
 

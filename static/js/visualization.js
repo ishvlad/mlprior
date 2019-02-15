@@ -61,7 +61,7 @@ function trend_line(data, data_full) {
         options: {
             responsive: true,
             title: {
-                display: true,
+                display: false,
                 text: 'Chart.js Line Chart'
             },
             tooltips: {
@@ -84,7 +84,7 @@ function trend_line(data, data_full) {
     };
 
     window.addEventListener("load",function(event) {
-        var ctx = document.getElementById('myTrend').getContext('2d');
+        var ctx = document.getElementById('Trends').getContext('2d');
         window.myLine = new Chart(ctx, config);
     }, false);
 
@@ -110,6 +110,19 @@ function trend_line(data, data_full) {
             });
 
             window.myLine.update();
+        }
+    });
+
+    document.getElementById("trend-button").addEventListener('click', function() {
+        var text = document.getElementById('trend-input').value;
+        if (text.length != 0) {
+            var url = window.location.href;
+            if (url.indexOf('?') > -1) {
+                url = url.slice(0, url.indexOf('?'));
+            }
+            url += '?kws=' + text;
+
+            window.location.href = url, true;
         }
     });
 }

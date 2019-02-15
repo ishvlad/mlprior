@@ -30,20 +30,15 @@ def home(request):
     for x in bar_chart_data['datasets']:
         x['data'] = x['data'][-VISUALIZATION__INITIAL_NUM_BARS:]
 
-    keywords = [
-        'In this paper',
-        'we propose',
-        'we assume',
-        'we have',
-        'qwhdsnjfna'
-    ]
+    keywords_raw = request.GET.get('kws', "Machine Learning, Neural Networks, Computer Vision, Deep Learning")
+    keywords = [kw.strip() for kw in keywords_raw.split(',')]
     colors = GLOBAL__COLORS.get_colors_code(len(keywords))
 
     res = {}
     min_tick = 300000
     for kw in keywords:
         res[kw] = {}
-        item = NGramsCorporaItem.objects.filter(sentence=kw)
+        item = NGramsCorporaItem.objects.filter(sentence=kw.lower())
         if item.count() == 0:
             continue
         assert item.count() == 1
@@ -55,9 +50,12 @@ def home(request):
 
         min_tick = min(min_tick, min([x[2] for x in freq]))
 
+    now = datetime.datetime.now()
+    if min_tick == 300000:
+        min_tick = (now.year - 1) * 100 + now.month
+
     month = min_tick % 100
     year = min_tick // 100
-    now = datetime.datetime.now()
 
     line_data = {
         'labels': [],

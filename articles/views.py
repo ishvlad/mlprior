@@ -97,7 +97,8 @@ def home(request):
         'stacked_bar_chart': json.dumps(bar_chart_data),
         'stacked_bar_chart_full': json.dumps(full_bar_data),
         'trend_data': json.dumps(line_data),
-        'trend_data_full': json.dumps(full_data)
+        'trend_data_full': json.dumps(full_data),
+        'keywords_raw': keywords_raw
     }
 
     return render(request, 'home.html', context)

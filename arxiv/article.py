@@ -27,7 +27,7 @@ class ArXivArticle(object):
                 continue
             return l['href']
 
-        return ''
+        return None
 
     @property
     def title(self):

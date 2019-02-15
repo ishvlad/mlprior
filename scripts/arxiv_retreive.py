@@ -63,7 +63,7 @@ class DBManager(object):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--article_per_it', type=int, help='Articles per iteration', default=100)
-    parser.add_argument('--n_articles', type=int, help='number of data loading workers', default=1000)
+    parser.add_argument('--n_articles', type=int, help='number of data loading workers', default=200)
     parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=5)
 
     args = parser.parse_args()
@@ -82,7 +82,8 @@ def main(args):
 
         for record in entries:
             arxiv_article = ArXivArticle(record)
-            db.add_article(arxiv_article)
+            if arxiv_article.pdf_url:
+                db.add_article(arxiv_article)
 
         sleep(args.sleep_time)
 

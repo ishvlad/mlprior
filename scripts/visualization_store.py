@@ -29,6 +29,7 @@ from time import time
 
 from articles.models import Article, NGramsCorporaByMonth, NGramsCorporaItem, CorporaItem
 from scripts.arxiv_retreive import DBManager
+from utils.constants import GLOBAL__COLORS, GLOBAL__CATEGORIES
 
 
 def get_grams_dict(sentences, max_ngram_len=5):
@@ -68,8 +69,8 @@ def main():
     ###############
     ### Stacked Bar
     ###############
-    categories = ['cs.AI', 'cs.CL', 'cs.CV', 'cs.LG', 'cs.ML', 'cs.NE']
-    colors = ["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#dd0000", "#00dd00", "#0000dd"]
+    categories = list(GLOBAL__CATEGORIES.keys())[:8]
+    colors = GLOBAL__COLORS.get_colors_code(len(categories))
     bar_chart_data = {
         'labels': [],
         'datasets': []

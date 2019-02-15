@@ -15,6 +15,7 @@ django.setup()
 from articles.models import Article as ArticleModel, Author, ArticleArticleRelation, \
     NGramsCorporaByMonth, NGramsCorporaItem, CorporaItem
 from arxiv import ArXivArticle, ArXivAPI
+from utils.constants import GLOBAL__CATEGORIES
 
 
 class DBManager(object):
@@ -71,16 +72,11 @@ def parse_args():
 
 def main(args):
     arxiv_api = ArXivAPI()
-
-    for start in tqdm.tgrange(0, args.n_articles, args.article_per_it):
-        entries = arxiv_api.search(categories=[
-            'cat:cs.CV',
-            'cat:cs.AI',
-            'cat:cs.LG',
-            'cat:cs.CL',
-            'cat:cs.NE',
-            'cat:cs.ML',
-        ], start=start, max_result=args.article_per_it)
+    for start in tqdm.trange(0, args.n_articles, args.article_per_it):
+        entries = arxiv_api.search(
+            categories=['cat:' + c for c in GLOBAL__CATEGORIES],
+            start=start, max_result=args.article_per_it
+        )
 
         db = DBManager()
 
@@ -94,6 +90,6 @@ def main(args):
 if __name__ == '__main__':
     args = parse_args()
     total_start_time = time()
-    main()
+    main(args)
 
     print('Total Time, min:', (time() - total_start_time) / 60)

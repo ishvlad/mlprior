@@ -10,6 +10,7 @@ from el_pagination.decorators import page_template
 from articles.documents import ArticleDocument
 from articles.forms import UserForm
 from articles.models import Article, Author, ArticleUser, NGramsCorporaItem, CorporaItem
+from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS
 
 
 @login_required(login_url='/login')
@@ -19,17 +20,15 @@ def home(request):
     articles_lib = Article.objects.filter(articleuser__user=request.user, articleuser__in_lib=True)
     n_articles_in_lib = articles_lib.count()
 
-    colors = ["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#dd0000", "#00dd00", "#0000dd"]
-
     bar_chart_data = pickle.load(open('visualization.pkl', 'rb'))
 
     full_bar_data = {
         'labels': bar_chart_data['labels'],
         'datasets': [x['data'] for x in bar_chart_data['datasets']]
     }
-    bar_chart_data['labels'] = bar_chart_data['labels'][-12:]
+    bar_chart_data['labels'] = bar_chart_data['labels'][-VISUALIZATION__INITIAL_NUM_BARS:]
     for x in bar_chart_data['datasets']:
-        x['data'] = x['data'][-12:]
+        x['data'] = x['data'][-VISUALIZATION__INITIAL_NUM_BARS:]
 
     keywords = [
         'In this paper',
@@ -38,6 +37,7 @@ def home(request):
         'we have',
         'qwhdsnjfna'
     ]
+    colors = GLOBAL__COLORS.get_colors_code(len(keywords))
 
     res = {}
     min_tick = 300000
@@ -89,9 +89,9 @@ def home(request):
         'labels': line_data['labels'],
         'datasets': [x['data'] for x in line_data['datasets']]
     }
-    line_data['labels'] = line_data['labels'][-12:]
+    line_data['labels'] = line_data['labels'][-VISUALIZATION__INITIAL_NUM_BARS:]
     for x in line_data['datasets']:
-        x['data'] = x['data'][-12:]
+        x['data'] = x['data'][-VISUALIZATION__INITIAL_NUM_BARS:]
 
     context = {
         'n_articles': n_articles,

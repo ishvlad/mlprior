@@ -7,4 +7,4 @@ python manage.py migrate
 python scripts/arxiv_retreive.py
 python scripts/relation_store.py
 python scripts/visualization_store.py
-python manage.py runserver
+python manage.py createsuperuser

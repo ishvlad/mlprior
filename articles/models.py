@@ -58,6 +58,20 @@ class ArticleArticleRelation(models.Model):
     distance = models.FloatField()
 
 
+class ArticleText(models.Model):
+    article_origin = models.OneToOneField(
+        Article,
+        on_delete=models.CASCADE,
+        primary_key=True,
+    )
+
+    text = models.CharField(max_length=100000)
+    inner_vector = models.CharField(max_length=10000, default='')
+
+    pdf_location = models.CharField(max_length=100)
+    txt_location = models.CharField(max_length=100)
+
+
 class NGramsCorporaByMonth(models.Model):
     length = models.IntegerField()
     label = models.CharField(max_length=6)

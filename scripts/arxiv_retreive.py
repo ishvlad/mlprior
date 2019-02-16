@@ -15,7 +15,7 @@ import django
 django.setup()
 
 from articles.models import Article as ArticleModel, Author, ArticleArticleRelation, \
-    NGramsCorporaByMonth, NGramsCorporaItem, CorporaItem, ArticleText
+    NGramsCorporaByMonth, NGramsCorporaItem, CorporaItem, ArticleText, ArticleVector
 from arxiv import ArXivArticle, ArXivAPI
 from urllib.request import urlopen
 from utils.constants import GLOBAL__CATEGORIES
@@ -61,6 +61,9 @@ class DBManager(object):
         )
 
         article.save()
+
+    def create_articles_vectors(self, items):
+        ArticleVector.objects.bulk_create(items)
 
     def create_articles_relation(self, items):
         ArticleArticleRelation.objects.bulk_create(items)

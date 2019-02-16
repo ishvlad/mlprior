@@ -66,10 +66,19 @@ class ArticleText(models.Model):
     )
 
     text = models.CharField(max_length=100000)
-    inner_vector = models.CharField(max_length=10000, default='')
 
     pdf_location = models.CharField(max_length=100)
     txt_location = models.CharField(max_length=100)
+
+
+class ArticleVector(models.Model):
+    article_origin = models.OneToOneField(
+        Article,
+        on_delete=models.CASCADE,
+        primary_key=True,
+    )
+
+    inner_vector = models.CharField(max_length=10000)
 
 
 class NGramsCorporaByMonth(models.Model):

@@ -4,7 +4,7 @@ import pickle
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count
+from django.db.models import Count, Q, When, Case
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils.decorators import method_decorator
@@ -15,7 +15,7 @@ from el_pagination.views import AjaxListView
 
 from articles.documents import ArticleDocument
 from articles.forms import UserForm
-from articles.models import Article, Author, ArticleUser, NGramsCorporaItem, CorporaItem
+from articles.models import Article, Author, ArticleUser, NGramsCorporaItem, CorporaItem, ArticleArticleRelation
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS
 from django_ajax.mixin import AJAXMixin
 
@@ -164,7 +164,29 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJ
             return Article.objects.annotate(n_likes=Count('articleuser__like_dislike')).order_by('-n_likes')
 
         if current_tab == 'recommended':
-            return Article.objects.order_by('-date')
+            # articles_negative = ArticleUser.objects.filter(user=self.request.user, like_dislike=False).values('article')
+            articles_positive = list(ArticleUser.objects.filter(
+                Q(like_dislike=True) | Q(in_lib=True),
+                user=self.request.user
+            ).values_list('article', flat=True))
+
+            jury = {}
+            for art in articles_positive:
+                for x in ArticleArticleRelation.objects.filter(left_id=art).values('right_id', 'distance'):
+                    key = x['right_id']
+                    if key not in articles_positive:
+                        if key not in jury:
+                            jury[key] = [x['distance']]
+                        else:
+                            jury[key].append(x['distance'])
+
+            jury = sorted(jury.items(), key=lambda x: min(x[1]))
+            ids = [x[0] for x in jury]
+
+            preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
+            queryset = Article.objects.filter(pk__in=ids).order_by(preserved)
+
+            return queryset
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context

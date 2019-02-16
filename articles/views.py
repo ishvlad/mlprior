@@ -17,6 +17,7 @@ from articles.documents import ArticleDocument
 from articles.forms import UserForm
 from articles.models import Article, Author, ArticleUser, NGramsCorporaItem, CorporaItem
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS
+from django_ajax.mixin import AJAXMixin
 
 
 @login_required(login_url='/login')
@@ -132,7 +133,7 @@ class ArticlesMixin(object):
         return dict(article_user.values_list('article', 'note'))
 
 
-class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin):
+class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJAXMixin):
     login_url = '/login/'
     template_name = 'articles/articles_list.html'
     page_template = 'articles/articles_list_page.html'

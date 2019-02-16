@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     # 'django_elasticsearch_dsl',
     'social_django',
     'el_pagination',
+    'django_ajax',
     'articles',
 ]
 

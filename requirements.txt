@@ -8,3 +8,4 @@ nltk
 pandas
 numpy
 social-auth-app-django
+djangoajax

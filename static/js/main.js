@@ -47,7 +47,7 @@ $(function() {
                 dataType: 'json',
                 success: function (data) {
                     var oldClasses = ['btn-primary', 'savetolibrary'];
-                    var newClasses = ['btn-secondary', 'donotsave'];
+                    var newClasses = ['btn-default', 'donotsave'];
 
                     changeButton(article_id, oldClasses, newClasses, 'Saved');
 
@@ -80,7 +80,7 @@ $(function() {
             },
             dataType: 'json',
             success: function (data) {
-                var oldClasses = ['btn-secondary', 'donotsave'];
+                var oldClasses = ['btn-default', 'donotsave'];
                 var newClasses = ['btn-primary', 'savetolibrary'];
 
                 changeButton(article_id, oldClasses, newClasses, 'Save to Library');

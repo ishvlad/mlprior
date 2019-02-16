@@ -5,86 +5,104 @@
 {% block content %}
 
     <!-- Visualization -->
-    <script src="{% static 'js/d3.v3.min.js' %}", charset="utf-8"></script>
-    <script src="{% static 'js/chart.js/Chart.min.js' %}", charset="utf-8"></script>
-    <script src="{% static 'js/visualization.js' %}", charset="utf-8"></script>
+    <script src="{% static 'js/d3.v3.min.js' %}" charset="utf-8"></script>
+    <script src="{% static 'js/chart.js/Chart.min.js' %}" charset="utf-8"></script>
+    <script src="{% static 'js/visualization.js' %}" charset="utf-8"></script>
 
 
     <!-- Content Row -->
-          <div class="row">
+          <div class="row mb-4">
 
             <!-- Earnings (Monthly) Card Example -->
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                  <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Articles</div>
-                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ n_articles }}</div>
-                    </div>
-                    <div class="col-auto">
-                      <i class="fas fa-archive fa-2x text-gray-300"></i>
-                    </div>
+{#            <div class="col-xl-3 col-md-6 mb-4">#}
+{#              <div class="card border-left-primary shadow h-100 py-2">#}
+{##}
+{#                <div class="card-body">#}
+{#                  <div class="row no-gutters align-items-center">#}
+{#                    <div class="col mr-2">#}
+{#                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Articles</div>#}
+{#                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ n_articles }}</div>#}
+{#                    </div>#}
+{#                    <div class="col-auto">#}
+{#                      <i class="fas fa-archive fa-2x text-gray-300"></i>#}
+{#                    </div>#}
+{#                  </div>#}
+{#                </div>#}
+{#              </div>#}
+{#            </div>#}
+
+
+              <div class="col-lg-3 col-md-6 col-sm-6">
+              <div class="card card-stats">
+                <div class="card-header card-header-warning card-header-icon">
+                  <div class="card-icon">
+                    <i class="material-icons">content_copy</i>
+                  </div>
+                  <p class="card-category">Articles</p>
+                  <h3 class="card-title">{{ n_articles }}
+                  </h3>
+                </div>
+                <div class="card-footer">
+                  <div class="stats">
+                    <i class="material-icons">date_range</i>
+                    Added today: n
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Earnings (Monthly) Card Example -->
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                  <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                      <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Articles in Library</div>
-                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ n_articles_in_lib }}</div>
-                    </div>
-                    <div class="col-auto">
-                      <i class="fas fa-bookmark fa-2x text-gray-300"></i>
-                    </div>
+            <div class="col-lg-3 col-md-6 col-sm-6">
+              <div class="card card-stats">
+                <div class="card-header card-header-success card-header-icon">
+                  <div class="card-icon">
+                    <i class="material-icons">content_copy</i>
+                  </div>
+                  <p class="card-category">Articles in Library</p>
+                  <h3 class="card-title">{{ n_articles_in_lib }}
+                  </h3>
+                </div>
+                <div class="card-footer">
+                  <div class="stats">
+                    <i class="material-icons">date_range</i>
+                    Likes: n
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Earnings (Monthly) Card Example -->
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                  <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                      <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Tasks</div>
-                      <div class="row no-gutters align-items-center">
-                        <div class="col-auto">
-                          <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">50%</div>
-                        </div>
-                        <div class="col">
-                          <div class="progress progress-sm mr-2">
-                            <div class="progress-bar bg-info" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-auto">
-                      <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
-                    </div>
+          <div class="col-lg-3 col-md-6 col-sm-6">
+              <div class="card card-stats">
+                <div class="card-header card-header-danger card-header-icon">
+                  <div class="card-icon">
+                    <i class="material-icons">content_copy</i>
+                  </div>
+                  <p class="card-category">Articles</p>
+                  <h3 class="card-title">{{ n_articles }}
+                  </h3>
+                </div>
+                <div class="card-footer">
+                  <div class="stats">
+                    <i class="material-icons">date_range</i>
+                    Added today: n
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Pending Requests Card Example -->
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                  <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                      <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Requests</div>
-                      <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
-                    </div>
-                    <div class="col-auto">
-                      <i class="fas fa-comments fa-2x text-gray-300"></i>
-                    </div>
+          <div class="col-lg-3 col-md-6 col-sm-6">
+              <div class="card card-stats">
+                <div class="card-header card-header-info card-header-icon">
+                  <div class="card-icon">
+                    <i class="material-icons">content_copy</i>
+                  </div>
+                  <p class="card-category">Articles</p>
+                  <h3 class="card-title">{{ n_articles }}
+                  </h3>
+                </div>
+                <div class="card-footer">
+                  <div class="stats">
+                    <i class="material-icons">date_range</i>
+                    Added today: n
                   </div>
                 </div>
               </div>
@@ -92,11 +110,16 @@
 
           </div>
 
-
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Categories</h6>
-            </div>
+        <div class="row">
+        <div class="col-md-12">
+        <div class="card shadow ">
+        <div class="card-header card-header-primary">
+                  <h4 class="card-title">Categories</h4>
+                  <p class="card-category">Plot description</p>
+                </div>
+{#            <div class="card-header py-3">#}
+{#                <h6 class="m-0 font-weight-bold text-primary">Categories</h6>#}
+{#            </div>#}
             <div class="card-body">
                 <div class="stacked-bar-chart">
                     <canvas id="myChart" width="1000" height="500"></canvas>
@@ -116,11 +139,15 @@
                 </div>
             </div>
         </div>
-
+</div>
+    </div>
+    <div class="row">
+<div class="col-md-12">
         <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Trends</h6>
-            </div>
+            <div class="card-header card-header-primary">
+                  <h4 class="card-title">Trends</h4>
+                  <p class="card-category">Plot description</p>
+                </div>
             <div class="card-body">
                 <div class="trend-chart">
                     <div class="input-group">
@@ -153,6 +180,9 @@
                 </div>
             </div>
         </div>
+</div>
+    </div>
+
 
 {% endblock content %}
 

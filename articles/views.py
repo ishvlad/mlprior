@@ -4,6 +4,7 @@ import pickle
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils.decorators import method_decorator
@@ -138,8 +139,31 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin):
     model = Article
     context_object_name = 'articles'
 
+    @property
+    def tab(self):
+        if 'recent' in self.request.get_raw_uri():
+            current_tab = 'recent'
+        elif 'recommended' in self.request.get_raw_uri():
+            current_tab = 'recommended'
+        elif 'popular' in self.request.get_raw_uri():
+            current_tab = 'popular'
+        else:
+            current_tab = 'other'
+
+        return current_tab
+
     def get_queryset(self):
-        return Article.objects.order_by('-date')
+        current_tab = self.tab
+
+        if current_tab == 'recent':
+            return Article.objects.order_by('-date')
+
+        if current_tab == 'popular':
+            # todo fix
+            return Article.objects.annotate(n_likes=Count('articleuser__like_dislike')).order_by('-n_likes')
+
+        if current_tab == 'recommended':
+            return Article.objects.order_by('-date')
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -152,6 +176,8 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin):
 
         context['page_name'] = 'Articles'
         context['page_template'] = 'articles/articles_list_page.html'
+
+        context['tab'] = self.tab
 
         return context
 

@@ -4,19 +4,26 @@
 
 {% block content %}
 
+{% if tab != 'other' %}
+
 <div class="row">
     <div class="col-xl-4 col-md-6 mb-4">
+      {% if tab == 'recommended' %}
+      <div class="card border-bottom-primary shadow h-100 py-2">
+    {% else %}
       <div class="card shadow h-100 py-2">
+    {% endif %}
         <div class="card-body">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
-{#                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Earnings (Monthly)</div>#}
               <div class="h5 mb-0 font-weight-bold text-gray-800">
-                  <a href=""><span class="align-middle">Recommended</span></a>
+                  <a href="/articles/recommended"><span class="align-middle">Recommended</span></a>
               </div>
             </div>
             <div class="col-auto">
-              <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                <span style="color: #e74a3b;">
+              <i class="fas fa-thumbs-up fa-2x"></i>
+                </span>
             </div>
           </div>
         </div>
@@ -24,17 +31,22 @@
     </div>
 
 <div class="col-xl-4 col-md-6 mb-4">
+    {% if tab == 'recent' %}
       <div class="card border-bottom-primary shadow h-100 py-2">
+    {% else %}
+      <div class="card shadow h-100 py-2">
+    {% endif %}
         <div class="card-body">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
-{#                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Earnings (Monthly)</div>#}
               <div class="h5 mb-0 font-weight-bold text-gray-800">
-                  <a href="">Recent</a>
+                  <a href="/articles/recent">Recent</a>
               </div>
             </div>
             <div class="col-auto">
-              <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                <span style="color: #e74a3b;">
+                  <i class="fas fa-chart-line fa-2x"></i>
+                </span>
             </div>
           </div>
         </div>
@@ -42,24 +54,31 @@
     </div>
 
     <div class="col-xl-4 col-md-6 mb-4">
+      {% if tab == 'popular' %}
+      <div class="card border-bottom-primary shadow h-100 py-2">
+    {% else %}
       <div class="card shadow h-100 py-2">
+    {% endif %}
         <div class="card-body">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
-{#                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Earnings (Monthly)</div>#}
               <div class="h5 mb-0 font-weight-bold text-gray-800">
-                  <a href="">Popular</a>
+                  <a href="/articles/popular">Popular</a>
               </div>
             </div>
             <div class="col-auto">
-              <i class="fas fa-calendar fa-2x text-gray-300"></i>
-            </div>
+                <span style="color: #e74a3b;">
+                  <i class="fab fa-hotjar fa-2x"></i>
+                </span>
+              </div>
           </div>
         </div>
       </div>
     </div>
 
     </div>
+
+{% endif %}
 
     {% include page_template %}
 

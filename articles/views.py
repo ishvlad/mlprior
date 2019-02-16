@@ -37,76 +37,16 @@ def home(request):
     for x in bar_chart_data['datasets']:
         x['data'] = x['data'][-VISUALIZATION__INITIAL_NUM_BARS:]
 
-    keywords_raw = request.GET.get('kws', "Machine Learning, Neural Networks, Computer Vision, Deep Learning")
-    keywords = [kw.strip() for kw in keywords_raw.split(',')]
-    colors = GLOBAL__COLORS.get_colors_code(len(keywords))
-
-    res = {}
-    min_tick = 300000
-    for kw in keywords:
-        res[kw] = {}
-        item = NGramsSentence.objects.filter(sentence=kw.lower())
-        if item.count() == 0:
-            continue
-        assert item.count() == 1
-
-        freq = SentenceVSMonth.objects.filter(from_item=item[0]).order_by('from_corpora__label_code')
-        freq = list(freq.values_list('freq_title', 'from_corpora__label', 'from_corpora__label_code'))
-        print(freq)
-        for f in freq:
-            res[kw][f[1]] = f[0]
-
-        min_tick = min(min_tick, min([x[2] for x in freq]))
-
-    now = datetime.datetime.now()
-    if min_tick == 300000:
-        min_tick = (now.year - 1) * 100 + now.month
-
-    month = min_tick % 100
-    year = min_tick // 100
-
-    line_data = {
-        'labels': [],
-        'datasets': [{
-            'label': k,
-            'fill': False,
-            'backgroundColor': c,
-            'borderColor': c,
-            'data': []
-        } for k, c in zip(keywords, colors)]
-    }
-
-    while not (year == now.year and month > now.month):
-        label = datetime.date(year, month, 1).strftime('%b %y')
-        line_data['labels'].append(label)
-        for i, kw in enumerate(keywords):
-            if label in res[kw]:
-                line_data['datasets'][i]['data'].append(res[kw][label])
-            else:
-                line_data['datasets'][i]['data'].append(0)
-
-        if month == 12:
-            year += 1
-            month = 1
-        else:
-            month += 1
-
-    full_data = {
-        'labels': line_data['labels'],
-        'datasets': [x['data'] for x in line_data['datasets']]
-    }
-    line_data['labels'] = line_data['labels'][-VISUALIZATION__INITIAL_NUM_BARS:]
-    for x in line_data['datasets']:
-        x['data'] = x['data'][-VISUALIZATION__INITIAL_NUM_BARS:]
+    data = json.loads(trend_view(request).content)
 
     context = {
         'n_articles': n_articles,
         'n_articles_in_lib': n_articles_in_lib,
         'stacked_bar_chart': json.dumps(bar_chart_data),
         'stacked_bar_chart_full': json.dumps(full_bar_data),
-        'trend_data': json.dumps(line_data),
-        'trend_data_full': json.dumps(full_data),
-        'keywords_raw': keywords_raw
+        'trend_data': json.dumps(data['data']),
+        'trend_data_full': json.dumps(data['data_full']),
+        'keywords_raw': "Machine Learning, Neural Networks, Computer Vision, Deep Learning"
     }
 
     return render(request, 'home.html', context)
@@ -326,6 +266,82 @@ def like_dislike(request, article_id):
     article_user.save()
 
     return JsonResponse({})
+
+@login_required(login_url='/login')
+def trend_view(request, keywords_raw=None):
+
+    if request.method == 'POST':
+        keywords_raw = request.POST.get('keywords_raw')
+    elif keywords_raw is None:
+        keywords_raw = "Machine Learning, Neural Networks, Computer Vision, Deep Learning"
+
+
+
+    keywords = [kw.strip() for kw in keywords_raw.split(',')]
+    colors = GLOBAL__COLORS.get_colors_code(len(keywords))
+
+    res = {}
+    min_tick = 300000
+    for kw in keywords:
+        res[kw] = {}
+        item = NGramsSentence.objects.filter(sentence=kw.lower())
+        if item.count() == 0:
+            continue
+        assert item.count() == 1
+
+        freq = SentenceVSMonth.objects.filter(from_item=item[0]).order_by('from_corpora__label_code')
+        freq = list(freq.values_list('freq_text', 'from_corpora__label', 'from_corpora__label_code'))
+        print(freq)
+        for f in freq:
+            res[kw][f[1]] = f[0]
+
+        min_tick = min(min_tick, min([x[2] for x in freq]))
+
+    now = datetime.datetime.now()
+    if min_tick == 300000:
+        min_tick = (now.year - 1) * 100 + now.month
+
+    month = min_tick % 100
+    year = min_tick // 100
+
+    line_data = {
+        'labels': [],
+        'datasets': [{
+            'label': k,
+            'fill': False,
+            'backgroundColor': c,
+            'borderColor': c,
+            'data': []
+        } for k, c in zip(keywords, colors)]
+    }
+
+    while not (year == now.year and month > now.month):
+        label = datetime.date(year, month, 1).strftime('%b %y')
+        line_data['labels'].append(label)
+        for i, kw in enumerate(keywords):
+            if label in res[kw]:
+                line_data['datasets'][i]['data'].append(res[kw][label])
+            else:
+                line_data['datasets'][i]['data'].append(0)
+
+        if month == 12:
+            year += 1
+            month = 1
+        else:
+            month += 1
+
+    full_data = {
+        'labels': line_data['labels'],
+        'datasets': [x['data'] for x in line_data['datasets']]
+    }
+    line_data['labels'] = line_data['labels'][-VISUALIZATION__INITIAL_NUM_BARS:]
+    for x in line_data['datasets']:
+        x['data'] = x['data'][-VISUALIZATION__INITIAL_NUM_BARS:]
+
+    return JsonResponse({
+        'data': line_data,
+        'data_full': full_data
+    })
 
 
 @page_template('articles_list_page.html')

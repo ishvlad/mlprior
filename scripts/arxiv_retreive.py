@@ -80,8 +80,8 @@ class DBManager(object):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--article_per_it', type=int, help='Articles per iteration', default=5)
-    parser.add_argument('--n_articles', type=int, help='number of data loading workers', default=25)
+    parser.add_argument('--article_per_it', type=int, help='Articles per iteration', default=50)
+    parser.add_argument('--n_articles', type=int, help='number of data loading workers', default=1000)
     parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=5)
 
     args = parser.parse_args()

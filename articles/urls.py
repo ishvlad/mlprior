@@ -17,6 +17,7 @@ urlpatterns = [
     path('api/v1/note/update/<article_id>', views.change_note, name='change_note'),
     path('api/v1/like/<article_id>', views.like_dislike, name='like'),
     path('api/v1/dislike/<article_id>', views.like_dislike, name='dislike'),
+    path('api/v1/trend', views.trend_view, name='trend_view')
     # path('api/articles/search/<searchinput>', articles_views.search, name='search'),
 
 

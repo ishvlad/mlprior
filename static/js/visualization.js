@@ -54,8 +54,8 @@ function chart_bar(data, data_full) {
     });
 }
 
-function trend_line(data, data_full) {
-    var config = {
+function get_config(data) {
+    return {
         type: 'line',
         data: data,
         options: {
@@ -82,14 +82,21 @@ function trend_line(data, data_full) {
             }
         }
     };
+}
 
-    window.addEventListener("load",function(event) {
-        var ctx = document.getElementById('Trends').getContext('2d');
-        window.myLine = new Chart(ctx, config);
-    }, false);
+function trend_buttons(data, data_full, config) {
+    var old_element = document.getElementById("addData");
+    var new_element = old_element.cloneNode(true);
+    old_element.parentNode.replaceChild(new_element, old_element);
+
+    var old_element = document.getElementById("removeData");
+    var new_element = old_element.cloneNode(true);
+    old_element.parentNode.replaceChild(new_element, old_element);
 
     document.getElementById('addData').addEventListener('click', function() {
-        if (config.data.labels.length < data_full.labels.length) {
+        var a = config.data.labels.length;
+        var b = data_full.labels.length
+        if (a < b) {
             idx = data_full.labels.length - config.data.labels.length - 1
             config.data.labels.unshift(data_full.labels[idx]);
 
@@ -112,17 +119,43 @@ function trend_line(data, data_full) {
             window.myLine.update();
         }
     });
+}
 
-    document.getElementById("trend-button").addEventListener('click', function() {
+function trend_line(data, data_full) {
+    var config = get_config(data);
+
+    window.addEventListener("load",function(event) {
+        var ctx = document.getElementById('Trends').getContext('2d');
+        window.myLine = new Chart(ctx, config);
+    }, false);
+
+    trend_buttons(data, data_full, config);
+
+    document.getElementById("trend-button").addEventListener('click' , function() {
         var text = document.getElementById('trend-input').value;
         if (text.length != 0) {
-            var url = window.location.href;
-            if (url.indexOf('?') > -1) {
-                url = url.slice(0, url.indexOf('?'));
-            }
-            url += '?kws=' + text + '#Trends';
+            $.ajax({
+                url: '/articles/api/v1/trend',
+                type: 'post',
+                data: {
+                    'keywords_raw': text
+                },
+                dataType: 'json',
+                success: function (data) {
+                    data_full = data.data_full
+                    data = data.data
 
-            window.location.href = url, true;
+                    var old_element = document.getElementById("Trends");
+                    var new_element = old_element.cloneNode(true);
+                    old_element.parentNode.replaceChild(new_element, old_element);
+
+                    const ctx = new_element.getContext('2d');
+                    var config = get_config(data);
+
+                    window.myLine = new Chart(ctx, config);
+                    trend_buttons(data, data_full, config);
+                }
+            })
         }
     });
 

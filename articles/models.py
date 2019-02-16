@@ -81,26 +81,33 @@ class ArticleVector(models.Model):
     inner_vector = models.CharField(max_length=10000)
 
 
-class NGramsCorporaByMonth(models.Model):
+class NGramsMonth(models.Model):
     length = models.IntegerField()
     label = models.CharField(max_length=6)
     label_code = models.IntegerField()
 
-    related = models.ManyToManyField('NGramsCorporaItem', through='CorporaItem')
+    related = models.ManyToManyField('NGramsSentence', through='SentenceVSMonth')
+
+    class Meta:
+        unique_together = (('length', 'label_code'),)
 
 
-class NGramsCorporaItem(models.Model):
+class NGramsSentence(models.Model):
     sentence = models.CharField(max_length=250, primary_key=True)
 
-    corpora = models.ManyToManyField(NGramsCorporaByMonth, through='CorporaItem')
+    corpora = models.ManyToManyField(NGramsMonth, through='SentenceVSMonth')
 
 
-class CorporaItem(models.Model):
-    freq = models.IntegerField(default=0)
+class SentenceVSMonth(models.Model):
+    from_corpora = models.ForeignKey(NGramsMonth, on_delete=models.CASCADE)
+    from_item = models.ForeignKey(NGramsSentence, on_delete=models.CASCADE)
 
-    from_corpora = models.ForeignKey(NGramsCorporaByMonth, on_delete=models.CASCADE)
-    from_item = models.ForeignKey(NGramsCorporaItem, on_delete=models.CASCADE)
+    freq_title = models.IntegerField(default=0)
+    freq_abstract = models.IntegerField(default=0)
+    freq_text = models.IntegerField(default=0)
 
+    class Meta:
+        unique_together = (('from_corpora', 'from_item'),)
 #
 # class Authorship(models.Model):
 #     author = models.ForeignKey(Author, on_delete=models.CASCADE)

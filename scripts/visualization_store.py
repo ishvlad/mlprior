@@ -1,10 +1,10 @@
 ##########################################################
 ### If it is not the first start, you have to clear table:
-### python manage.py dbshell
-### DELETE FROM articles_ngramscorporabymonth;
-### DELETE FROM articles_ngramscorporaitem;
-### DELETE FROM articles_corporaitem;
-### .exit 0
+# python manage.py dbshell
+# DELETE FROM articles_ngramsmonth;
+# DELETE FROM articles_ngramssentence;
+# DELETE FROM articles_sentencevsmonth;
+# .exit 0
 ##########################################################
 
 import datetime
@@ -27,7 +27,7 @@ from django.db.models.functions import TruncMonth
 from nltk import ngrams
 from time import time
 
-from articles.models import Article, NGramsCorporaByMonth, NGramsCorporaItem, CorporaItem
+from articles.models import Article, NGramsMonth, NGramsSentence, SentenceVSMonth
 from scripts.arxiv_retreive import DBManager
 from utils.constants import GLOBAL__COLORS, GLOBAL__CATEGORIES
 
@@ -41,6 +41,8 @@ def get_grams_dict(sentences, max_ngram_len=5):
 
     p = re.compile('\w+[\-\w+]*', re.IGNORECASE)
     dic = [{} for _ in range(max_ngram_len)]
+
+    key_store = []
 
     for n in range(1, max_ngram_len + 1):
         for s in sentences:
@@ -60,8 +62,9 @@ def get_grams_dict(sentences, max_ngram_len=5):
                     dic[n - 1][key] += 1
                 else:
                     dic[n - 1][key] = 1
+                key_store.append(key)
 
-    return dic
+    return dic, key_store
 
 
 def main():
@@ -126,12 +129,12 @@ def main():
     ###############
     print('START Trend lines')
 
-    articles = pd.DataFrame(articles.values())
+    articles = pd.DataFrame(Article.objects.values('date', 'title', 'abstract', 'articletext__text'))
     articles['date'] = pd.to_datetime(articles['date'])
     articles['idx_sort'] = articles.date.dt.month + articles.date.dt.year * 100
     articles.sort_values('idx_sort', inplace=True)
 
-    max_n_for_grams = 5
+    max_n_for_grams = 3
     month = min(articles.idx_sort) % 100
     year = min(articles.idx_sort) // 100
 
@@ -141,7 +144,7 @@ def main():
         label_code = month + year * 100
 
         for i in range(1, max_n_for_grams + 1):
-            corpora.extend([NGramsCorporaByMonth(
+            corpora.extend([NGramsMonth(
                 length=i, label=label, label_code=label_code
             )])
 
@@ -151,44 +154,83 @@ def main():
         else:
             month += 1
 
-    dics = get_grams_dict(articles.abstract.values, max_n_for_grams)
-    items = []
-    for d in dics:
-        items.extend([NGramsCorporaItem(sentence=s) for s in d])
+    dics_title, keys_title = get_grams_dict(articles.title.values, max_n_for_grams)
+    print('Found %d Ngrams in Title' % len(keys_title))
+    dics_abstract, keys_abstract = get_grams_dict(articles.abstract.values, max_n_for_grams)
+    print('Found %d Ngrams in Abstract' % len(keys_abstract))
+    dics_text, keys_text = get_grams_dict(articles.articletext__text.values, max_n_for_grams)
+    print('Found %d Ngrams in Text' % len(keys_text))
+
+    print('START Saving sentences in DB', end=' ')
+    items = [NGramsSentence(sentence=s) for s in set(keys_title + keys_abstract + keys_text)]
 
     db = DBManager()
     db.create_ngram_item(items)
     db.create_ngram_corpora(corpora)
+    print('OK\nNow filling')
 
-    links = []
+    links = {}
     grouped = sorted(articles.groupby('idx_sort'), key=operator.itemgetter(0))
     for date, df_group in tqdm.tqdm(grouped):
-        dics = get_grams_dict(df_group.abstract.values, max_n_for_grams)
+        dics_title, _ = get_grams_dict(df_group.title.values, max_n_for_grams)
+        dics_abstract, _ = get_grams_dict(df_group.abstract.values, max_n_for_grams)
+        dics_text, _ = get_grams_dict(df_group.articletext__text.values, max_n_for_grams)
 
-        for i, dic in enumerate(dics):
-            corpora = NGramsCorporaByMonth.objects.filter(label_code=date, length=i + 1)
-            if len(corpora) == 0:
-                continue
-            assert len(corpora) == 1
-            corpus = corpora[0]
+        for i in range(1, max_n_for_grams+1):
+            corpus = NGramsMonth.objects.filter(label_code=date, length=i)[0]
 
-            for key in dic:
-                item = NGramsCorporaItem.objects.filter(sentence=key)
-                assert len(item) == 1
-                item = item[0]
+            for key in dics_title[i-1]:
+                item = NGramsSentence.objects.filter(sentence=key)[0]
 
-                links.append(CorporaItem(
-                    freq=dic[key],
-                    from_corpora=corpus,
-                    from_item=item
-                ))
+                links[(key, date)] = {
+                    'freq_title': dics_title[i-1][key],
+                    'freq_abstract': 0,
+                    'freq_text': 0,
+                    'from_corpora': corpus,
+                    'from_item': item
+                }
 
-    db.create_corpora_item_link(links)
-    print('OK')
+            for key in dics_abstract[i-1]:
+                if (key, date) in links:
+                    links[(key, date)]['freq_abstract'] = dics_abstract[i-1][key]
+                else:
+                    item = NGramsSentence.objects.filter(sentence=key)[0]
+
+                    links[(key, date)] = {
+                        'freq_title': 0,
+                        'freq_abstract': dics_abstract[i-1][key],
+                        'freq_text': 0,
+                        'from_corpora': corpus,
+                        'from_item': item
+                    }
+
+            for key in dics_text[i-1]:
+                if (key, date) in links:
+                    links[(key, date)]['freq_text'] = dics_text[i-1][key]
+                else:
+                    item = NGramsSentence.objects.filter(sentence=key)[0]
+
+                    links[(key, date)] = {
+                        'freq_title': 0,
+                        'freq_abstract': 0,
+                        'freq_text': dics_text[i-1][key],
+                        'from_corpora': corpus,
+                        'from_item': item
+                    }
+
+    print('Filling %d sentences-months OK' % len(links))
+
     ##########
     ### Saving
     ##########
     print('START Saving')
+    db.create_corpora_item_link([SentenceVSMonth(
+        from_corpora=l['from_corpora'],
+        from_item=l['from_item'],
+        freq_title=l['freq_title'],
+        freq_abstract=l['freq_abstract'],
+        freq_text=l['freq_text']
+    ) for k,l in links.items()])
     pickle.dump(bar_chart_data, open('visualization.pkl', 'wb+'))
 
 

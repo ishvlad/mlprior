@@ -15,7 +15,7 @@ from el_pagination.views import AjaxListView
 
 from articles.documents import ArticleDocument
 from articles.forms import UserForm
-from articles.models import Article, Author, ArticleUser, NGramsCorporaItem, CorporaItem, ArticleArticleRelation
+from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS
 from django_ajax.mixin import AJAXMixin
 
@@ -45,13 +45,14 @@ def home(request):
     min_tick = 300000
     for kw in keywords:
         res[kw] = {}
-        item = NGramsCorporaItem.objects.filter(sentence=kw.lower())
+        item = NGramsSentence.objects.filter(sentence=kw.lower())
         if item.count() == 0:
             continue
         assert item.count() == 1
 
-        freq = CorporaItem.objects.filter(from_item=item[0]).order_by('from_corpora__label_code')
-        freq = list(freq.values_list('freq', 'from_corpora__label', 'from_corpora__label_code'))
+        freq = SentenceVSMonth.objects.filter(from_item=item[0]).order_by('from_corpora__label_code')
+        freq = list(freq.values_list('freq_title', 'from_corpora__label', 'from_corpora__label_code'))
+        print(freq)
         for f in freq:
             res[kw][f[1]] = f[0]
 
@@ -169,6 +170,9 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJ
                 Q(like_dislike=True) | Q(in_lib=True),
                 user=self.request.user
             ).values_list('article', flat=True))
+
+            if len(articles_positive) == 0:
+                return Article.objects.order_by('-date')
 
             jury = {}
             for art in articles_positive:

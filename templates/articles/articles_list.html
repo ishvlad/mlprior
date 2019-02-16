@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+{% if tab != 'other' %}
+
+<div class="row">
+    <div class="col-xl-4 col-md-6 mb-4">
+      {% if tab == 'recommended' %}
+      <div class="card border-bottom-primary shadow h-100 py-2">
+    {% else %}
+      <div class="card shadow h-100 py-2">
+    {% endif %}
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                  <a href="/articles/recommended"><span class="align-middle">Recommended</span></a>
+              </div>
+            </div>
+            <div class="col-auto">
+                <span style="color: #e74a3b;">
+              <i class="fas fa-thumbs-up fa-2x"></i>
+                </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div class="col-xl-4 col-md-6 mb-4">
+    {% if tab == 'recent' %}
+      <div class="card border-bottom-primary shadow h-100 py-2">
+    {% else %}
+      <div class="card shadow h-100 py-2">
+    {% endif %}
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                  <a href="/articles/recent">Recent</a>
+              </div>
+            </div>
+            <div class="col-auto">
+                <span style="color: #e74a3b;">
+                  <i class="fas fa-chart-line fa-2x"></i>
+                </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-4 col-md-6 mb-4">
+      {% if tab == 'popular' %}
+      <div class="card border-bottom-primary shadow h-100 py-2">
+    {% else %}
+      <div class="card shadow h-100 py-2">
+    {% endif %}
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                  <a href="/articles/popular">Popular</a>
+              </div>
+            </div>
+            <div class="col-auto">
+                <span style="color: #e74a3b;">
+                  <i class="fab fa-hotjar fa-2x"></i>
+                </span>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    </div>
+
+{% endif %}
+
+    {% include page_template %}
+
+    {% block js %}
+        {{ block.super }}
+        <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
+        <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
+        <script src="{% static 'el-pagination/js/el-pagination.js' %}"></script>
+
+        <script>
+            $.endlessPaginate({
+                paginateOnScroll: true,
+                paginateOnScrollMargin: 20
+            });
+
+        </script>
+
+
+    {% endblock js %}
+
+
+{% endblock content %}
+
+
+

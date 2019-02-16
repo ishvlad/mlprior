@@ -1,4 +1,4 @@
-django
+django==2.1.7
 feedparser
 requests
 django-el-pagination

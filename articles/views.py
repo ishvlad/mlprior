@@ -3,9 +3,15 @@ import json
 import pickle
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.generic import ListView, DetailView
 from el_pagination.decorators import page_template
+from el_pagination.views import AjaxListView
 
 from articles.documents import ArticleDocument
 from articles.forms import UserForm
@@ -104,87 +110,145 @@ def home(request):
     return render(request, 'home.html', context)
 
 
-@page_template('articles_list_page.html')
-@login_required(login_url='/login')
-def articles(request, template='articles_list.html', extra_context=None):
-    all_articles = Article.objects.order_by('-date')
+class ArticlesMixin(object):
+    @property
+    def like_ids(self):
+        article_user = ArticleUser.objects.filter(user=self.request.user, like_dislike=True)
+        return article_user.values_list('article', flat=True)
 
-    # all_articles.
+    @property
+    def dislike_ids(self):
+        article_user = ArticleUser.objects.filter(user=self.request.user, like_dislike=False)
+        return article_user.values_list('article', flat=True)
 
-    print(ArticleUser.objects.filter(user=request.user).values_list('article', 'note'))
+    @property
+    def lib_ids(self):
+        article_user = ArticleUser.objects.filter(user=self.request.user, in_lib=True)
+        return article_user.values_list('article', flat=True)
 
-    lib_articles_ids = ArticleUser.objects.filter(user=request.user, in_lib=True).values_list('article', flat=True)
-    like_articles_ids = ArticleUser.objects.filter(user=request.user, like_dislike=True).values_list('article', flat=True)
-    dislike_articles_ids = ArticleUser.objects.filter(user=request.user, like_dislike=False).values_list('article', flat=True)
-
-    notes = dict(ArticleUser.objects.filter(user=request.user, note__isnull=False).values_list('article', 'note'))
-
-    # print(dict(ArticleUser.objects.filter(user=request.user, note__isnull=False).values_list('article', 'note')))
-    context = {
-        'articles': all_articles,
-        'lib_articles_ids': lib_articles_ids,
-        'like_articles_ids': like_articles_ids,
-        'dislike_articles_ids': dislike_articles_ids,
-        'notes': notes,
-        'page_name': 'Articles'
-    }
-
-    if extra_context is not None:
-        context.update(extra_context)
-
-    return render(request, template, context)
+    @property
+    def notes(self):
+        article_user = ArticleUser.objects.filter(user=self.request.user, note__isnull=False)
+        return dict(article_user.values_list('article', 'note'))
 
 
-@page_template('related_articles_page.html')
-def article_details(request, article_id, template='article_details.html', extra_context=None):
-    # todo check if user is authorised
+class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin):
+    login_url = '/login/'
+    template_name = 'articles/articles_list.html'
+    page_template = 'articles/articles_list_page.html'
+    model = Article
+    context_object_name = 'articles'
 
-    article = get_object_or_404(Article, id=article_id)
-    # related_articles = article.related.order_by('related__from_article__distance')# article.related.order_by('related_articles__distance')
-    related_articles = article.related.order_by('related_articles__distance')
+    @property
+    def tab(self):
+        if 'recent' in self.request.get_raw_uri():
+            current_tab = 'recent'
+        elif 'recommended' in self.request.get_raw_uri():
+            current_tab = 'recommended'
+        elif 'popular' in self.request.get_raw_uri():
+            current_tab = 'popular'
+        else:
+            current_tab = 'other'
 
-    lib_articles_ids = ArticleUser.objects.filter(user=request.user, in_lib=True).values_list('article', flat=True)
+        return current_tab
 
-    like_articles_ids = ArticleUser.objects.filter(user=request.user,
-                                                   like_dislike=True).values_list('article', flat=True)
-    dislike_articles_ids = ArticleUser.objects.filter(user=request.user,
-                                                      like_dislike=False).values_list('article', flat=True)
+    def get_queryset(self):
+        current_tab = self.tab
 
-    notes = dict(ArticleUser.objects.filter(user=request.user, note__isnull=False).values_list('article', 'note'))
+        if current_tab == 'recent':
+            return Article.objects.order_by('-date')
 
-    context = {
-        'article': article,
-        'related_articles': related_articles,
-        'lib_articles_ids': lib_articles_ids,
-        'like_articles_ids': like_articles_ids,
-        'dislike_articles_ids': dislike_articles_ids,
-        'notes': notes
-    }
+        if current_tab == 'popular':
+            # todo fix
+            return Article.objects.annotate(n_likes=Count('articleuser__like_dislike')).order_by('-n_likes')
 
-    if extra_context is not None:
-        context.update(extra_context)
+        if current_tab == 'recommended':
+            return Article.objects.order_by('-date')
 
-    return render(request, template, context)
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super().get_context_data(**kwargs)
+
+        context['lib_articles_ids'] = self.lib_ids
+        context['like_articles_ids'] = self.like_ids
+        context['dislike_articles_ids'] = self.dislike_ids
+        context['notes'] = self.notes
+
+        context['page_name'] = 'Articles'
+        context['page_template'] = 'articles/articles_list_page.html'
+
+        context['tab'] = self.tab
+
+        return context
 
 
-@page_template('articles_list_page.html')
-@login_required(login_url='/login')
-def author_articles(request, author_name, template='articles_list.html', extra_context=None):
-    # all_articles = Article.objects.order_by('-date')
+class ArticlesOfAuthor(ArticlesView):
+    def get_queryset(self):
+        user = Author.objects.get(name=self.kwargs['author_name'])
 
-    user = Author.objects.get(name=author_name)
-    user_articles = request.user.articles.all()
+        return user.articles.order_by('-date')
 
-    context = {
-        'articles': user.articles.all(),
-        'page_name': 'Articles of %s' % user.name,
-        'user_articles': user_articles
-    }
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super().get_context_data(**kwargs)
 
-    if extra_context is not None:
-        context.update(extra_context)
+        user = Author.objects.get(name=self.kwargs['author_name'])
+        context['page_name'] = 'Articles of %s' % user.name
 
-    return render(request, template, context)
+        return context
+
+
+class ArticlesLibrary(ArticlesView):
+    def get_queryset(self):
+        return Article.objects.filter(articleuser__user=self.request.user, articleuser__in_lib=True)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_name'] = 'Library'
+
+        return context
+
+
+class LikedDisliked(ArticlesView):
+    def get_queryset(self):
+        liked = 'disliked' not in self.request.get_raw_uri()
+        return Article.objects.filter(articleuser__user=self.request.user, articleuser__like_dislike=liked)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        liked = 'disliked' not in self.request.get_raw_uri()
+        context['page_name'] = 'Liked' if liked else 'Disliked'
+
+        return context
+
+
+class ArticleDetailsView(AjaxListView, ArticlesMixin):
+    model = Article
+
+    template_name = 'articles/article_details.html'
+    page_template = 'articles/related_articles_page.html'
+    context_object_name = 'article'
+
+    def get_queryset(self):
+        return get_object_or_404(Article, id=self.kwargs['pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['lib_articles_ids'] = self.lib_ids
+        context['like_articles_ids'] = self.like_ids
+        context['dislike_articles_ids'] = self.dislike_ids
+        context['notes'] = self.notes
+
+        article = get_object_or_404(Article, id=self.kwargs['pk'])
+
+        related_articles = article.related.order_by('related_articles__distance')
+        context['related_articles'] = related_articles
+
+        context['page_template'] = 'articles/related_articles_page.html'
+
+        return context
 
 
 @login_required(login_url='/login')
@@ -260,63 +324,6 @@ def search(request, search_query, template='articles_list.html', extra_context=N
 
     rendered_template = render(request, template, context)
     return HttpResponse(rendered_template, content_type='text/html')
-
-
-@page_template('articles_list_page.html')
-@login_required(login_url='/login')
-def library(request, template='articles_list.html', extra_context=None):
-    all_articles = Article.objects.filter(articleuser__user=request.user, articleuser__in_lib=True)
-
-    like_articles_ids = ArticleUser.objects.filter(user=request.user,
-                                                   like_dislike=True).values_list('article', flat=True)
-    dislike_articles_ids = ArticleUser.objects.filter(user=request.user,
-                                                      like_dislike=False).values_list('article', flat=True)
-
-    notes = dict(ArticleUser.objects.filter(user=request.user, note__isnull=False).values_list('article', 'note'))
-
-    context = {
-        'articles': all_articles,
-        'page_name': 'Library',
-        'is_lib': True,
-        'like_articles_ids': like_articles_ids,
-        'dislike_articles_ids': dislike_articles_ids,
-        'notes': notes
-    }
-
-    if extra_context is not None:
-        context.update(extra_context)
-
-    return render(request, template, context)
-
-
-@page_template('articles_list_page.html')
-@login_required(login_url='/login')
-def liked_disliked(request, template='articles_list.html', extra_context=None):
-
-    liked = 'disliked' not in request.get_raw_uri()
-
-    all_articles = Article.objects.filter(articleuser__user=request.user, articleuser__like_dislike=liked)
-
-    like_articles_ids = ArticleUser.objects.filter(user=request.user,
-                                                   like_dislike=True).values_list('article', flat=True)
-    dislike_articles_ids = ArticleUser.objects.filter(user=request.user,
-                                                      like_dislike=False).values_list('article', flat=True)
-
-    notes = dict(ArticleUser.objects.filter(user=request.user, note__isnull=False).values_list('article', 'note'))
-
-    context = {
-        'articles': all_articles,
-        'page_name': 'Liked' if liked else 'Disliked',
-        'is_lib': True,
-        'like_articles_ids': like_articles_ids,
-        'dislike_articles_ids': dislike_articles_ids,
-        'notes': notes
-    }
-
-    if extra_context is not None:
-        context.update(extra_context)
-
-    return render(request, template, context)
 
 
 def register(request):

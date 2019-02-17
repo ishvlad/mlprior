@@ -1,15 +1,15 @@
 <button data-article-id="{{ article.id }}" class="btn btn-primary btn-round btn-fab likebutton">
-                    {% if article.id in like_articles_ids %}
-                    <i class="material-icons" id="like-{{ article.id }}">thumb_up</i>
-                    {% else %}
-                    <i class="material-icons" id="like-{{ article.id }}">thumb_up</i>
-                    {% endif %}
-                </button>
+    {% if article.id in like_articles_ids %}
+    <i class="fas fa-thumbs-up fa-sm" id="like-{{ article.id }}"></i>
+    {% else %}
+    <i class="far fa-thumbs-up fa-sm" id="like-{{ article.id }}"></i>
+    {% endif %}
+</button>
 
-                <button data-article-id="{{ article.id }}" class="btn btn-primary btn-round btn-fab dislikebutton">
-                    {% if article.id in dislike_articles_ids %}
-                    <i class="material-icons" id="dislike-{{ article.id }}">thumb_downs</i>
-                    {% else %}
-                    <i class="material-icons" id="dislike-{{ article.id }}">thumb_down</i>
-                    {% endif %}
-                </button>
+<button data-article-id="{{ article.id }}" class="btn btn-primary btn-round btn-fab dislikebutton">
+    {% if article.id in dislike_articles_ids %}
+    <i class="fas fa-thumbs-down fa-sm" id="dislike-{{ article.id }}"></i>
+    {% else %}
+    <i class="far fa-thumbs-down fa-sm" id="dislike-{{ article.id }}"></i>
+    {% endif %}
+</button>

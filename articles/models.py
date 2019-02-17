@@ -108,7 +108,33 @@ class SentenceVSMonth(models.Model):
 
     class Meta:
         unique_together = (('from_corpora', 'from_item'),)
-#
+
+
+class Categories(models.Model):
+    category = models.CharField(max_length=10, primary_key=True)
+    category_full = models.CharField(max_length=1000)
+
+    month = models.ManyToManyField('CategoriesDate', through='CategoriesVSDate')
+
+
+class CategoriesDate(models.Model):
+    date_code = models.IntegerField(primary_key=True)
+    date = models.CharField(max_length=6)
+
+    category = models.ManyToManyField('Categories', through='CategoriesVSDate')
+
+
+class CategoriesVSDate(models.Model):
+    from_category = models.ForeignKey(Categories, on_delete=models.CASCADE)
+    from_month = models.ForeignKey(CategoriesDate, on_delete=models.CASCADE)
+
+    count = models.IntegerField()
+
+    class Meta:
+        unique_together = (('from_category', 'from_month'),)
+
+
+
 # class Authorship(models.Model):
 #     author = models.ForeignKey(Author, on_delete=models.CASCADE)
 #     article = models.ForeignKey(Article, on_delete=models.CASCADE)

@@ -4,13 +4,15 @@
 # DELETE FROM articles_ngramsmonth;
 # DELETE FROM articles_ngramssentence;
 # DELETE FROM articles_sentencevsmonth;
+# DELETE FROM articles_categories;
+# DELETE FROM articles_categoriesdate;
+# DELETE FROM articles_categoriesvsdate;
 # .exit 0
 ##########################################################
 
 import datetime
 import operator
 import os
-import pickle
 import re
 import sys
 import tqdm
@@ -23,13 +25,16 @@ import django
 django.setup()
 
 import pandas as pd
+from dateutil.relativedelta import relativedelta
+from django.db.models import Min
 from django.db.models.functions import TruncMonth
 from nltk import ngrams
 from time import time
 
-from articles.models import Article, NGramsMonth, NGramsSentence, SentenceVSMonth
+from articles.models import Article, NGramsMonth, NGramsSentence, SentenceVSMonth, \
+    Categories, CategoriesDate, CategoriesVSDate
 from scripts.arxiv_retreive import DBManager
-from utils.constants import GLOBAL__COLORS, GLOBAL__CATEGORIES
+from utils.constants import GLOBAL__CATEGORIES
 
 
 def get_grams_dict(sentences, max_ngram_len=5):
@@ -69,64 +74,51 @@ def get_grams_dict(sentences, max_ngram_len=5):
 
 def main():
     print('START stacked bar chart', end=' ')
-    ###############
-    ### Stacked Bar
-    ###############
-    categories = list(GLOBAL__CATEGORIES.keys())[:8]
-    colors = GLOBAL__COLORS.get_colors_code(len(categories))
-    bar_chart_data = {
-        'labels': [],
-        'datasets': []
-    }
-    for cat, color in zip(categories, colors):
-        bar_chart_data['datasets'].append({
-            'label': cat,
-            'backgroundColor': color,
-            'data': []
-        })
+    #############
+    # Stacked Bar
+    #############
+    categories = [Categories(
+        category=k,
+        category_full=v
+    ) for k, v in GLOBAL__CATEGORIES.items()]
 
-    articles = Article.objects.all()
-    counts_for_bar = list(articles.annotate(month=TruncMonth('date')).values('month', 'category'))
-    df = pd.DataFrame(counts_for_bar, columns=['category', 'month'])
+    m_date = Article.objects.all().aggregate(Min('date'))['date__min']
+    m_date = datetime.date(year=m_date.year, month=m_date.month, day=1)
+    now = datetime.datetime.now().date()
 
-    idx = df.category == categories[0]
-    for cat in categories[1:]:
-        idx |= df.category == cat
-    df = df[idx]
-    df.sort_values('month', inplace=True)
+    dates = []
 
-    store = {}
-    for date, df_group in df.groupby(['month']):
-        store[date.month + date.year * 100] = df_group
+    while m_date <= now:
+        dates.append(CategoriesDate(
+            date_code=m_date.month + m_date.year * 100,
+            date=m_date.strftime('%b %y')
+        ))
 
-    month = min(store) % 100
-    year = min(store) // 100
-    now = datetime.datetime.now()
+        m_date += relativedelta(months=1)
 
-    while not (year == now.year and month > now.month):
-        date = datetime.date(year, month, 1).strftime('%b %y')
-        bar_chart_data['labels'].append(date)
+    db = DBManager()
+    db.bulk_create(Categories, categories)
+    db.bulk_create(CategoriesDate, dates)
 
-        key = month + year * 100
-        if key in store:
-            for i, cat in enumerate(categories):
-                bar_chart_data['datasets'][i]['data'].append(
-                    sum(store[key].category == cat)
-                )
-        else:
-            for i in range(len(categories)):
-                bar_chart_data['datasets'][i]['data'].append(0)
+    articles = Article.objects.all().annotate(month=TruncMonth('date'))
+    sub_articles = articles.values('month', 'category')
 
-        if month == 12:
-            year += 1
-            month = 1
-        else:
-            month += 1
+    cat_vs_date = []
+    for cat in categories:
+        for d in dates:
+            dt = datetime.date(year=d.date_code // 100, month=d.date_code % 100, day=1)
+            cat_vs_date.append(CategoriesVSDate(
+                from_category=cat,
+                from_month=d,
+                count=sub_articles.filter(category=cat.category, month=dt).count()
+            ))
+
+    db.bulk_create(CategoriesVSDate, cat_vs_date)
 
     print('OK')
-    ###############
-    ### Trend Lines
-    ###############
+    #############
+    # Trend Lines
+    #############
     print('START Trend lines')
 
     articles = pd.DataFrame(Article.objects.values('date', 'title', 'abstract', 'articletext__text'))
@@ -161,13 +153,19 @@ def main():
     dics_text, keys_text = get_grams_dict(articles.articletext__text.values, max_n_for_grams)
     print('Found %d Ngrams in Text' % len(keys_text))
 
-    print('START Saving sentences in DB', end=' ')
-    items = [NGramsSentence(sentence=s) for s in set(keys_title + keys_abstract + keys_text)]
-
+    print('START Saving sentences in DB')
     db = DBManager()
-    db.create_ngram_item(items)
-    db.create_ngram_corpora(corpora)
-    print('OK\nNow filling')
+    db.bulk_create(NGramsMonth, corpora)
+    batch_size = 1000
+    batch = []
+    for s in tqdm.tqdm(set(keys_title + keys_abstract + keys_text)):
+        batch.append(NGramsSentence(sentence=s))
+        if len(batch) == batch_size:
+            db.bulk_create(NGramsSentence, batch)
+            batch = []
+    if len(batch) != 0:
+        db.bulk_create(NGramsSentence, batch)
+    print('Now filling')
 
     links = {}
     grouped = sorted(articles.groupby('idx_sort'), key=operator.itemgetter(0))
@@ -220,18 +218,25 @@ def main():
 
     print('Filling %d sentences-months OK' % len(links))
 
-    ##########
-    ### Saving
-    ##########
-    print('START Saving')
-    db.create_corpora_item_link([SentenceVSMonth(
-        from_corpora=l['from_corpora'],
-        from_item=l['from_item'],
-        freq_title=l['freq_title'],
-        freq_abstract=l['freq_abstract'],
-        freq_text=l['freq_text']
-    ) for k,l in links.items()])
-    pickle.dump(bar_chart_data, open('visualization.pkl', 'wb+'))
+    ########
+    # Saving
+    ########
+    print('START Saving %d items' % len(links))
+    batch_size = 1000
+    batch = []
+    for v in tqdm.tqdm(links.values()):
+        batch.append(SentenceVSMonth(
+            from_corpora=v['from_corpora'],
+            from_item=v['from_item'],
+            freq_title=v['freq_title'],
+            freq_abstract=v['freq_abstract'],
+            freq_text=v['freq_text']
+        ))
+        if len(batch) == batch_size:
+            db.bulk_create(SentenceVSMonth, batch)
+            batch = []
+    if len(batch) != 0:
+        db.bulk_create(SentenceVSMonth, batch)
 
 
 if __name__ == '__main__':

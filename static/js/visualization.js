@@ -1,11 +1,51 @@
 function chart_bar(data, data_full) {
-    var config = {
+    var config = category_config(data);
+    console.log(data)
+    window.addEventListener("load",function(event) {
+        var ctx = document.getElementById('myChart').getContext('2d');
+        window.myBar = new Chart(ctx, config);
+    }, false);
+
+    category_buttons(data, data_full, config);
+
+
+    // document.getElementById("trend-button").addEventListener('click' , function() {
+    //     var text = document.getElementById('trend-input').value;
+    //     if (text.length != 0) {
+    //         $.ajax({
+    //             url: '/articles/api/v1/trend',
+    //             type: 'post',
+    //             data: {
+    //                 'keywords_raw': text
+    //             },
+    //             dataType: 'json',
+    //             success: function (data) {
+    //                 data_full = data.data_full
+    //                 data = data.data
+    //
+    //                 var old_element = document.getElementById("Trends");
+    //                 var new_element = old_element.cloneNode(true);
+    //                 old_element.parentNode.replaceChild(new_element, old_element);
+    //
+    //                 const ctx = new_element.getContext('2d');
+    //                 var config = trend_config(data);
+    //
+    //                 window.myLine = new Chart(ctx, config);
+    //                 trend_buttons(data, data_full, config);
+    //             }
+    //         })
+    //     }
+    // })
+}
+
+function category_config(data) {
+    return {
         type: 'bar',
         data: data,
         options: {
             title: {
                 display: true,
-                text: 'Chart.js Bar Chart - Stacked'
+                text: 'Categories'
             },
             tooltips: {
                 mode: 'index',
@@ -22,11 +62,16 @@ function chart_bar(data, data_full) {
             }
         }
     }
+}
 
-    window.addEventListener("load",function(event) {
-        var ctx = document.getElementById('myChart').getContext('2d');
-        window.myBar = new Chart(ctx, config);
-    }, false);
+function category_buttons(data, data_full, config) {
+    // var old_element = document.getElementById("addDataBar");
+    // var new_element = old_element.cloneNode(true);
+    // old_element.parentNode.replaceChild(new_element, old_element);
+    //
+    // var old_element = document.getElementById("removeDataBar");
+    // var new_element = old_element.cloneNode(true);
+    // old_element.parentNode.replaceChild(new_element, old_element);
 
     document.getElementById('addDataBar').addEventListener('click', function() {
         if (config.data.labels.length < data_full.labels.length) {
@@ -48,13 +93,14 @@ function chart_bar(data, data_full) {
             config.data.datasets.forEach(function(dataset) {
                 dataset.data.shift();
             });
+            console.log(data_full)
 
             window.myBar.update();
         }
     });
 }
 
-function get_config(data) {
+function trend_config(data) {
     return {
         type: 'line',
         data: data,
@@ -94,10 +140,8 @@ function trend_buttons(data, data_full, config) {
     old_element.parentNode.replaceChild(new_element, old_element);
 
     document.getElementById('addData').addEventListener('click', function() {
-        var a = config.data.labels.length;
-        var b = data_full.labels.length
-        if (a < b) {
-            idx = data_full.labels.length - config.data.labels.length - 1
+        if (config.data.labels.length < data_full.labels.length) {
+            idx = data_full.labels.length - config.data.labels.length - 1;
             config.data.labels.unshift(data_full.labels[idx]);
 
             for (i = 0; i < data.datasets.length; i++) {
@@ -122,7 +166,7 @@ function trend_buttons(data, data_full, config) {
 }
 
 function trend_line(data, data_full) {
-    var config = get_config(data);
+    var config = trend_config(data);
 
     window.addEventListener("load",function(event) {
         var ctx = document.getElementById('Trends').getContext('2d');
@@ -150,7 +194,7 @@ function trend_line(data, data_full) {
                     old_element.parentNode.replaceChild(new_element, old_element);
 
                     const ctx = new_element.getContext('2d');
-                    var config = get_config(data);
+                    var config = trend_config(data);
 
                     window.myLine = new Chart(ctx, config);
                     trend_buttons(data, data_full, config);

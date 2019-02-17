@@ -15,7 +15,7 @@ import django
 django.setup()
 
 from articles.models import Article as ArticleModel, Author, ArticleArticleRelation, \
-    NGramsMonth, NGramsSentence, SentenceVSMonth, ArticleText, ArticleVector
+    ArticleText, ArticleVector
 from arxiv import ArXivArticle, ArXivAPI
 from urllib.request import urlopen
 from utils.constants import GLOBAL__CATEGORIES
@@ -62,20 +62,15 @@ class DBManager(object):
 
         article.save()
 
+    def bulk_create(self, base_class, items):
+        base_class.objects.bulk_create(items)
+
     def create_articles_vectors(self, items):
         ArticleVector.objects.bulk_create(items)
 
     def create_articles_relation(self, items):
         ArticleArticleRelation.objects.bulk_create(items)
 
-    def create_ngram_corpora(self, items):
-        NGramsMonth.objects.bulk_create(items)
-
-    def create_ngram_item(self, items):
-        NGramsSentence.objects.bulk_create(items)
-
-    def create_corpora_item_link(self, items):
-        SentenceVSMonth.objects.bulk_create(items)
 
 
 def parse_args():

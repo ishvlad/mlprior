@@ -26,7 +26,8 @@
         getCurrentPage: function() {
             var path = window.location.pathname;
 
-            return path;
+
+            return path.substring(0, path.indexOf('/'));
         },
 
         isHomePage: function(currentPage) {

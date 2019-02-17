@@ -1,0 +1,25 @@
+{% if tab and tab != 'other' %}
+
+    <div class="row">
+    <div class="col-md-12 ml-auto mr-auto">
+<ul class="nav nav-pills nav-pills-warning nav-pills-icons justify-content-center" role="tablist">
+    <div class="btn-group">
+      <a  href="/articles/recommended" class="btn {% if tab == 'recommended' %}btn-primary{% else %}btn-white{% endif %}">
+          <i class="material-icons" style="color: #4caf50;">widgets</i>
+          <span class="{% if tab != 'recommended' %}text-dark{% endif %}"> Recommended</span>
+      </a>
+      <a href="/articles/recent" class="btn {% if tab == 'recent' %}btn-primary{% else %}btn-white{% endif %}" role="button">
+          <i class="material-icons" style="color: #ff9800;">access_time</i>
+          <span class="{% if tab != 'recent' %}text-dark{% endif %}"> Recent</span><div class="ripple-container"></div>
+      </a>
+      <a href="/articles/popular" class="btn {% if tab == 'popular' %}btn-primary{% else %}btn-white{% endif %}" role="button">
+          <i class="material-icons" style="color: #ea1c0d;" >whatshot</i>
+          <span class="{% if tab != 'popular' %}text-dark{% endif %}"> Popular</span>
+      </a>
+    </div>
+</ul>
+    </div>
+
+    </div>
+
+{% endif %}

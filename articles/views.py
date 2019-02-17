@@ -161,6 +161,7 @@ def trend_view(request, keywords_raw=None):
         'data_full': full_data
     })
 
+
 class ArticlesMixin(object):
     @property
     def like_ids(self):

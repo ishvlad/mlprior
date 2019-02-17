@@ -1,16 +1,16 @@
 <div class="note-button" id="note-button-{{ article.id }}">
 
-                {% if notes|lookup:article.id != '' %}
-                <span class="note-badge" id="note-badge-{{ article.id }}"> </span>
-                {% else %}
-                <span class="note-badge d-none" id="note-badge-{{ article.id }}"> </span>
-                {% endif %}
+    {% if notes|lookup:article.id != '' %}
+    <span class="note-badge" id="note-badge-{{ article.id }}"> </span>
+    {% else %}
+    <span class="note-badge d-none" id="note-badge-{{ article.id }}"> </span>
+    {% endif %}
 
-                    <button class="btn btn-warning btn-round note" type="button" aria-controls="collapseUtilities"
-                            aria-expanded="false" data-toggle="collapse" data-target="#note-collapse-{{ article.id }}">
-                        <span class="icon text-white-50">
-                            <i class="material-icons">comment</i>
-                        </span>
-                        <span class="text">Note</span>
-                    </button>
-                             </div>
+    <button class="btn btn-warning btn-round note" type="button" aria-controls="collapseUtilities"
+            aria-expanded="false" data-toggle="collapse" data-target="#note-collapse-{{ article.id }}">
+        <span class="icon">
+            <i class="material-icons">comment</i>
+        </span>
+        <span class="text">Note</span>
+    </button>
+</div>

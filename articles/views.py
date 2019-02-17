@@ -38,7 +38,7 @@ def home(request):
         'trend_data': json.dumps(trend_data['data']),
         'trend_data_full': json.dumps(trend_data['data_full']),
         'keywords_raw': "Machine Learning, Neural Networks, Computer Vision, Deep Learning",
-        'activate': 'home'
+        'page_id': 'home'
     }
 
     return render(request, 'home.html', context)
@@ -257,7 +257,7 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJ
 
         context['tab'] = self.tab
 
-        context['activate'] = 'articles'
+        context['page_id'] = 'articles'
 
         return context
 
@@ -285,7 +285,7 @@ class ArticlesLibrary(ArticlesView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'Library'
-        context['activate'] = 'library'
+        context['page_id'] = 'library'
 
         return context
 
@@ -300,7 +300,7 @@ class LikedDisliked(ArticlesView):
 
         liked = 'disliked' not in self.request.get_raw_uri()
         context['page_name'] = 'Liked' if liked else 'Disliked'
-        context['activate'] = 'liked' if liked else 'disliked'
+        context['page_id'] = 'liked' if liked else 'disliked'
 
         return context
 
@@ -330,7 +330,7 @@ class ArticleDetailsView(AjaxListView, ArticlesMixin):
 
         context['page_template'] = 'articles/related_articles_page.html'
 
-        context['activate'] = 'articles'
+        context['page_id'] = 'articles'
 
         return context
 

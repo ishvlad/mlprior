@@ -1,7 +1,7 @@
-{% if tab and tab != 'other' %}
+{% if page_id == 'articles'%}
 
     <div class="row">
-    <div class="col-md-12 ml-auto mr-auto">
+    <div class="col-md-6 ml-auto mr-auto">
 <ul class="nav nav-pills nav-pills-warning nav-pills-icons justify-content-center" role="tablist">
     <div class="btn-group">
       <a  href="/articles/recommended" class="btn {% if tab == 'recommended' %}btn-primary{% else %}btn-white{% endif %}">
@@ -16,6 +16,72 @@
           <i class="material-icons" style="color: #ea1c0d;" >whatshot</i>
           <span class="{% if tab != 'popular' %}text-dark{% endif %}"> Popular</span>
       </a>
+    </div>
+</ul>
+    </div>
+
+    </div>
+
+{% endif %}
+
+
+
+{% if page_id == 'library' or page_id == 'liked' or page_id == 'disliked'%}
+
+    <div class="row">
+    <div class="col-md-6 ml-auto mr-auto">
+<ul class="nav nav-pills nav-pills-warning nav-pills-icons justify-content-center" role="tablist">
+    <div class="btn-group">
+
+    {% if page_id == 'library' %}
+        <a  href="/articles/library" class="btn btn-primary">
+          <i class="material-icons" style="color: #FFFFFF;">bookmark</i>
+          <span class=""> Saved</span>
+      </a>
+    {% else %}
+        <a  href="/articles/library" class="btn btn-white">
+          <i class="material-icons" style="color: #4e73df;">bookmark</i>
+          <span class="text-dark"> Saved</span>
+      </a>
+    {% endif %}
+
+    {% if page_id == 'liked' %}
+        <a  href="/articles/liked" class="btn btn-primary">
+          <i class="material-icons" style="color: #FFFFFF;">thumb_up</i>
+          <span class=""> Liked</span>
+      </a>
+    {% else %}
+        <a  href="/articles/liked" class="btn btn-white">
+          <i class="material-icons" style="color: #4e73df;">thumb_up</i>
+          <span class="text-dark"> Liked</span>
+      </a>
+    {% endif %}
+
+    {% if page_id == 'disliked' %}
+        <a  href="/articles/disliked" class="btn btn-primary">
+          <i class="material-icons" style="color: #FFFFFF;">thumb_down</i>
+          <span class=""> Disliked</span>
+      </a>
+    {% else %}
+        <a  href="/articles/disliked" class="btn btn-white">
+          <i class="material-icons" style="color: #4e73df;">thumb_down</i>
+          <span class="text-dark"> Disliked</span>
+      </a>
+    {% endif %}
+
+
+{#      <a  href="/articles/library" class="btn {% if state == 'library' %}btn-primary{% else %}btn-white{% endif %}">#}
+{#          <i class="material-icons" style="color: #4caf50;">bookmark</i>#}
+{#          <span class="{% if state != 'library' %}text-dark{% endif %}"> Saved</span>#}
+{#      </a>#}
+{#      <a href="/articles/liked" class="btn {% if state == 'liked' %}btn-primary{% else %}btn-white{% endif %}" role="button">#}
+{#          <i class="material-icons" style="color: #ff9800;">thumb_up</i>#}
+{#          <span class="{% if state != 'liked' %}text-dark{% endif %}"> Liked</span><div class="ripple-container"></div>#}
+{#      </a>#}
+{#      <a href="/articles/disliked" class="btn {% if state == 'disliked' %}btn-primary{% else %}btn-white{% endif %}" role="button">#}
+{#          <i class="material-icons" style="color: #ea1c0d;" >thumb_down</i>#}
+{#          <span class="{% if state != 'disliked' %}text-dark{% endif %}"> Disliked</span>#}
+{#      </a>#}
     </div>
 </ul>
     </div>

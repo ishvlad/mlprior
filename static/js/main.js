@@ -161,7 +161,7 @@ $(function() {
             });
     });
 
-    $('#main-navbar').dynamicMenu();
+    // $('#main-navbar').dynamicMenu();
 
     $('#popoverData').popover();
     $('#popoverOption').popover({ trigger: "hover" });

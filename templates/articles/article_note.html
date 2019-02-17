@@ -1,6 +1,6 @@
 {% load articles_extras %}
 
-<textarea class="form-control border-left-warning note-area note-form" id="note-{{ article.id }}"
+<textarea class="form-control note-area note-form" id="note-{{ article.id }}"
           placeholder="You type, we save..."
           data-article-id="{{ article.id }}" rows="3">{{ notes|lookup:article.id }}
 </textarea>

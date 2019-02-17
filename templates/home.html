@@ -9,34 +9,14 @@
     <script src="{% static 'js/chart.js/Chart.min.js' %}" charset="utf-8"></script>
     <script src="{% static 'js/visualization.js' %}" charset="utf-8"></script>
 
-
     <!-- Content Row -->
           <div class="row mb-4">
-
-            <!-- Earnings (Monthly) Card Example -->
-{#            <div class="col-xl-3 col-md-6 mb-4">#}
-{#              <div class="card border-left-primary shadow h-100 py-2">#}
-{##}
-{#                <div class="card-body">#}
-{#                  <div class="row no-gutters align-items-center">#}
-{#                    <div class="col mr-2">#}
-{#                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Articles</div>#}
-{#                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ n_articles }}</div>#}
-{#                    </div>#}
-{#                    <div class="col-auto">#}
-{#                      <i class="fas fa-archive fa-2x text-gray-300"></i>#}
-{#                    </div>#}
-{#                  </div>#}
-{#                </div>#}
-{#              </div>#}
-{#            </div>#}
-
 
               <div class="col-lg-3 col-md-6 col-sm-6">
               <div class="card card-stats">
                 <div class="card-header card-header-warning card-header-icon">
                   <div class="card-icon">
-                    <i class="material-icons">content_copy</i>
+                    <i class="material-icons">store</i>
                   </div>
                   <p class="card-category">Articles</p>
                   <h3 class="card-title">{{ n_articles }}
@@ -112,54 +92,55 @@
 
         <div class="row">
         <div class="col-md-12">
-        <div class="card shadow ">
-        <div class="card-header card-header-primary">
-                  <h4 class="card-title">Categories</h4>
-                  <p class="card-category">Plot description</p>
-                </div>
-{#            <div class="card-header py-3">#}
-{#                <h6 class="m-0 font-weight-bold text-primary">Categories</h6>#}
-{#            </div>#}
-            <div class="card-body">
-                <div class="stacked-bar-chart">
-                    <canvas id="myChart" width="1000" height="500"></canvas>
+        <div class="card ">
+        <div class="card-header card-header-success card-header-icon">
+          <div class="card-icon">
+                      <i class="material-icons">equalizer</i>
+                    </div>
+            <h4 class="card-title">All Categories</h4>
+        </div>
+        <div class="card-body">
+            <div class="stacked-bar-chart">
+                <canvas id="myChart" width="1000" height="500"></canvas>
 
-                    <hr>
+                <hr>
 
-                    <button id="addDataBar" class="btn btn-primary btn-icon-split">
-                        <span class="icon text-white-50"><i class="fas fa-plus"></i></span>
-                        <span class="text">Month</span>
-                    </button>
-                    <button id="removeDataBar" class="btn btn-primary btn-icon-split">
-                        <span class="icon text-white-50"><i class="fas fa-minus"></i></span>
-                        <span class="text">Month</span></button>
-                    <script type="text/javascript">
-                        chart_bar({{ stacked_bar_chart|safe }}, {{ stacked_bar_chart_full|safe }})
-                    </script>
-                </div>
+                <button id="addDataBar" class="btn btn-primary btn-icon-split">
+                    <span class="icon text-white-50"><i class="fas fa-plus"></i></span>
+                    <span class="text">Month</span>
+                </button>
+                <button id="removeDataBar" class="btn btn-primary btn-icon-split">
+                    <span class="icon text-white-50"><i class="fas fa-minus"></i></span>
+                    <span class="text">Month</span></button>
+                <script type="text/javascript">
+                    chart_bar({{ stacked_bar_chart|safe }}, {{ stacked_bar_chart_full|safe }})
+                </script>
             </div>
+        </div>
         </div>
 </div>
     </div>
     <div class="row">
 <div class="col-md-12">
         <div class="card shadow mb-4">
-            <div class="card-header card-header-primary">
-                  <h4 class="card-title">Trends</h4>
-                  <p class="card-category">Plot description</p>
-                </div>
+            <div class="card-header card-header-success card-header-icon">
+          <div class="card-icon">
+                      <i class="material-icons">equalizer</i>
+                    </div>
+            <h4 class="card-title">Trends</h4>
+        </div>
             <div class="card-body">
                 <div class="trend-chart">
                     <div class="input-group">
                         <input id="trend-input" type="text" class="form-control bg-light border-0 small"
                                placeholder="Machine Learning, Neural Networks, Computer Vision, Deep Learning"
                                aria-label="Search" aria-describedby="basic-addon2" value="{{ keywords_raw }}">
-
-                        <div class="input-group-append">
+{#                        <div class="input-group-append">#}
                             <button class="btn btn-primary trendbutton" id="trend-button" type="button" onclick="">
                                 <i class="fas fa-search fa-sm"></i>
+                                <span>Update</span>
                             </button>
-                        </div>
+{#                        </div>#}
                     </div>
 
                     <canvas id="Trends" width="1000" height="500"></canvas>

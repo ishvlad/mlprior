@@ -9,7 +9,10 @@
                     <a href="/articles/details/{{ article.id }}"><h3 class="card-title" style="">{{ article.title }}</h3></a>
                 </div>
                 <div class="col-sm-2 text-danger">
+                    <div style="float: left">
                     <strong>{{ article.date }}</strong>
+                        </div>
+                    {% include 'articles/utils/more_dropdown.html' %}
                 </div>
             </div>
             <div class="row">

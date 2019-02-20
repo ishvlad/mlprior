@@ -263,6 +263,8 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJ
 
 
 class ArticlesOfAuthor(ArticlesView):
+    template_name = 'articles/author_details.html'
+
     def get_queryset(self):
         user = Author.objects.get(name=self.kwargs['author_name'])
 
@@ -273,7 +275,10 @@ class ArticlesOfAuthor(ArticlesView):
         context = super().get_context_data(**kwargs)
 
         user = Author.objects.get(name=self.kwargs['author_name'])
-        context['page_name'] = 'Articles of %s' % user.name
+        context['page_name'] = '%s' % user.name
+
+        n_articles = Author.objects.get(name=self.kwargs['author_name']).articles.count()
+        context['n_articles'] = n_articles
 
         return context
 

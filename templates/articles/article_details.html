@@ -12,6 +12,7 @@
                     </div>
                     <div class="col-sm-2 text-danger">
                         <strong>{{ article.date }}</strong>
+                        {% include 'articles/utils/more_dropdown.html' %}
                     </div>
                 </div>
                 <div class="row">
@@ -76,7 +77,9 @@
 {#                    </div>#}
                     <!-- Card Body -->
                     <div class="card-body">
-                        <textarea class="form-control  note-area note-form" id="note-{{ article.id }}"
+                        <textarea class="form-control  note-area note-form"
+                                  placeholder="You type, we save..."
+                                  id="note-{{ article.id }}"
                                   data-article-id="{{ article.id }}" rows="3">{{ notes|lookup:article.id }}</textarea>
 
                     </div>

@@ -6,8 +6,8 @@
 
 .note-badge {
     position: absolute;
-    right: -7px;
-    top: -7px;
+    right: -4px;
+    top: -4px;
     background: #e74a3b;
     text-align: center;
     border-radius: 30px 30px 30px 30px;
@@ -29,6 +29,32 @@
 .primary {
     background: #4e73df;
 }
+
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus,
+.dropdown-menu a:hover,
+.dropdown-menu a:focus,
+.dropdown-menu a:active {
+  box-shadow: 0 4px 20px 0px rgba(0, 0, 0, 0.14), 0 7px 10px -5px rgba(156, 39, 176, 0.4);
+  background-color: #4e73df;
+  color: #FFFFFF;
+
+}
+
+/*.dropdown-menu {*/
+    /*min-width: 12rem;*/
+/*}*/
+
+a {
+  color: #4e73df;
+}
+
+a:hover,
+a:focus {
+  color: #445bb5;
+  text-decoration: none;
+}
+
 
 
 .sidebar[data-color="blue"] li.active>a {
@@ -165,4 +191,22 @@
 .btn.btn-primary.btn-link:active {
     background-color: transparent;
     color: #4e73df;
+}
+
+.btn.btn-reddit {
+    color: #fff;
+    background-color: #ff4500;
+    border-color: #ff4500;
+    box-shadow: 0 2px 2px 0 rgba(255,69,0,.14), 0 3px 1px -2px rgba(255,69,0,.2), 0 1px 5px 0 rgba(255,69,0,.12);
+}
+
+.btn.btn-just-icon {
+    font-size: 24px;
+    height: 41px;
+    min-width: 41px;
+    width: 41px;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+    line-height: 41px;
 }

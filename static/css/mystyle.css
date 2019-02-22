@@ -201,6 +201,15 @@ a:focus {
     color: #4e73df;
 }
 
+.card .card-header-prior .card-icon,
+.card .card-header-prior .card-text,
+.card .card-header-prior:not(.card-header-icon):not(.card-header-text),
+.card.bg-prior,
+.card.card-rotate.bg-prior .front,
+.card.card-rotate.bg-prior .back {
+  background: linear-gradient(60deg, #4e73df, #4a5fbe);
+}
+
 .btn.btn-reddit {
     color: #fff;
     background-color: #ff4500;

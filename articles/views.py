@@ -5,19 +5,22 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q, When, Case
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.generic import FormView
 from django.views.generic import ListView, DetailView
 from el_pagination.decorators import page_template
 from el_pagination.views import AjaxListView
+from django.contrib.auth import login, authenticate
 
 from articles.documents import ArticleDocument
-from articles.forms import UserForm
+from articles.forms import UserSignUpForm, UserLoginForm
 from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation, \
     CategoriesVSDate
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
 from django_ajax.mixin import AJAXMixin
+from django.contrib.auth.forms import UserCreationForm
 
 
 @login_required(login_url='/login')
@@ -415,8 +418,35 @@ def search(request, search_query, template='articles_list.html', extra_context=N
     return HttpResponse(rendered_template, content_type='text/html')
 
 
-def register(request):
-    user_form = UserForm()
-    return render(request, 'register.html', {
-        'user_form': user_form
-    })
+class CustomLoginView(FormView):
+    form_class = UserLoginForm
+    template_name = 'login.html'
+
+    def form_valid(self, form):
+        print('validation')
+        user = form.save()
+        # username = form.cleaned_data.get('username')
+        # raw_password = form.cleaned_data.get('password')
+        # email = form.cleaned_data.get('email')
+        # user = authenticate(email=email, password=raw_password)
+        login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+        return redirect('/home')
+
+
+class SignUpView(FormView):
+    form_class = UserSignUpForm
+    template_name = 'signup.html'
+
+    def form_valid(self, form):
+        print('validation')
+        user = form.save()
+        # username = form.cleaned_data.get('username')
+        # raw_password = form.cleaned_data.get('password')
+        # email = form.cleaned_data.get('email')
+        # user = authenticate(username=username, email=email, password=raw_password)
+        login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+        return redirect('/home')
+
+
+def landing_view(request):
+    return render(request, 'landing.html', context={})

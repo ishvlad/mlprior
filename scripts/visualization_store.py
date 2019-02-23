@@ -33,7 +33,7 @@ from time import time
 
 from articles.models import Article, NGramsMonth, NGramsSentence, SentenceVSMonth, \
     Categories, CategoriesDate, CategoriesVSDate
-from scripts.arxiv_retreive import DBManager
+from scripts.db_manager import DBManager
 from utils.constants import GLOBAL__CATEGORIES
 
 

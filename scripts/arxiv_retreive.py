@@ -5,6 +5,7 @@ import sys
 from time import time
 import tqdm
 
+from scripts.db_manager import DBManager
 
 sys.path.append('./')
 
@@ -14,63 +15,9 @@ import django
 
 django.setup()
 
-from articles.models import Article as ArticleModel, Author, ArticleArticleRelation, \
-    ArticleText, ArticleVector
 from arxiv import ArXivArticle, ArXivAPI
 from urllib.request import urlopen
 from utils.constants import GLOBAL__CATEGORIES
-
-
-class DBManager(object):
-    def __init__(self):
-        pass
-
-    def add_author(self, name, article):
-        pass
-
-    def add_article(self, arxiv_article):
-        article, _ = ArticleModel.objects.update_or_create(
-            arxiv_id=arxiv_article.id,
-            version=arxiv_article.version,
-            title=arxiv_article.title,
-            abstract=arxiv_article.abstract,
-            url=arxiv_article.pdf_url,
-            date=arxiv_article.date,
-            category=arxiv_article.category
-        )
-
-        article.save()
-
-        # authors = []
-
-        for name in arxiv_article.authors:
-            author, created = Author.objects.get_or_create(name=name)
-            author.save()
-            # authors.append(author)
-
-            article.authors.add(author)
-
-        return article.id
-
-    def add_article_text(self, article_id, pdf_location, txt_location, text):
-        article, _ = ArticleText.objects.update_or_create(
-            article_origin_id=article_id,
-            pdf_location=pdf_location,
-            txt_location=txt_location,
-            text=text
-        )
-
-        article.save()
-
-    def bulk_create(self, base_class, items):
-        base_class.objects.bulk_create(items)
-
-    def create_articles_vectors(self, items):
-        ArticleVector.objects.bulk_create(items)
-
-    def create_articles_relation(self, items):
-        ArticleArticleRelation.objects.bulk_create(items)
-
 
 
 def parse_args():

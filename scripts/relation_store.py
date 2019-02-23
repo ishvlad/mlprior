@@ -25,7 +25,7 @@ import django
 django.setup()
 
 from articles.models import Article, ArticleArticleRelation, ArticleVector
-from scripts.arxiv_retreive import DBManager
+from scripts.db_manager import DBManager
 
 
 def get_features(articles):

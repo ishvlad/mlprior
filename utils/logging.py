@@ -4,7 +4,7 @@ import time
 import os
 
 
-def timed(logger, tag=None, level=None, format='%s: %s minutes'):
+def timeit(logger, tag=None, level=None, format='%s: %s minutes'):
     if level is None:
         level = logging.INFO
 
@@ -42,7 +42,7 @@ def get_logger(name, log_file=None, level=logging.DEBUG):
 
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
-    handler.setLevel(logging.WARNING)
+    handler.setLevel(logging.INFO)
     logger.addHandler(handler)
 
     return logger

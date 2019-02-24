@@ -1,3 +1,5 @@
+import tqdm
+
 from articles.models import Article as ArticleModel, Author, ArticleText, ArticleVector, ArticleArticleRelation
 
 
@@ -42,16 +44,30 @@ class DBManager(object):
 
         article.save()
 
-    def bulk_create(self, base_class, items):
-        base_class.objects.bulk_create(items)
+    def bulk_create(self, items, batch_size=None):
+        '''
+        :param f: map from item to DB model
+        '''
+        if len(items) == 0:
+            return
 
-    def create_articles_vectors(self, items):
-        ArticleVector.objects.bulk_create(items)
+        base_class = type(items[0])
+
+        if batch_size is None:
+            base_class.objects.bulk_create(items)
+            return
+
+        pbar = tqdm.tqdm(total=len(items))
+        start = 0
+        while start < len(items):
+            base_class.objects.bulk_create(items[start:start+batch_size])
+            start += batch_size
+            pbar.update(batch_size)
+        pbar.close()
 
     def create_articles_relation(self, items):
         ArticleArticleRelation.objects.bulk_create(items)
 
     def article_filter_by_existance(self, arxiv_ids):
         articles = ArticleModel.objects.filter(arxiv_id__in=arxiv_ids).values_list('arxiv_id', flat=True)
-
         return [idx not in articles for idx in arxiv_ids]

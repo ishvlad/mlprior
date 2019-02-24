@@ -78,7 +78,7 @@ class ArticleVector(models.Model):
         primary_key=True,
     )
 
-    inner_vector = models.CharField(max_length=10000)
+    inner_vector = models.BinaryField(max_length=100000)
 
 
 class NGramsMonth(models.Model):

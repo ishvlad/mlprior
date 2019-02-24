@@ -34,7 +34,7 @@ logger = utils.logging.get_logger('Increment_' + str(datetime.datetime.now()))
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--article_per_it', type=int, help='Articles per iteration', default=20)
+    parser.add_argument('--article_per_it', type=int, help='Articles per iteration', default=200)
     parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=1000)
     parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=5)
 
@@ -68,7 +68,7 @@ def download_articles(args):
 
             entries = arxiv_api.search(
                 categories=['cat:' + c for c in GLOBAL__CATEGORIES],
-                start=start+1050, max_result=args.article_per_it
+                start=start, max_result=args.article_per_it
             )
             logger.debug('Obtain %d articles' % len(entries))
 
@@ -334,62 +334,60 @@ def trend_ngrams(articles, max_n_for_grams=3):
 
         logger.info('%d (%d out of %d)' % (date, i_group+1, len(grouped)))
 
-        for i_text, col in enumerate(['title', 'abstract', 'articletext__text']):
-            upd = 0
-            new_months, new_sentences, new_links = [], [], []
-            dics, _ = get_grams_dict(df_group[col].values, max_n_for_grams)
+        dics_ttl, keys_ttl = get_grams_dict(df_group.title.values, max_n_for_grams)
+        dics_abs, keys_abs = get_grams_dict(df_group.abstract.values, max_n_for_grams)
+        dics_txt, keys_txt = get_grams_dict(df_group.articletext__text.values, max_n_for_grams)
+        keys = list(set(np.concatenate((keys_ttl, keys_abs, keys_txt))))
 
-            for i_len in range(1, max_n_for_grams+1):
-                month = NGramsMonth.objects.filter(label_code=date, length=i_len)
-                if month.count() == 0:
-                    month = NGramsMonth(label_code=date, length=i_len)
-                    new_months.append(month)
-                    is_new = True
-                else:
-                    month = month[0]
-                    is_new = False
+        upd = 0
+        new_months, new_sentences, new_links = 0, 0, []
 
-                for key in tqdm.tqdm(dics[i_len-1]):
-                    sentence = NGramsSentence.objects.filter(sentence=key)
-                    if sentence.count() == 0:
-                        sentence = NGramsSentence(sentence=key)
-                        new_sentences.append(sentence)
-                        is_new = True
-                    else:
-                        sentence = sentence[0]
+        if NGramsMonth.objects.filter(label_code=date).count() == 0:
+            label = datetime.date(date//100, date%100, 1).strftime('%b %y')
+            db.bulk_create([NGramsMonth(
+                label_code=date,
+                label=label,
+                length=i+1
+            ) for i in range(max_n_for_grams)])
+            new_months += 1
 
-                    link = None
-                    if not is_new:
-                        link = SentenceVSMonth.objects.filter(from_corpora=month, from_item=sentence)
-                    if is_new or link.count() == 0:
-                        new_links.append(SentenceVSMonth(
-                            from_corpora=month,
-                            from_item=sentence,
-                            freq_title=dics[i_len-1][key] if i_text == 0 else 0,
-                            freq_abstract=dics[i_len-1][key] if i_text == 1 else 0,
-                            freq_text=dics[i_len-1][key] if i_text == 2 else 0
-                        ))
-                    else:
-                        if i_text == 0:
-                            link.update(freq_title=F('freq_title') + dics[i_len - 1][key])
-                        elif i_text == 1:
-                            link.update(freq_abstract=F('freq_abstract') + dics[i_len - 1][key])
-                        else:
-                            link.update(freq_text=F('freq_text') + dics[i_len - 1][key])
+        existed_keys = list(NGramsSentence.objects.filter(sentence__in=keys).values_list(flat=True))
+        new_keys = np.array(keys)[~np.in1d(keys, existed_keys)]
+        new_sentences = len(new_keys)
+        db.bulk_create([NGramsSentence(sentence=k) for k in new_keys])
 
-                        upd += 1
+        for key in tqdm.tqdm(keys):
+            length = len(key.split())
 
-            start_str = '%d: %s: ' % (date, col)
-            num_new[0] += len(new_months)
-            num_new[1] += len(new_sentences)
-            logger.info(start_str + '{} new months, {} new sentences'.format(len(new_months), len(new_sentences)))
-            db.bulk_create(new_months)
-            db.bulk_create(new_sentences)
+            sentence = NGramsSentence.objects.filter(sentence=key)[0]
+            month = NGramsMonth.objects.filter(length=length, label_code=date)[0]
 
-            num_new[2] += len(new_links)
-            num_update += upd
-            logger.info(start_str + '{} new, {} updated'.format(len(new_links), upd))
-            db.bulk_create(list(new_links.values()))
+            base = SentenceVSMonth.objects.filter(from_corpora=month, from_item=sentence)
+            if base.count() == 0:
+                new_links.append(SentenceVSMonth(
+                    from_corpora=month,
+                    from_item=sentence,
+                    freq_title=dics_ttl[length-1].get(key, 0),
+                    freq_abstract=dics_abs[length-1].get(key, 0),
+                    freq_text=dics_txt[length-1].get(key, 0),
+                ))
+            else:
+                base.update(
+                    freq_title=F('freq_title') + dics_ttl[length - 1].get(key, 0),
+                    freq_abstract=F('freq_abstract') + dics_abs[length - 1].get(key, 0),
+                    freq_text=F('freq_text') + dics_txt[length - 1].get(key, 0),
+                )
+                upd += 1
+
+        start_str = '%d: ' % date
+        num_new[0] += new_months
+        num_new[1] += new_sentences
+        logger.info(start_str + '{} new months, {} new sentences'.format(new_months, new_sentences))
+
+        num_new[2] += len(new_links)
+        num_update += upd
+        logger.info(start_str + '{} new, {} updated'.format(len(new_links), upd))
+        db.bulk_create(new_links)
 
     logger.info('FINISH Trend Ngrams. Statictics:')
     logger.info('\tNew months: %d' % num_new[0])

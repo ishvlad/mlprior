@@ -41,8 +41,8 @@ def parse_args():
     parser.add_argument('-download_pdf', action='store_true', help='Do we need to download pdf?')
     parser.add_argument('-pdf2txt', action='store_true', help='Do we need to generate TXT?')
 
-    parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=10)
-    parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=100)
+    parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=200)
+    parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=2000)
     parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=5)
 
     args = parser.parse_args()
@@ -102,16 +102,14 @@ def download_meta(args):
         if len(entries) != 0:
             logger.debug('There are %d new articles. Append to list' % len(entries))
             ok_list += entries
+            for a in tqdm.tqdm(entries):
+                db.add_article(a)
             pbar.update(len(entries))
         else:
             logger.debug('arXiv.API: no new articles')
 
     pbar.close()
-
-    logger.info('FINISH downloading metas from arXiv. Now saving %d articles' % len(ok_list))
-    if len(ok_list) != 0:
-        for a in tqdm.tqdm(ok_list):
-            db.add_article(a)
+    logger.info('FINISH downloading %d metas from arXiv' % len(ok_list))
 
 
 def download_pdf(args, path_pdf='data/pdfs'):

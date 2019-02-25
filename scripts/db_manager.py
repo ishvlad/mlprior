@@ -34,16 +34,6 @@ class DBManager(object):
 
         return article.id
 
-    def add_article_text(self, article_id, pdf_location, txt_location, text):
-        article, _ = ArticleText.objects.update_or_create(
-            article_origin_id=article_id,
-            pdf_location=pdf_location,
-            txt_location=txt_location,
-            text=text
-        )
-
-        article.save()
-
     def bulk_create(self, items, batch_size=None):
         '''
         :param f: map from item to DB model

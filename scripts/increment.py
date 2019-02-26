@@ -64,12 +64,16 @@ def overall_stats():
 
 def _get_max_articles(articles, max_articles):
     upper_bound = articles.count()
+    if upper_bound == 0:
+        logger.info('All articles are up to date!')
+        return 0
+
     if max_articles <= 0 or max_articles >= upper_bound:
-        logger.info('There are %d articles. Take all' % max_articles)
+        logger.info('There are %d articles. Take all' % upper_bound)
         return upper_bound
-    else:
-        logger.info('There are %d articles. Take only %d of them' % (upper_bound, max_articles))
-        return max_articles
+
+    logger.info('There are %d articles. Take only %d of them' % (upper_bound, max_articles))
+    return max_articles
 
 
 @utils.logging.timeit(logger, 'Download Meta Time', level=logging.INFO)
@@ -133,6 +137,10 @@ def download_pdf(args, path_pdf='data/pdfs'):
     articles = Article.objects.filter(has_pdf=False)
     max_articles = _get_max_articles(articles, args.max_articles)
 
+    if max_articles == 0:
+        logger.info('FINISH downloading PDFs from arXiv')
+        return
+
     pbar = tqdm.tqdm(total=max_articles)
     ok_list = []
     for pk, idx, url in articles.values_list('pk', 'arxiv_id', 'url'):
@@ -170,6 +178,10 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
 
     articles = Article.objects.filter(Q(has_pdf=True) & Q(has_txt=False))
     max_articles = _get_max_articles(articles, args.max_articles)
+
+    if max_articles == 0:
+        logger.info('FINISH generating TXTs from PDFs')
+        return
 
     pbar = tqdm.tqdm(total=max_articles)
     ok_list = []
@@ -229,7 +241,9 @@ def retrain(args):
     model.retrain(logger, train_size=max_articles)
 
     logger.info('Training is finished. Set all flags to False')
+    ArticleVector.objects.all().delete()
     Article.objects.update(has_inner_vector=False)
+    ArticleArticleRelation.objects.all().delete()
     Article.objects.update(has_neighbors=False)
     logger.info('FINISH Retraining model')
 
@@ -246,6 +260,10 @@ def calc_inner_vector(args):
 
     articles = Article.objects.filter(Q(has_txt=True) & Q(has_inner_vector=False))
     max_articles = _get_max_articles(articles, args.max_articles)
+
+    if max_articles == 0:
+        logger.info('FINISH making relations')
+        return
 
     articles = articles.values('id', 'title', 'abstract', 'articletext__text')[:max_articles]
     articles = pd.DataFrame(articles)

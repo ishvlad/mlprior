@@ -62,6 +62,16 @@ def overall_stats():
     logger.info('\tNumber of articles with ngram stats:  %d' % articles.filter(has_ngram_stat=True).count())
 
 
+def _get_max_articles(articles, max_articles):
+    upper_bound = articles.count()
+    if max_articles <= 0 or max_articles >= upper_bound:
+        logger.info('There are %d articles. Take all' % max_articles)
+        return upper_bound
+    else:
+        logger.info('There are %d articles. Take only %d of them' % (upper_bound, max_articles))
+        return max_articles
+
+
 @utils.logging.timeit(logger, 'Download Meta Time', level=logging.INFO)
 def download_meta(args):
     logger.info('START downloading metas from arXiv')
@@ -121,12 +131,7 @@ def download_pdf(args, path_pdf='data/pdfs'):
     logger.info('START downloading PDFs from arXiv')
 
     articles = Article.objects.filter(has_pdf=False)
-    max_articles = articles.count()
-    if args.max_articles <= 0 or args.max_articles >= max_articles:
-        logger.info('There are %d articles. Take all' % max_articles)
-    else:
-        logger.info('There are %d articles. Take only %d of them' % (max_articles, args.max_articles))
-        max_articles = args.max_articles
+    max_articles = _get_max_articles(articles, args.max_articles)
 
     pbar = tqdm.tqdm(total=max_articles)
     ok_list = []
@@ -164,12 +169,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
     db = DBManager()
 
     articles = Article.objects.filter(Q(has_pdf=True) & Q(has_txt=False))
-    max_articles = articles.count()
-    if args.max_articles <= 0 or args.max_articles >= max_articles:
-        logger.info('There are %d articles. Take all' % max_articles)
-    else:
-        logger.info('There are %d articles. Take only %d of them' % (max_articles, args.max_articles))
-        max_articles = args.max_articles
+    max_articles = _get_max_articles(articles, args.max_articles)
 
     pbar = tqdm.tqdm(total=max_articles)
     ok_list = []
@@ -222,12 +222,8 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
 def retrain(args):
     logger.info('START Retraining model')
 
-    max_articles = Article.objects.filter(has_txt=True).count()
-    if args.max_articles <= 0 or args.max_articles >= max_articles:
-        logger.info('There are %d articles. Take all' % max_articles)
-    else:
-        logger.info('There are %d articles. Take only %d of them (more recent)' % (max_articles, args.max_articles))
-        max_articles = args.max_articles
+    articles = Article.objects.filter(has_txt=True)
+    max_articles = _get_max_articles(articles, args.max_articles)
 
     model = RelationModel()
     model.retrain(train_size=max_articles)
@@ -249,13 +245,7 @@ def calc_inner_vector(args):
         return
 
     articles = Article.objects.filter(Q(has_txt=True) & Q(has_inner_vector=False))
-
-    max_articles = articles.count()
-    if args.max_articles <= 0 or args.max_articles >= max_articles:
-        logger.info('There are %d articles. Calculate all' % max_articles)
-    else:
-        logger.info('There are %d articles. Take only %d of them' % (max_articles, args.max_articles))
-        max_articles = args.max_articles
+    max_articles = _get_max_articles(articles, args.max_articles)
 
     articles = articles.values('id', 'title', 'abstract', 'articletext__text')[:max_articles]
     articles = pd.DataFrame(articles)

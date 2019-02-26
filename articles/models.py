@@ -16,6 +16,12 @@ class Article(models.Model):
     related = models.ManyToManyField('self', 'related_articles', through='ArticleArticleRelation',
                                      symmetrical=False)
 
+    has_pdf = models.BooleanField(default=False)
+    has_txt = models.BooleanField(default=False)
+    has_inner_vector = models.BooleanField(default=False)
+    has_ngram_stat = models.BooleanField(default=False)
+
+
     class Meta:
         verbose_name = 'Article'
         verbose_name_plural = 'Articles'

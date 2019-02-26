@@ -19,9 +19,9 @@ django.setup()
 
 from articles.models import Article, ArticleVector, ArticleArticleRelation, \
                             CategoriesVSDate, Categories, CategoriesDate, \
-                            NGramsSentence, NGramsMonth, SentenceVSMonth
+                            NGramsSentence, NGramsMonth, SentenceVSMonth, ArticleText
 from arxiv import ArXivArticle, ArXivAPI
-from django.db.models import F
+from django.db.models import F, Q
 from nltk import ngrams
 from scripts.db_manager import DBManager
 from urllib.request import urlopen
@@ -30,140 +30,184 @@ from utils.recommendation import RelationModel
 
 import utils.logging
 
-logger = utils.logging.get_logger('Increment_' + str(datetime.datetime.now()))
+file_tag = str(datetime.datetime.now())
+logger = utils.logging.get_logger('Increment_' + file_tag)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--article_per_it', type=int, help='Articles per iteration', default=20)
-    parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=1000)
+
+    parser.add_argument('-download_meta', action='store_true', help='Do we need to download articles from arXiv?')
+    parser.add_argument('-download_pdf', action='store_true', help='Do we need to download pdf?')
+    parser.add_argument('-pdf2txt', action='store_true', help='Do we need to generate TXT?')
+
+    parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=200)
+    parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=2000)
     parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=5)
 
     args = parser.parse_args()
     return args
 
 
-@utils.logging.timeit(logger, 'Download Articles Time', level=logging.WARNING)
-def download_articles(args):
-    logger.info('START downloading')
+def overall_stats():
+    articles = Article.objects
+    logger.info('DATABASE stats:')
+    logger.info('\tNumber of articles:                   %d' % articles.count())
+    logger.info('\tNumber of articles with pdf:          %d' % articles.filter(has_pdf=True).count())
+    logger.info('\tNumber of articles with txt:          %d' % articles.filter(has_txt=True).count())
+    logger.info('\tNumber of articles with inner vector: %d' % articles.filter(has_inner_vector=True).count())
+    logger.info('\tNumber of articles with ngram stats:  %d' % articles.filter(has_ngram_stat=True).count())
+
+
+def download_meta(args):
+    logger.info('START downloading metas from arXiv')
     arxiv_api = ArXivAPI(args.sleep_time)
     db = DBManager()
 
-    path, path_pdf, path_txt = 'data', 'data/pdfs', 'data/txts'
-    for d in [path, path_pdf, path_txt]:
-        if not os.path.exists(d):
-            os.mkdir(d)
-
-    num_from_arxiv = 0
-    num_pdfs_generated = 0
-    num_txts_parsed = 0
-    ok_list = []
-
+    attempt = 1
     start = 0
-    entries = []
+    ok_list = []
     pbar = tqdm.tqdm(total=args.max_articles)
 
     while len(ok_list) < args.max_articles:
-        while len(entries) == 0:
-            logger.debug('BUFFER is empty. arXiv.API -- Get %d articles' % args.article_per_it)
+        logger.debug('BUFFER is empty. arXiv.API -- Try to get %d articles...' % args.batch_size)
 
-            entries = arxiv_api.search(
-                categories=['cat:' + c for c in GLOBAL__CATEGORIES],
-                start=start+1050, max_result=args.article_per_it
-            )
-            logger.debug('Obtain %d articles' % len(entries))
+        entries = arxiv_api.search(
+            categories=['cat:' + c for c in GLOBAL__CATEGORIES],
+            start=start, max_result=args.batch_size
+        )
+        logger.debug('... received %d articles from arXiv' % len(entries))
 
-            start += args.article_per_it
-            if len(entries) == 0:
-                start -= args.article_per_it
-                logger.info('ArXiv is over :) Stop Downloading.')
-                break
-
-            #####################
-            #  Check existance  #
-            #####################
-
-            records = [ArXivArticle(x) for x in entries]
-
-            records_idx = db.article_filter_by_existance([r.id for r in records])
-            entries = list(np.array(records)[records_idx])
-
-            if len(entries) != 0:
-                logger.debug('arXiv.API: %d articles are new' % len(entries))
-
+        start += args.batch_size
         if len(entries) == 0:
+            start -= args.batch_size
+            if attempt < 4:
+                logger.debug('Empty buffer again. ArXiv is over :) Attempt %d.' % attempt)
+                attempt += 1
+            else:
+                logger.debug('Empty buffer again. ArXiv is over :) Stop downloading.')
+                break
+        else:
+            attempt = 1
+
+        #####################
+        #  Check existance  #
+        #####################
+
+        records = [ArXivArticle(x) for x in entries]
+
+        records_idx = db.article_filter_by_existance([r.id for r in records])
+        entries = list(np.array(records)[records_idx])
+
+        if len(entries) != 0:
+            logger.debug('There are %d new articles. Append to list' % len(entries))
+            ok_list += entries
+            for a in tqdm.tqdm(entries):
+                db.add_article(a)
+            pbar.update(len(entries))
+        else:
+            logger.debug('arXiv.API: no new articles')
+
+    pbar.close()
+    logger.info('FINISH downloading %d metas from arXiv' % len(ok_list))
+
+
+def download_pdf(args, path_pdf='data/pdfs'):
+    logger.info('START downloading PDFs from arXiv')
+
+    articles = Article.objects.filter(has_pdf=False)
+    max_articles = articles.count()
+    if args.max_articles <= 0 or args.max_articles >= max_articles:
+        logger.info('There are %d articles. Take all' % max_articles)
+    else:
+        logger.info('There are %d articles. Take only %d of them' % (max_articles, args.max_articles))
+        max_articles = args.max_articles
+
+    pbar = tqdm.tqdm(total=max_articles)
+    ok_list = []
+    for pk, idx, url in articles.values_list('pk', 'arxiv_id', 'url'):
+        if len(ok_list) >= max_articles:
             break
-        arxiv_article = entries.pop()
-        url, idx = arxiv_article.pdf_url, arxiv_article.id
-        num_from_arxiv += 1
 
-        if not url:
-            logger.debug(idx + ': (No url). NEXT')
-            continue
-
-        ##############
-        # Create PDF #
-        ##############
-        file_pdf = os.path.join(path_pdf, idx + '.pdf')
+        file_pdf = os.path.join(path_pdf, str(idx) + '.pdf')
         url += '.pdf'
 
-        if not (os.path.exists(file_pdf) and os.path.getsize(file_pdf) != 0):
-            try:
-                req = urlopen(url, None, args.sleep_time)
+        if os.path.exists(file_pdf) and os.path.getsize(file_pdf) != 0:
+            logger.debug('PDF ' + idx + ' already exists. Just update flag')
+            ok_list.append(pk)
+            pbar.update(1)
+            continue
 
-                with open(file_pdf, 'wb+') as fp:
-                    shutil.copyfileobj(req, fp)
+        try:
+            req = urlopen(url, None, args.sleep_time)
+            with open(file_pdf, 'wb+') as fp:
+                shutil.copyfileobj(req, fp)
+            ok_list.append(pk)
+            pbar.update(1)
+        except Exception as e:
+            logger.debug(idx + ' (' + url + '): Cannot download PDF. Exception: ' + e)
 
-                num_pdfs_generated += 1
-            except:
-                logger.warning(idx + ' (Cannot download PDF). NEXT')
-                continue
-        else:
-            logger.debug(idx + ': (PDF exists). Continue processing ' + idx)
+    pbar.close()
+    logger.info('FINISH downloading PDFs from arXiv. Now update flags of %d articles' % len(ok_list))
+    if len(ok_list) != 0:
+        Article.objects.filter(pk__in=ok_list).update(has_pdf=True)
 
-        ##############
-        # Create TXT #
-        ##############
+
+def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
+    logger.info('START generating TXTs from PDFs')
+    db = DBManager()
+
+    articles = Article.objects.filter(Q(has_pdf=True) & Q(has_txt=False))
+    max_articles = articles.count()
+    if args.max_articles <= 0 or args.max_articles >= max_articles:
+        logger.info('There are %d articles. Take all' % max_articles)
+    else:
+        logger.info('There are %d articles. Take only %d of them' % (max_articles, args.max_articles))
+        max_articles = args.max_articles
+
+    pbar = tqdm.tqdm(total=max_articles)
+    ok_list = []
+    new_items = []
+    for pk, idx in articles.values_list('pk', 'arxiv_id'):
+        if len(ok_list) >= max_articles:
+            break
+
+        file_pdf = os.path.join(path_pdf, idx + '.pdf')
         file_txt = os.path.join(path_txt, idx + '.txt')
 
-        if not (os.path.exists(file_txt) and os.path.getsize(file_txt) != 0):
-            cmd = "pdftotext %s %s 2> log.txt" % (file_pdf, file_txt)
-            os.system(cmd)
+        if os.path.exists(file_txt) and os.path.getsize(file_txt) != 0:
+            logger.debug('TXT ' + idx + ' already exists. Just update flag')
+            ok_list.append(pk)
+            pbar.update(1)
+            continue
 
-            if not os.path.isfile(file_txt):
-                logger.warning(idx + ' (Failed to generate TXT). NEXT')
-                continue
+        cmd = "pdftotext %s %s 2> logs/pdf2txt_%s.log" % (file_pdf, file_txt, idx)
+        os.system(cmd)
 
-            num_txts_parsed += 1
-        else:
-            logger.debug(idx + ': (TXT exists). Continue processing ' + idx)
+        if not os.path.isfile(file_txt):
+            logger.debug(idx + '. pdf2txt: Failed to generate TXT (No .txt file)). NEXT')
+            continue
 
         with open(file_txt, 'r') as f:
             text = ' '.join(f.readlines())[:100000]
 
-        ################
-        # Saving to DB #
-        ################
-        article_id = db.add_article(arxiv_article)
-        db.add_article_text(article_id, file_pdf, file_txt, text)
-        ok_list.append(article_id)
+        new_items.append(ArticleText(
+            article_origin_id=pk,
+            pdf_location=file_pdf,
+            txt_location=file_txt,
+            text=text
+        ))
+        ok_list.append(pk)
         pbar.update(1)
-        logger.debug(idx + ': OK. NEXT')
 
     pbar.close()
-
-    logger.debug('#' * 50)
-    logger.info('FINISH. Statistics:')
-    logger.info('\tRequested %d articles' % start)
-    logger.info("\tGet %d articles' meta from arxiv" % num_from_arxiv)
-    logger.info('\tGenerate %d PDFs' % num_pdfs_generated)
-    logger.info('\tGenerate %d TXTs' % num_txts_parsed)
-    logger.info('\tAppend %d articles' % len(ok_list))
-    logger.debug('#' * 50)
-
-    return ok_list
+    logger.info('FINISH generating TXTs. Now update flags of %d articles' % len(ok_list))
+    if len(ok_list) != 0:
+        db.bulk_create(new_items)
+        Article.objects.filter(pk__in=ok_list).update(has_txt=True)
 
 
-@utils.logging.timeit(logger, 'Make Relation Time')
+@utils.logging.timeit(logger, 'Make Relation Time', level=logging.INFO)
 def relations(articles_id, n_neighbors=21):
     logger.info('START making relations')
     db = DBManager()
@@ -253,7 +297,8 @@ def get_grams_dict(sentences, max_ngram_len=5):
 
     return dic, key_store
 
-@utils.logging.timeit(logger, 'Stacked bar Time', level=logging.WARNING)
+
+@utils.logging.timeit(logger, 'Stacked bar Time', level=logging.INFO)
 def stacked_bar(articles):
     db = DBManager()
     articles['date'] = pd.to_datetime(articles['date'])
@@ -319,7 +364,7 @@ def stacked_bar(articles):
     logger.info('\tTotal %d updates' % new_vs)
 
 
-@utils.logging.timeit(logger, 'Trend Ngrams Time', level=logging.WARNING)
+@utils.logging.timeit(logger, 'Trend Ngrams Time', level=logging.INFO)
 def trend_ngrams(articles, max_n_for_grams=3):
     db = DBManager()
     articles['date'] = pd.to_datetime(articles['date'])
@@ -334,62 +379,60 @@ def trend_ngrams(articles, max_n_for_grams=3):
 
         logger.info('%d (%d out of %d)' % (date, i_group+1, len(grouped)))
 
-        for i_text, col in enumerate(['title', 'abstract', 'articletext__text']):
-            upd = 0
-            new_months, new_sentences, new_links = [], [], []
-            dics, _ = get_grams_dict(df_group[col].values, max_n_for_grams)
+        dics_ttl, keys_ttl = get_grams_dict(df_group.title.values, max_n_for_grams)
+        dics_abs, keys_abs = get_grams_dict(df_group.abstract.values, max_n_for_grams)
+        dics_txt, keys_txt = get_grams_dict(df_group.articletext__text.values, max_n_for_grams)
+        keys = list(set(np.concatenate((keys_ttl, keys_abs, keys_txt))))
 
-            for i_len in range(1, max_n_for_grams+1):
-                month = NGramsMonth.objects.filter(label_code=date, length=i_len)
-                if month.count() == 0:
-                    month = NGramsMonth(label_code=date, length=i_len)
-                    new_months.append(month)
-                    is_new = True
-                else:
-                    month = month[0]
-                    is_new = False
+        upd = 0
+        new_months, new_sentences, new_links = 0, 0, []
 
-                for key in tqdm.tqdm(dics[i_len-1]):
-                    sentence = NGramsSentence.objects.filter(sentence=key)
-                    if sentence.count() == 0:
-                        sentence = NGramsSentence(sentence=key)
-                        new_sentences.append(sentence)
-                        is_new = True
-                    else:
-                        sentence = sentence[0]
+        if NGramsMonth.objects.filter(label_code=date).count() == 0:
+            label = datetime.date(date//100, date%100, 1).strftime('%b %y')
+            db.bulk_create([NGramsMonth(
+                label_code=date,
+                label=label,
+                length=i+1
+            ) for i in range(max_n_for_grams)])
+            new_months += 1
 
-                    link = None
-                    if not is_new:
-                        link = SentenceVSMonth.objects.filter(from_corpora=month, from_item=sentence)
-                    if is_new or link.count() == 0:
-                        new_links.append(SentenceVSMonth(
-                            from_corpora=month,
-                            from_item=sentence,
-                            freq_title=dics[i_len-1][key] if i_text == 0 else 0,
-                            freq_abstract=dics[i_len-1][key] if i_text == 1 else 0,
-                            freq_text=dics[i_len-1][key] if i_text == 2 else 0
-                        ))
-                    else:
-                        if i_text == 0:
-                            link.update(freq_title=F('freq_title') + dics[i_len - 1][key])
-                        elif i_text == 1:
-                            link.update(freq_abstract=F('freq_abstract') + dics[i_len - 1][key])
-                        else:
-                            link.update(freq_text=F('freq_text') + dics[i_len - 1][key])
+        existed_keys = list(NGramsSentence.objects.filter(sentence__in=keys).values_list(flat=True))
+        new_keys = np.array(keys)[~np.in1d(keys, existed_keys)]
+        new_sentences = len(new_keys)
+        db.bulk_create([NGramsSentence(sentence=k) for k in new_keys])
 
-                        upd += 1
+        for key in tqdm.tqdm(keys):
+            length = len(key.split())
 
-            start_str = '%d: %s: ' % (date, col)
-            num_new[0] += len(new_months)
-            num_new[1] += len(new_sentences)
-            logger.info(start_str + '{} new months, {} new sentences'.format(len(new_months), len(new_sentences)))
-            db.bulk_create(new_months)
-            db.bulk_create(new_sentences)
+            sentence = NGramsSentence.objects.filter(sentence=key)[0]
+            month = NGramsMonth.objects.filter(length=length, label_code=date)[0]
 
-            num_new[2] += len(new_links)
-            num_update += upd
-            logger.info(start_str + '{} new, {} updated'.format(len(new_links), upd))
-            db.bulk_create(list(new_links.values()))
+            base = SentenceVSMonth.objects.filter(from_corpora=month, from_item=sentence)
+            if base.count() == 0:
+                new_links.append(SentenceVSMonth(
+                    from_corpora=month,
+                    from_item=sentence,
+                    freq_title=dics_ttl[length-1].get(key, 0),
+                    freq_abstract=dics_abs[length-1].get(key, 0),
+                    freq_text=dics_txt[length-1].get(key, 0),
+                ))
+            else:
+                base.update(
+                    freq_title=F('freq_title') + dics_ttl[length - 1].get(key, 0),
+                    freq_abstract=F('freq_abstract') + dics_abs[length - 1].get(key, 0),
+                    freq_text=F('freq_text') + dics_txt[length - 1].get(key, 0),
+                )
+                upd += 1
+
+        start_str = '%d: ' % date
+        num_new[0] += new_months
+        num_new[1] += new_sentences
+        logger.info(start_str + '{} new months, {} new sentences'.format(new_months, new_sentences))
+
+        num_new[2] += len(new_links)
+        num_update += upd
+        logger.info(start_str + '{} new, {} updated'.format(len(new_links), upd))
+        db.bulk_create(new_links)
 
     logger.info('FINISH Trend Ngrams. Statictics:')
     logger.info('\tNew months: %d' % num_new[0])
@@ -408,11 +451,30 @@ def visualizations(articles, max_n_for_grams=3):
     logger.info('FINISH Visualization')
 
 
-@utils.logging.timeit(logger, 'Total Time', level=logging.WARNING)
+@utils.logging.timeit(logger, 'Total Time', level=logging.INFO)
 def main(args):
-    articles_id = download_articles(args)
-    articles = relations(articles_id)
-    visualizations(articles)
+    path, path_pdf, path_txt = 'data', 'data/pdfs', 'data/txts'
+    for d in [path, path_pdf, path_txt]:
+        if not os.path.exists(d):
+            os.mkdir(d)
+
+    overall_stats()
+
+    if args.download_meta:
+        download_meta(args)
+
+    if args.download_pdf:
+        download_pdf(args, path_pdf)
+
+    if args.pdf2txt:
+        pdf2txt(args, path_pdf, path_txt)
+
+    # articles = relations(articles_id)
+    # visualizations(articles)
+
+    logger.debug('#'*50)
+    overall_stats()
+    logger.debug('#'*50)
 
 
 if __name__ == '__main__':

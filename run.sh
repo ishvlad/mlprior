@@ -4,8 +4,6 @@ rm -rf articles/migrations
 python manage.py makemigrations
 python manage.py makemigrations articles
 python manage.py migrate
-python scripts/arxiv_retreive.py
-python scripts/relation_store.py
-python scripts/visualization_store.py
+python scripts/increment.py
 
 python manage.py createsuperuser

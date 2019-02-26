@@ -226,7 +226,7 @@ def retrain(args):
     max_articles = _get_max_articles(articles, args.max_articles)
 
     model = RelationModel()
-    model.retrain(train_size=max_articles)
+    model.retrain(logger, train_size=max_articles)
 
     logger.info('Training is finished. Set all flags to False')
     Article.objects.update(has_inner_vector=False)

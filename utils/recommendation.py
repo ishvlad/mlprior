@@ -12,10 +12,10 @@ from sklearn.preprocessing import StandardScaler
 
 
 class RelationModel:
-    def __init__(self):
-        models_path = 'data/models/relations.pkl'
-        if os.path.exists(models_path):
-            title, abstract, text, standart_scaler = pickle.load(open(models_path, 'rb+'))
+    def __init__(self, model_path='data/models/relations.pkl'):
+        self.models_path = model_path
+        if os.path.exists(self.models_path):
+            title, abstract, text, standart_scaler = pickle.load(open(self.models_path, 'rb+'))
             self.title = title
             self.abstract = abstract
             self.text = text
@@ -61,34 +61,49 @@ class RelationModel:
 
         return new, update
 
-    def retrain(self, train_size=1000):
+    def _convert_bytes(self, num):
+        """
+        this function will convert bytes to MB.... GB... etc
+        """
+        for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
+            if num < 1024.0:
+                return "%3.1f %s" % (num, x)
+            num /= 1024.0
+
+    def retrain(self, logger, train_size=1000):
         articles = Article.objects.filter(has_txt=True)
 
         max_articles = articles.count()
         if train_size <= 0 or train_size >= max_articles:
             train_size = max_articles
 
+        logger.info('Take %d articles' % train_size)
         articles = articles.order_by('date').values('title', 'abstract', 'articletext__text')[:train_size]
         articles = pd.DataFrame(articles)
 
+        logger.info('Training Title TD-IDF')
         model_title = TfidfVectorizer(decode_error='replace', max_features=20,
                                       ngram_range=(1, 2), stop_words='english', strip_accents='unicode')
         features_title = model_title.fit_transform(articles.abstract.values).toarray()
 
+        logger.info('Training Abstract TD-IDF')
         model_abstract = TfidfVectorizer(decode_error='replace', max_features=50,
                                          ngram_range=(1, 2), stop_words='english', strip_accents='unicode')
         features_abstract = model_abstract.fit_transform(articles.abstract.values).toarray()
 
+        logger.info('Training Text TD-IDF')
         model_text = TfidfVectorizer(decode_error='replace', max_features=230,
                                      ngram_range=(1, 2), stop_words='english', strip_accents='unicode')
         features_text = model_text.fit_transform(articles.articletext__text.values).toarray()
 
+        logger.info('Training Standart Scaler')
         features = np.hstack([
             features_title,
             features_abstract,
             features_text
         ])
-        ss = StandardScaler().fit_transform(features)
+        ss = StandardScaler().fit(features)
 
-        pickle.dump((model_title, model_abstract, model_text, ss), open('data/models/relations.pkl', 'wb+'))
-
+        logger.info('Saving models')
+        pickle.dump((model_title, model_abstract, model_text, ss), open(self.models_path, 'wb+'))
+        logger.info('Models saved. Total size = %s' % self._convert_bytes(os.path.getsize(self.models_path)))

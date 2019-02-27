@@ -7,5 +7,7 @@ django-elasticsearch-dsl
 nltk
 pandas
 numpy
+scikit-learn
 social-auth-app-django
+tqdm
 djangoajax

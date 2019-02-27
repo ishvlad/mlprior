@@ -40,9 +40,11 @@ def parse_args():
     parser.add_argument('-download_meta', action='store_true', help='Do we need to download articles from arXiv?')
     parser.add_argument('-download_pdf', action='store_true', help='Do we need to download pdf?')
     parser.add_argument('-pdf2txt', action='store_true', help='Do we need to generate TXT?')
+    parser.add_argument('-retrain', action='store_true', help='Do we need to retrain recommendation model?')
+    parser.add_argument('-inner_vector', action='store_true', help='Do we need to calculate inner vectors?')
 
-    parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=200)
-    parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=2000)
+    parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=100)
+    parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=200)
     parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=5)
 
     args = parser.parse_args()
@@ -56,9 +58,21 @@ def overall_stats():
     logger.info('\tNumber of articles with pdf:          %d' % articles.filter(has_pdf=True).count())
     logger.info('\tNumber of articles with txt:          %d' % articles.filter(has_txt=True).count())
     logger.info('\tNumber of articles with inner vector: %d' % articles.filter(has_inner_vector=True).count())
+    logger.info('\tNumber of articles with neighbors:    %d' % articles.filter(has_neighbors=True).count())
     logger.info('\tNumber of articles with ngram stats:  %d' % articles.filter(has_ngram_stat=True).count())
 
 
+def _get_max_articles(articles, max_articles):
+    upper_bound = articles.count()
+    if max_articles <= 0 or max_articles >= upper_bound:
+        logger.info('There are %d articles. Take all' % max_articles)
+        return upper_bound
+    else:
+        logger.info('There are %d articles. Take only %d of them' % (upper_bound, max_articles))
+        return max_articles
+
+
+@utils.logging.timeit(logger, 'Download Meta Time', level=logging.INFO)
 def download_meta(args):
     logger.info('START downloading metas from arXiv')
     arxiv_api = ArXivAPI(args.sleep_time)
@@ -112,16 +126,12 @@ def download_meta(args):
     logger.info('FINISH downloading %d metas from arXiv' % len(ok_list))
 
 
+@utils.logging.timeit(logger, 'Download PDF Time', level=logging.INFO)
 def download_pdf(args, path_pdf='data/pdfs'):
     logger.info('START downloading PDFs from arXiv')
 
     articles = Article.objects.filter(has_pdf=False)
-    max_articles = articles.count()
-    if args.max_articles <= 0 or args.max_articles >= max_articles:
-        logger.info('There are %d articles. Take all' % max_articles)
-    else:
-        logger.info('There are %d articles. Take only %d of them' % (max_articles, args.max_articles))
-        max_articles = args.max_articles
+    max_articles = _get_max_articles(articles, args.max_articles)
 
     pbar = tqdm.tqdm(total=max_articles)
     ok_list = []
@@ -153,17 +163,13 @@ def download_pdf(args, path_pdf='data/pdfs'):
         Article.objects.filter(pk__in=ok_list).update(has_pdf=True)
 
 
+@utils.logging.timeit(logger, 'PDF 2 TXT Time', level=logging.INFO)
 def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
     logger.info('START generating TXTs from PDFs')
     db = DBManager()
 
     articles = Article.objects.filter(Q(has_pdf=True) & Q(has_txt=False))
-    max_articles = articles.count()
-    if args.max_articles <= 0 or args.max_articles >= max_articles:
-        logger.info('There are %d articles. Take all' % max_articles)
-    else:
-        logger.info('There are %d articles. Take only %d of them' % (max_articles, args.max_articles))
-        max_articles = args.max_articles
+    max_articles = _get_max_articles(articles, args.max_articles)
 
     pbar = tqdm.tqdm(total=max_articles)
     ok_list = []
@@ -176,17 +182,22 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
         file_txt = os.path.join(path_txt, idx + '.txt')
 
         if os.path.exists(file_txt) and os.path.getsize(file_txt) != 0:
-            logger.debug('TXT ' + idx + ' already exists. Just update flag')
-            ok_list.append(pk)
-            pbar.update(1)
-            continue
+            arts = ArticleText.objects.filter(article_origin=pk).values('text')
 
-        cmd = "pdftotext %s %s 2> logs/pdf2txt_%s.log" % (file_pdf, file_txt, idx)
-        os.system(cmd)
+            if len(arts) != 0 and arts[0]['text'] is not None:
+                logger.debug('TXT ' + idx + ' already exists. Just update flag')
+                ok_list.append(pk)
+                pbar.update(1)
+                continue
+            else:
+                logger.debug('TXT ' + idx + ' already exists, but text not appears in DB. Save text')
+        else:
+            cmd = "pdftotext %s %s 2> logs/pdf2txt_%s.log" % (file_pdf, file_txt, idx)
+            os.system(cmd)
 
-        if not os.path.isfile(file_txt):
-            logger.debug(idx + '. pdf2txt: Failed to generate TXT (No .txt file)). NEXT')
-            continue
+            if not os.path.isfile(file_txt) or os.path.getsize(file_txt) == 0:
+                logger.debug(idx + '. pdf2txt: Failed to generate TXT (No .txt file)). NEXT')
+                continue
 
         with open(file_txt, 'r') as f:
             text = ' '.join(f.readlines())[:100000]
@@ -207,18 +218,37 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
         Article.objects.filter(pk__in=ok_list).update(has_txt=True)
 
 
-@utils.logging.timeit(logger, 'Make Relation Time', level=logging.INFO)
-def relations(articles_id, n_neighbors=21):
+@utils.logging.timeit(logger, 'Retraining model Time', level=logging.INFO)
+def retrain(args):
+    logger.info('START Retraining model')
+
+    articles = Article.objects.filter(has_txt=True)
+    max_articles = _get_max_articles(articles, args.max_articles)
+
+    model = RelationModel()
+    model.retrain(train_size=max_articles)
+
+    logger.info('Training is finished. Set all flags to False')
+    Article.objects.update(has_inner_vector=False)
+    Article.objects.update(has_neighbors=False)
+    logger.info('FINISH Retraining model')
+
+
+@utils.logging.timeit(logger, 'Calculate Inner Vector Time', level=logging.INFO)
+def calc_inner_vector(args):
     logger.info('START making relations')
     db = DBManager()
-
-    logger.debug('Loading %d articles' % len(articles_id))
-    articles = Article.objects.filter(pk__in=articles_id).values('id', 'date', 'category', 'title', 'abstract', 'articletext__text')
-    articles = pd.DataFrame(articles)
-    assert len(articles_id) == len(articles)
-
-    logger.debug('Feature engineering')
     model = RelationModel()
+
+    if model.trained is False:
+        logger.info("Relation model not trained. Let's train first (-retrain).")
+        return
+
+    articles = Article.objects.filter(Q(has_txt=True) & Q(has_inner_vector=False))
+    max_articles = _get_max_articles(articles, args.max_articles)
+
+    articles = articles.values('id', 'title', 'abstract', 'articletext__text')[:max_articles]
+    articles = pd.DataFrame(articles)
     features = model.get_features(
         articles.title.values,
         articles.abstract.values,
@@ -232,35 +262,9 @@ def relations(articles_id, n_neighbors=21):
             article_origin_id=idx,
             inner_vector=feature.tobytes()
         ))
-    db.bulk_create(items, batch_size=5000)
-
-    logger.debug('Obtain ' + str(n_neighbors-1) + ' neighbors')
-    new_tuples, old_tuples = model.get_knn_dist(articles.id.values, features, n_neighbors)
-    logger.info('Processed %d new articles. Also need to update %d old articles' % (len(new_tuples)/(n_neighbors-1),len(old_tuples)))
-
-    if len(old_tuples) > 0:
-        logger.debug('Update old articles')
-        ArticleArticleRelation.objects.filter(left_id__in=[x[0] for x in old_tuples]).delete()
-        for x in old_tuples:
-            new_tuples.extend(x)
-
-    logger.info('Saving relations (len: %d)' % len(new_tuples))
-    items = []
-    for i_left, i_right, distance in tqdm.tqdm(new_tuples):
-        items.append(ArticleArticleRelation(
-            left_id=i_left,
-            right_id=i_right,
-            distance=distance
-        ))
-    db.bulk_create(items, batch_size=5000)
-
-    logger.debug('#' * 50)
-    logger.info('FINISH. Statistics:')
-    logger.info('\tNew: %d articles (%d relations)' % (len(articles), len(articles)*(n_neighbors-1)))
-    logger.info('\tUpdated %d articles (%d relations)' % (len(old_tuples), len(old_tuples)*(n_neighbors-1)))
-    logger.debug('#' * 50)
-
-    return articles
+    db.bulk_create(items)
+    Article.objects.filter(pk__in=list(articles.id.values)).update(has_inner_vector=True)
+    logger.info('FINISH making relations')
 
 
 def get_grams_dict(sentences, max_ngram_len=5):
@@ -468,6 +472,12 @@ def main(args):
 
     if args.pdf2txt:
         pdf2txt(args, path_pdf, path_txt)
+
+    if args.retrain:
+        retrain(args)
+
+    if args.inner_vector:
+        calc_inner_vector(args)
 
     # articles = relations(articles_id)
     # visualizations(articles)

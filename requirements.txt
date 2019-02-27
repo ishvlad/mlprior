@@ -11,3 +11,4 @@ scikit-learn
 social-auth-app-django
 tqdm
 djangoajax
+django-allauth

@@ -41,6 +41,14 @@ INSTALLED_APPS = [
     'social_django',
     'el_pagination',
     'django_ajax',
+
+    'django.contrib.sites',  # new
+    # 3rd party
+    'allauth',  # new
+    'allauth.account',  # new
+    'allauth.socialaccount',  # new
+
+    'core',
     'articles',
 ]
 
@@ -70,11 +78,11 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.request',  ## For EL-pagination
                 'social_django.context_processors.backends',  # auth
-                'social_django.context_processors.login_redirect' # auth
+                'social_django.context_processors.login_redirect'  # auth
             ],
-        'builtins': [
-            'articles.templatetags.articles_extras'
-        ],
+            'builtins': [
+                'articles.templatetags.articles_extras'
+            ],
         },
     },
 ]
@@ -131,8 +139,7 @@ STATICFILES_DIRS = [
     STATICFILE_DIR,
 ]
 
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = '/home'
+LOGIN_URL = 'accounts/login'
 
 ELASTICSEARCH_DSL = {
     'default': {
@@ -140,15 +147,42 @@ ELASTICSEARCH_DSL = {
     },
 }
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.open_id.OpenIdAuth',  # for Google authentication
     'social_core.backends.google.GoogleOpenId',  # for Google authentication
     'social_core.backends.google.GoogleOAuth2',  # for Google authentication
     'social_core.backends.github.GithubOAuth2',  # for Github authentication
     'social_core.backends.facebook.FacebookOAuth2',  # for Facebook authentication
-
     'django.contrib.auth.backends.ModelBackend',
+    "allauth.account.auth_backends.AuthenticationBackend",
 )
 
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '84590134255-r0m62tcgtktifk6ct36po6g4q8k3rg1g.apps.googleusercontent.com'  #Paste CLient Key
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'vT1E0qYP27NMBQjZlN-MbvKQ' #Paste Secret Key
+LOGIN_REDIRECT_URL = '/home'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+
+SITE_ID = 1
+
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
+ACCOUNT_SESSION_REMEMBER = True
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_UNIQUE_EMAIL = True
+
+ACCOUNT_FORMS = {
+    'login': 'core.forms.MyCustomLoginForm',
+    'signup': 'core.forms.MyCustomSignupForm',
+    'add_email': 'allauth.account.forms.AddEmailForm',
+    'change_password': 'allauth.account.forms.ChangePasswordForm',
+    'set_password': 'allauth.account.forms.SetPasswordForm',
+    'reset_password': 'allauth.account.forms.ResetPasswordForm',
+    'reset_password_from_key': 'allauth.account.forms.ResetPasswordKeyForm',
+    'disconnect': 'allauth.socialaccount.forms.DisconnectForm',
+}
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '84590134255-r0m62tcgtktifk6ct36po6g4q8k3rg1g.apps.googleusercontent.com'  # Paste CLient Key
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'vT1E0qYP27NMBQjZlN-MbvKQ'  # Paste Secret Key
+
+AUTH_USER_MODEL = 'core.User'

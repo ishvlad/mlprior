@@ -19,6 +19,7 @@
 
     <!-- Custom styles for this template-->
     <link href="{% static 'css/material-dashboard.css' %}" rel="stylesheet">
+    <link href="{% static 'css/mystyle.css' %}" rel="stylesheet">
 
 </head>
 
@@ -29,11 +30,14 @@
 <div class="wrapper wrapper-full-page">
 
 <div class="container">
-    <div class="row">
+    <div class="row align-items-center">
+        {% include "socialaccount/snippets/provider_list.html" with process="connect" %}
 <div class="col-lg-4 col-md-6 col-sm-8 ml-auto mr-auto mt-auto ">
             <form class="user" method="post">
+
+
               <div class="card card-login">
-                <div class="card-header card-header-rose text-center">
+                <div class="card-header card-header-prior text-center">
                   <h4 class="card-title">Login</h4>
                   <div class="social-line">
                     <a href="{% url 'social:begin' 'facebook' %}" class="btn btn-just-icon btn-link btn-white">
@@ -50,8 +54,10 @@
                 </div>
                 <div class="card-body ">
                   <p class="card-description text-center">Or Be Classical</p>
-
+                <form class="form" method="post" action="">
                       {% csrf_token %}
+
+                    {{ form.errors }}
                   <span class="bmd-form-group">
                     <div class="input-group">
                       <div class="input-group-prepend">
@@ -59,7 +65,9 @@
                           <i class="material-icons">email</i>
                         </span>
                       </div>
-                      <input type="email" class="form-control" placeholder="Email...">
+                        {{ form.login }}
+                        {{ form.login.errors }}
+
                     </div>
                   </span>
                   <span class="bmd-form-group">
@@ -69,15 +77,14 @@
                           <i class="material-icons">lock_outline</i>
                         </span>
                       </div>
-                      <input type="password" class="form-control" name="password"
-                                               id="password" placeholder="Password...">
+                        {{ form.password }}
+                        {{ form.password.errors }}
                     </div>
                   </span>
+</form>
                 </div>
                 <div class="card-footer justify-content-center">
-                  <button class="btn btn-primary btn-user btn-block" type="submit">
-                                        Login
-                                    </button>
+                  <button class="btn btn-primary btn-user btn-block" type="submit">Login</button>
                 </div>
               </div>
             </form>

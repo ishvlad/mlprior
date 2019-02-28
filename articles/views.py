@@ -6,24 +6,21 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q, When, Case
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
-from django.utils.decorators import method_decorator
-from django.views import View
 from django.views.generic import FormView
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView
 from el_pagination.decorators import page_template
 from el_pagination.views import AjaxListView
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login
 
 from articles.documents import ArticleDocument
-from articles.forms import UserSignUpForm, UserLoginForm
+# from core.forms import UserSignUpForm, UserLoginForm
 from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation, \
     CategoriesVSDate
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
 from django_ajax.mixin import AJAXMixin
-from django.contrib.auth.forms import UserCreationForm
 
 
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login')
 def home(request):
     n_articles = Article.objects.count()
 
@@ -47,7 +44,7 @@ def home(request):
     return render(request, 'home.html', context)
 
 
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login')
 def category_view(request, categories=None):
     if request.method == 'POST':
         categories = request.POST.get('categories')
@@ -92,7 +89,7 @@ def category_view(request, categories=None):
     })
 
 
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login')
 def trend_view(request, keywords_raw=None):
     if request.method == 'POST':
         keywords_raw = request.POST.get('keywords_raw')
@@ -189,7 +186,7 @@ class ArticlesMixin(object):
 
 
 class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJAXMixin):
-    login_url = '/login/'
+    login_url = '/accounts/login'
     template_name = 'articles/articles_list.html'
     page_template = 'articles/articles_list_page.html'
     model = Article
@@ -286,7 +283,9 @@ class ArticlesOfAuthor(ArticlesView):
         return context
 
 
-class ArticlesLibrary(ArticlesView):
+class ArticlesLibrary(ArticlesView, LoginRequiredMixin):
+    login_url = '/accounts/login'
+
     def get_queryset(self):
         return Article.objects.filter(articleuser__user=self.request.user, articleuser__in_lib=True)
 
@@ -298,7 +297,9 @@ class ArticlesLibrary(ArticlesView):
         return context
 
 
-class LikedDisliked(ArticlesView):
+class LikedDisliked(ArticlesView, LoginRequiredMixin):
+    login_url = '/accounts/login'
+
     def get_queryset(self):
         liked = 'disliked' not in self.request.get_raw_uri()
         return Article.objects.filter(articleuser__user=self.request.user, articleuser__like_dislike=liked)
@@ -343,7 +344,7 @@ class ArticleDetailsView(AjaxListView, ArticlesMixin):
         return context
 
 
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login')
 def add_remove_from_library(request, article_id):
     article = get_object_or_404(Article, id=article_id)
 
@@ -359,7 +360,7 @@ def add_remove_from_library(request, article_id):
     return JsonResponse({})
 
 
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login')
 def change_note(request, article_id):
     article = get_object_or_404(Article, id=article_id)
 
@@ -376,7 +377,7 @@ def change_note(request, article_id):
     return JsonResponse({})
 
 
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login')
 def like_dislike(request, article_id):
     article = get_object_or_404(Article, id=article_id)
     article_user, _ = ArticleUser.objects.get_or_create(article=article, user=request.user)
@@ -394,7 +395,7 @@ def like_dislike(request, article_id):
 
 
 @page_template('articles_list_page.html')
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login')
 def search(request, search_query, template='articles_list.html', extra_context=None):
     print('SEARCH!!!')
     s = ArticleDocument.search().query("match", title=search_query)
@@ -416,36 +417,6 @@ def search(request, search_query, template='articles_list.html', extra_context=N
 
     rendered_template = render(request, template, context)
     return HttpResponse(rendered_template, content_type='text/html')
-
-
-class CustomLoginView(FormView):
-    form_class = UserLoginForm
-    template_name = 'login.html'
-
-    def form_valid(self, form):
-        print('validation')
-        user = form.save()
-        # username = form.cleaned_data.get('username')
-        # raw_password = form.cleaned_data.get('password')
-        # email = form.cleaned_data.get('email')
-        # user = authenticate(email=email, password=raw_password)
-        login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return redirect('/home')
-
-
-class SignUpView(FormView):
-    form_class = UserSignUpForm
-    template_name = 'signup.html'
-
-    def form_valid(self, form):
-        print('validation')
-        user = form.save()
-        # username = form.cleaned_data.get('username')
-        # raw_password = form.cleaned_data.get('password')
-        # email = form.cleaned_data.get('email')
-        # user = authenticate(username=username, email=email, password=raw_password)
-        login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return redirect('/home')
 
 
 def landing_view(request):

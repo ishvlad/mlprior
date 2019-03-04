@@ -23,7 +23,8 @@ from articles.models import Article, ArticleVector, ArticleArticleRelation, \
 from arxiv import ArXivArticle, ArXivAPI
 from django.db.models import F, Q
 from nltk import ngrams
-from scripts.db_manager import DBManager
+from sklearn.neighbors import NearestNeighbors
+from utils.db_manager import DBManager
 from urllib.request import urlopen
 from utils.constants import GLOBAL__CATEGORIES
 from utils.recommendation import RelationModel
@@ -36,12 +37,14 @@ logger = utils.logging.get_logger('Increment_' + file_tag)
 
 def parse_args():
     parser = argparse.ArgumentParser()
-
+    parser.add_argument('-clean', action='store_true', help='pdf, txt, inner_vector, knn, ngrams')
+    parser.add_argument('-all', action='store_true', help='meta, pdf, txt, inner_vector, knn, ngrams')
     parser.add_argument('-download_meta', action='store_true', help='Do we need to download articles from arXiv?')
     parser.add_argument('-download_pdf', action='store_true', help='Do we need to download pdf?')
     parser.add_argument('-pdf2txt', action='store_true', help='Do we need to generate TXT?')
     parser.add_argument('-retrain', action='store_true', help='Do we need to retrain recommendation model?')
     parser.add_argument('-inner_vector', action='store_true', help='Do we need to calculate inner vectors?')
+    parser.add_argument('-knn', action='store_true', help='Do we need to calculate nearest articles?')
 
     parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=100)
     parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=200)
@@ -285,6 +288,75 @@ def calc_inner_vector(args):
     logger.info('FINISH making relations')
 
 
+@utils.logging.timeit(logger, 'Calculate nearest articles', level=logging.INFO)
+def calc_nearest_articles(args, n_nearest=20):
+    logger.info('START calculating nearest articles')
+    db = DBManager()
+    model = RelationModel()
+
+    if model.trained is False:
+        logger.info("Relation model not trained. Let's train first (-retrain).")
+        logger.info('FINISH calculating nearest articles')
+        return
+
+    db_articles = Article.objects.filter(has_neighbors=True)
+    new_articles = Article.objects.filter(Q(has_inner_vector=True) & Q(has_neighbors=False))
+
+    max_articles = _get_max_articles(new_articles, args.max_articles)
+
+    if max_articles == 0:
+        logger.info('No articles for calculating (has_inner_vector=True & has_neighbors=False)')
+        logger.info('FINISH calculating nearest articles')
+        return
+    elif db_articles.count() < n_nearest + 1 and  max_articles < n_nearest + 1:
+        error_str = 'need batch_size > {}. Now batch_size = {}'.format(n_nearest, max_articles)
+        logger.info('For proper calculations we ' + error_str)
+        logger.info('FINISH calculating nearest articles')
+        return
+
+    logger.info('READ {} new articles and {} old articles from db'.format(max_articles, db_articles.count()))
+    articles = new_articles.values('id', 'articlevector__inner_vector')[:max_articles]
+    articles = pd.DataFrame(articles)
+    ids = articles.id.values
+    features = np.vstack(articles.articlevector__inner_vector.apply(np.frombuffer))
+
+    border = len(articles)
+
+    if db_articles.count() != 0:
+        df = pd.DataFrame(db_articles.values('id', 'articlevector__inner_vector'))
+        ids = np.concatenate((ids, df['id'].values))
+        features = np.concatenate((features, np.vstack(df.articlevector__inner_vector.apply(np.frombuffer))))
+
+    logger.info('FIT knn on {} articles'.format(len(features)))
+    knn = NearestNeighbors()
+    knn.fit(features)
+    dists, nn = knn.kneighbors(features, n_nearest+1)
+
+    logger.info('Process {} articles'.format(len(features)))
+    count = -border
+    for dist, ns in tqdm.tqdm(zip(dists, nn), total=len(features)):
+        if sum(ns < border) == 0:
+            continue
+        count += 1
+        ArticleArticleRelation.objects.filter(left_id=ids[ns[0]]).all().delete()
+        items = [ArticleArticleRelation(
+            left_id=ids[ns[0]],
+            right_id=ids[n],
+            distance=d
+        ) for d, n in zip(dist[1:], ns[1:])]
+        db.bulk_create(items)
+        Article.objects.filter(pk=ids[ns[0]]).update(has_neighbors=True)
+    logger.info('Created {} new articles and updated {} old articles'.format(border, count))
+
+    num_labeled = Article.objects.filter(has_neighbors=True).count()
+    num_items = ArticleArticleRelation.objects.count()
+    if num_items == num_labeled * n_nearest:
+        logger.info('OK. Total {} articles with {} nn rows in DB'.format(num_labeled, num_items))
+    else:
+        logger.warning('!!! Total {} articles with {} nn rows in DB'.format(num_labeled, num_items))
+    logger.info('FINISH calculating nearest articles')
+
+
 def get_grams_dict(sentences, max_ngram_len=5):
     # stop_words = [
     #     'a', 'the', 'in', 'of', 'in', 'this', 'and',
@@ -482,23 +554,23 @@ def main(args):
 
     overall_stats()
 
-    if args.download_meta:
+    if args.download_meta or args.all:
         download_meta(args)
 
-    if args.download_pdf:
+    if args.download_pdf or args.all or args.clean:
         download_pdf(args, path_pdf)
 
-    if args.pdf2txt:
+    if args.pdf2txt or args.all or args.clean:
         pdf2txt(args, path_pdf, path_txt)
 
     if args.retrain:
         retrain(args)
 
-    if args.inner_vector:
+    if args.inner_vector or args.all or args.clean:
         calc_inner_vector(args)
 
-    # articles = relations(articles_id)
-    # visualizations(articles)
+    if args.knn or args.all or args.clean:
+        calc_nearest_articles(args)
 
     logger.debug('#'*50)
     overall_stats()

@@ -21,6 +21,7 @@ from articles.models import Article, ArticleVector, ArticleArticleRelation, \
                             CategoriesVSDate, Categories, CategoriesDate, \
                             NGramsSentence, NGramsMonth, SentenceVSMonth, ArticleText
 from arxiv import ArXivArticle, ArXivAPI
+from dateutil.relativedelta import relativedelta
 from django.db.models import F, Q
 from nltk import ngrams
 from sklearn.neighbors import NearestNeighbors
@@ -39,12 +40,15 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-clean', action='store_true', help='pdf, txt, inner_vector, knn, ngrams')
     parser.add_argument('-all', action='store_true', help='meta, pdf, txt, inner_vector, knn, ngrams')
+    parser.add_argument('-retrain', action='store_true', help='Do we need to retrain recommendation model?')
+    parser.add_argument('-update_categories', action='store_true', help='Move categories description from GLOBAL to DB')
+
     parser.add_argument('-download_meta', action='store_true', help='Do we need to download articles from arXiv?')
     parser.add_argument('-download_pdf', action='store_true', help='Do we need to download pdf?')
     parser.add_argument('-pdf2txt', action='store_true', help='Do we need to generate TXT?')
-    parser.add_argument('-retrain', action='store_true', help='Do we need to retrain recommendation model?')
     parser.add_argument('-inner_vector', action='store_true', help='Do we need to calculate inner vectors?')
     parser.add_argument('-knn', action='store_true', help='Do we need to calculate nearest articles?')
+    parser.add_argument('-category_bar', action='store_true', help='Do we need to count articles in category bar?')
 
     parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=100)
     parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=200)
@@ -57,12 +61,13 @@ def parse_args():
 def overall_stats():
     articles = Article.objects
     logger.info('DATABASE stats:')
-    logger.info('\tNumber of articles:                   %d' % articles.count())
-    logger.info('\tNumber of articles with pdf:          %d' % articles.filter(has_pdf=True).count())
-    logger.info('\tNumber of articles with txt:          %d' % articles.filter(has_txt=True).count())
-    logger.info('\tNumber of articles with inner vector: %d' % articles.filter(has_inner_vector=True).count())
-    logger.info('\tNumber of articles with neighbors:    %d' % articles.filter(has_neighbors=True).count())
-    logger.info('\tNumber of articles with ngram stats:  %d' % articles.filter(has_ngram_stat=True).count())
+    logger.info('\tNumber of articles:                          %d' % articles.count())
+    logger.info('\tNumber of articles with pdf:                 %d' % articles.filter(has_pdf=True).count())
+    logger.info('\tNumber of articles with txt:                 %d' % articles.filter(has_txt=True).count())
+    logger.info('\tNumber of articles with inner vector:        %d' % articles.filter(has_inner_vector=True).count())
+    logger.info('\tNumber of articles with neighbors:           %d' % articles.filter(has_neighbors=True).count())
+    logger.info('\tNumber of articles with counted category:    %d' % articles.filter(has_category_bar=True).count())
+    logger.info('\tNumber of articles with ngram stats:         %d' % articles.filter(has_ngram_stat=True).count())
 
 
 def _get_max_articles(articles, max_articles):
@@ -357,6 +362,107 @@ def calc_nearest_articles(args, n_nearest=20):
     logger.info('FINISH calculating nearest articles')
 
 
+@utils.logging.timeit(logger, 'Update categories Time', level=logging.INFO)
+def update_categories_name():
+    logger.info('START Updating categories')
+    ok, not_ok = 0, 0
+    for cat in Categories.objects.all():
+        if cat.category in GLOBAL__CATEGORIES:
+            cat.category_full = GLOBAL__CATEGORIES[cat.category]
+            cat.save()
+            ok += 1
+            logger.info('UPDATE ' + cat.category + ': ' + GLOBAL__CATEGORIES[cat.category])
+        else:
+            logger.warning('NOT SPECIFIED ' + cat.category)
+            not_ok += 1
+    logger.info('FINISH Updating categories (%d updated and %d not specified)' % (ok, not_ok))
+
+
+@utils.logging.timeit(logger, 'Stacked Bar Time', level=logging.INFO)
+def stacked_bar(args):
+    logger.info('START Stacked bar')
+    db = DBManager()
+
+    articles = Article.objects.filter(has_category_bar=False)
+    max_articles = _get_max_articles(articles, args.max_articles)
+
+    if max_articles == 0:
+        logger.info('No articles for count categories')
+        logger.info('FINISH Stacked bar')
+        return
+
+    articles = articles.values('id', 'date', 'category')[:max_articles]
+    articles = pd.DataFrame(articles)
+    articles['date'] = pd.to_datetime(articles['date'])
+
+    next_month = datetime.datetime.now() + relativedelta(months=1)
+    min_date_code_in_db = CategoriesDate.objects.order_by('date').first()
+    if min_date_code_in_db is None:
+        min_date_code_in_db = next_month.month + next_month.year * 100
+        logger.debug('No dates in DB. Select min date: %d' % min_date_code_in_db)
+    else:
+        min_date_code_in_db = min_date_code_in_db.date_code
+        logger.debug('Min date in DB: %d' % min_date_code_in_db)
+
+    min_date = articles.date.min()
+    min_date_code = min_date.month + min_date.year * 100
+
+    if min_date_code >= min_date_code_in_db:
+        logger.info('All months are present')
+    else:
+        logger.info('Append new months from %d to %d' % (min_date_code, min_date_code_in_db))
+        date_code = min_date_code
+        while date_code != min_date_code_in_db:
+            date = datetime.date(year=date_code // 100, month=date_code % 100, day=1)
+            new_date, _ = CategoriesDate.objects.update_or_create(date_code=date_code, date=date.strftime('%b %y'))
+            new_date.save()
+
+            if Categories.objects.count() != 0:
+                db.bulk_create([CategoriesVSDate(
+                    category=c,
+                    from_month=new_date,
+                    count=0
+                ) for c in Categories.objects.all()])
+
+            if date_code % 100 == 12:
+                date_code = date_code - 11 + 100
+            else:
+                date_code += 1
+
+    new_categories = articles.category.unique()
+    old_categories = list(Categories.objects.values_list('category', flat=True))
+
+    append_categories = new_categories[~np.in1d(new_categories, old_categories)]
+    if len(append_categories) == 0:
+        logger.info('All categories are present')
+    else:
+        logger.warning('Categories does not exists: ' + ', '.join(append_categories))
+        logger.warning('!!! You need to manually specify this category in DB')
+        logger.warning('!!! And append this category to utils.constants.GLOBAL__CATEGORIES')
+
+        for cat in append_categories:
+            new_category, _ = Categories.objects.update_or_create(category=cat, category_full='NOT SPECIFIED')
+            new_category.save()
+
+            db.bulk_create([CategoriesVSDate(
+                from_category=new_category,
+                from_month=d,
+                count=0
+            ) for d in CategoriesDate.objects.all()])
+
+    logging.info('Update %d bar counts')
+    for _, row in tqdm.tqdm(articles.iterrows(), total=len(articles)):
+        date_code = row['date'].month + row['date'].year * 100
+        CategoriesVSDate.objects.filter(
+            from_category__category=row['category'],
+            from_month__date_code=date_code
+        ).update(count=F('count') + 1)
+
+        Article.objects.filter(id=row['id']).update(has_category_bar=True)
+
+    logger.info('FINISH Stacked bar')
+
+
 def get_grams_dict(sentences, max_ngram_len=5):
     # stop_words = [
     #     'a', 'the', 'in', 'of', 'in', 'this', 'and',
@@ -390,72 +496,6 @@ def get_grams_dict(sentences, max_ngram_len=5):
                 key_store.append(key)
 
     return dic, key_store
-
-
-@utils.logging.timeit(logger, 'Stacked bar Time', level=logging.INFO)
-def stacked_bar(articles):
-    db = DBManager()
-    articles['date'] = pd.to_datetime(articles['date'])
-
-    logger.info('START Stacked bar')
-
-    new_months = []
-    logger.debug('Looking for new months')
-    for date in articles.date:
-        date_code = date.month + date.year * 100
-        if CategoriesDate.objects.filter(date_code=date_code).count() == 0:
-            logger.debug('Append new date: ' + str(date_code))
-
-            new_date, _ = CategoriesDate.objects.update_or_create(date_code=date_code, date=date.strftime('%b %y'))
-            new_date.save()
-
-            db.bulk_create([CategoriesVSDate(
-                category=c,
-                from_month=new_date,
-                count=0
-            ) for c in Categories.objects.all()])
-
-            new_months.append(str(date_code))
-    if len(new_months) != 0:
-        logger.info('Append new months: ' + ' '.join(new_months))
-    else:
-        logger.info('No new months')
-
-    new_cats = []
-    logger.debug('Looking for new categories')
-    for cat in articles.category.values:
-        if Categories.objects.filter(category=cat).count() == 0:
-            logger.critical('Category does not exists: ' + cat + '. Specify full and append to GLOBAL!!!!')
-            new_category, _ = Categories.objects.update_or_create(category=cat, category_full='NOT SPECIFIED')
-            new_category.save()
-            new_cats.append(cat)
-
-            db.bulk_create([CategoriesVSDate(
-                from_category=new_category,
-                from_month=d,
-                count=0
-            ) for d in CategoriesDate.objects.all()])
-    if len(new_months) != 0:
-        logger.info('Append new categories: ' + ' '.join(new_cats))
-    else:
-        logger.info('No new categories')
-
-    new_vs = 0
-    logging.debug('Update bar counts')
-    for cat, date in tqdm.tqdm(zip(articles.category.values, articles.date)):
-        date_code = date.month + date.year * 100
-        target = CategoriesVSDate.objects.filter(
-            from_category__category=cat,
-            from_month__date_code=date_code
-        )
-        assert target.count() == 1
-        target.update(count=F('count') + 1)
-        new_vs += 1
-
-    logger.info('FINISH Stacked bar. Statictics:')
-    logger.info('\t%d new categories (SPECIFY!): ' % len(new_cats))
-    logger.info('\t%d new dates: ' % len(new_months))
-    logger.info('\tTotal %d updates' % new_vs)
 
 
 @utils.logging.timeit(logger, 'Trend Ngrams Time', level=logging.INFO)
@@ -554,6 +594,9 @@ def main(args):
 
     overall_stats()
 
+    if args.update_categories:
+        update_categories_name()
+
     if args.download_meta or args.all:
         download_meta(args)
 
@@ -571,6 +614,9 @@ def main(args):
 
     if args.knn or args.all or args.clean:
         calc_nearest_articles(args)
+
+    if args.category_bar or args.all or args.clean:
+        stacked_bar(args)
 
     logger.debug('#'*50)
     overall_stats()

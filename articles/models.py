@@ -24,6 +24,7 @@ class Article(models.Model):
     has_txt = models.BooleanField(default=False)
     has_inner_vector = models.BooleanField(default=False)
     has_neighbors = models.BooleanField(default=False)
+    has_category_bar = models.BooleanField(default=False)
     has_ngram_stat = models.BooleanField(default=False)
 
 

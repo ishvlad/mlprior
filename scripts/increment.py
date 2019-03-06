@@ -49,6 +49,7 @@ def parse_args():
     parser.add_argument('-inner_vector', action='store_true', help='Do we need to calculate inner vectors?')
     parser.add_argument('-knn', action='store_true', help='Do we need to calculate nearest articles?')
     parser.add_argument('-category_bar', action='store_true', help='Do we need to count articles in category bar?')
+    parser.add_argument('-ngrams', action='store_true', help='Do we need to update Ngrams Trend lines?')
 
     parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=100)
     parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=200)
@@ -93,7 +94,7 @@ def download_meta(args):
     attempt = 1
     start = 0
     ok_list = []
-    pbar = tqdm.tqdm(total=args.max_articles)
+    pbar = tqdm.tqdm(total=args.max_articles, desc='Total articles')
 
     while len(ok_list) < args.max_articles:
         logger.debug('BUFFER is empty. arXiv.API -- Try to get %d articles...' % args.batch_size)
@@ -450,7 +451,7 @@ def stacked_bar(args):
                 count=0
             ) for d in CategoriesDate.objects.all()])
 
-    logging.info('Update %d bar counts')
+    logging.info('Update bar counts')
     for _, row in tqdm.tqdm(articles.iterrows(), total=len(articles)):
         date_code = row['date'].month + row['date'].year * 100
         CategoriesVSDate.objects.filter(
@@ -498,91 +499,75 @@ def get_grams_dict(sentences, max_ngram_len=5):
     return dic, key_store
 
 
-@utils.logging.timeit(logger, 'Trend Ngrams Time', level=logging.INFO)
-def trend_ngrams(articles, max_n_for_grams=3):
+@utils.logging.timeit(logger, 'Ngram Trend Line Time', level=logging.INFO)
+def trend_ngrams(args, max_n_for_grams=3):
+    logger.info('START Ngram Trend Line')
     db = DBManager()
+
+    articles = Article.objects.filter(Q(has_txt=True) & Q(has_ngram_stat=False))
+    max_articles = _get_max_articles(articles, args.max_articles)
+
+    if max_articles == 0:
+        logger.info('No articles for ngrams')
+        logger.info('FINISH Ngram Trend Line')
+        return
+
+    articles = articles.values('id', 'date', 'title', 'abstract', 'articletext__text')[:max_articles]
+    articles = pd.DataFrame(articles)
     articles['date'] = pd.to_datetime(articles['date'])
     articles['idx_sort'] = articles.date.dt.month + articles.date.dt.year * 100
-    articles.sort_values('idx_sort', inplace=True)
-    grouped = sorted(articles.groupby('idx_sort'), key=operator.itemgetter(0))
 
-    logger.info('START Trend Ngrams')
-    num_new = [0, 0, 0]
-    num_update = 0
-    for i_group, (date, df_group) in enumerate(grouped):
+    for _, row in tqdm.tqdm(articles.iterrows(), total=len(articles), desc='Total'):
+        date_code = row['idx_sort']
 
-        logger.info('%d (%d out of %d)' % (date, i_group+1, len(grouped)))
-
-        dics_ttl, keys_ttl = get_grams_dict(df_group.title.values, max_n_for_grams)
-        dics_abs, keys_abs = get_grams_dict(df_group.abstract.values, max_n_for_grams)
-        dics_txt, keys_txt = get_grams_dict(df_group.articletext__text.values, max_n_for_grams)
-        keys = list(set(np.concatenate((keys_ttl, keys_abs, keys_txt))))
-
-        upd = 0
-        new_months, new_sentences, new_links = 0, 0, []
-
-        if NGramsMonth.objects.filter(label_code=date).count() == 0:
-            label = datetime.date(date//100, date%100, 1).strftime('%b %y')
+        if NGramsMonth.objects.filter(label_code=date_code).count() == 0:
+            label = datetime.date(date_code//100, date_code%100, 1).strftime('%b %y')
             db.bulk_create([NGramsMonth(
-                label_code=date,
+                label_code=date_code,
                 label=label,
                 length=i+1
             ) for i in range(max_n_for_grams)])
-            new_months += 1
 
+        dics_ttl, keys_ttl = get_grams_dict([row['title']], max_n_for_grams)
+        dics_abs, keys_abs = get_grams_dict([row['abstract']], max_n_for_grams)
+        dics_txt, keys_txt = get_grams_dict([row['articletext__text']], max_n_for_grams)
+
+        keys = list(set(np.concatenate((keys_ttl, keys_abs, keys_txt))))
         existed_keys = list(NGramsSentence.objects.filter(sentence__in=keys).values_list(flat=True))
         new_keys = np.array(keys)[~np.in1d(keys, existed_keys)]
-        new_sentences = len(new_keys)
+
         db.bulk_create([NGramsSentence(sentence=k) for k in new_keys])
+        months = NGramsMonth.objects.filter(label_code=date_code).order_by('length')
+        db.bulk_create([SentenceVSMonth(
+            from_corpora=months[len(key.split()) - 1],
+            from_item=NGramsSentence.objects.filter(sentence=key)[0],
+            freq_title=dics_ttl[len(key.split()) - 1].get(key, 0),
+            freq_abstract=dics_abs[len(key.split()) - 1].get(key, 0),
+            freq_text=dics_txt[len(key.split()) - 1].get(key, 0)
+        ) for key in tqdm.tqdm(new_keys, desc='New sentences in %d' % date_code)])
 
-        for key in tqdm.tqdm(keys):
-            length = len(key.split())
-
-            sentence = NGramsSentence.objects.filter(sentence=key)[0]
-            month = NGramsMonth.objects.filter(length=length, label_code=date)[0]
-
-            base = SentenceVSMonth.objects.filter(from_corpora=month, from_item=sentence)
-            if base.count() == 0:
-                new_links.append(SentenceVSMonth(
-                    from_corpora=month,
-                    from_item=sentence,
-                    freq_title=dics_ttl[length-1].get(key, 0),
-                    freq_abstract=dics_abs[length-1].get(key, 0),
-                    freq_text=dics_txt[length-1].get(key, 0),
-                ))
-            else:
-                base.update(
-                    freq_title=F('freq_title') + dics_ttl[length - 1].get(key, 0),
-                    freq_abstract=F('freq_abstract') + dics_abs[length - 1].get(key, 0),
-                    freq_text=F('freq_text') + dics_txt[length - 1].get(key, 0),
+        for key in tqdm.tqdm(existed_keys, 'Update sentences in %d' % date_code):
+            idx_len = len(key.split()) - 1
+            target = SentenceVSMonth.objects.filter(
+                from_corpora=months[idx_len],
+                from_item=NGramsSentence.objects.filter(sentence=key)[0]
+            )
+            if len(target) == 0:
+                SentenceVSMonth.objects.update_or_create(
+                    from_corpora=months[idx_len],
+                    from_item=NGramsSentence.objects.filter(sentence=key)[0],
+                    freq_title=dics_ttl[idx_len].get(key, 0),
+                    freq_abstract=dics_abs[idx_len].get(key, 0),
+                    freq_text=dics_txt[idx_len].get(key, 0),
                 )
-                upd += 1
+            else:
+                target.update(
+                    freq_title=F('freq_title') + dics_ttl[idx_len].get(key, 0),
+                    freq_abstract=F('freq_abstract') + dics_abs[idx_len].get(key, 0),
+                    freq_text=F('freq_text') + dics_txt[idx_len].get(key, 0),
+                )
 
-        start_str = '%d: ' % date
-        num_new[0] += new_months
-        num_new[1] += new_sentences
-        logger.info(start_str + '{} new months, {} new sentences'.format(new_months, new_sentences))
-
-        num_new[2] += len(new_links)
-        num_update += upd
-        logger.info(start_str + '{} new, {} updated'.format(len(new_links), upd))
-        db.bulk_create(new_links)
-
-    logger.info('FINISH Trend Ngrams. Statictics:')
-    logger.info('\tNew months: %d' % num_new[0])
-    logger.info('\tNew sentences: %d' % num_new[1])
-    logger.info('\tNew links: %d' % num_new[2])
-    logger.info('\tUpdated links: %d' % num_update)
-    logger.debug('#'*50 + '\n')
-
-
-def visualizations(articles, max_n_for_grams=3):
-    logger.info('START Visualizations')
-
-    stacked_bar(articles)
-    trend_ngrams(articles, max_n_for_grams)
-
-    logger.info('FINISH Visualization')
+        Article.objects.filter(pk=row['id']).update(has_ngram_stat=True)
 
 
 @utils.logging.timeit(logger, 'Total Time', level=logging.INFO)
@@ -617,6 +602,9 @@ def main(args):
 
     if args.category_bar or args.all or args.clean:
         stacked_bar(args)
+
+    if args.ngrams or args.all or args.clean:
+        trend_ngrams(args)
 
     logger.debug('#'*50)
     overall_stats()

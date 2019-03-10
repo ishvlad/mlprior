@@ -3,6 +3,6 @@
 {#    <i class="material-icons">account_box</i>#}
 {#</span>#}
     {% for author in article.authors.all %}
-    <a href="/articles/authors/{{ author.name }}"><span style="color: #4e73df">{{ author }}</span> </a>{% if not forloop.last %},{% endif %}
+    <a href="/articles/authors/{{ author.name }}"><span style="color: #4e73df">{{ author }}</span></a>{% if not forloop.last %},{% endif %}
     {% endfor %}
 </div>

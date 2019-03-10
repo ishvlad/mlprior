@@ -1,4 +1,5 @@
 {% load static %}
+{% load account %}
 {% load i18n %}
 
 <!DOCTYPE html>
@@ -22,9 +23,11 @@
   <link href="{% static 'css/material-dashboard.css'%}" rel="stylesheet" />
 
     <link href="{% static 'fontawesome/css/all.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'css/bootstrap-select.min.css'%}" rel="stylesheet" type="text/css">
 
     <link href="{% static 'css/mystyle.css' %}" rel="stylesheet">
 {#    <link href="{% static 'css/share.css' %}" rel="stylesheet">#}
+
 
 
 </head>
@@ -42,6 +45,51 @@
             <div class="col-md-4 ml-auto mr-auto">
                 {% include 'articles/articles_navigation.html' %}
             </div>
+
+{#              <div class="row">#}
+{#<div class="col-md-4 ml-auto mr-auto">#}
+{#<div class="card">#}
+{#    <div class="card-header card-header-rose card-header-text">#}
+{#      <div class="card-icon">#}
+{#        <i class="material-icons">library_books</i>#}
+{#      </div>#}
+{#      <h4 class="card-title">Date Picker</h4>#}
+{#    </div>#}
+{#    <div class="card-body ">#}
+{#      <div class="form-group bmd-form-group is-filled" id='datetimepicker22'>#}
+{#        <input type="text" class="form-control datepicker" value="10/06/2018">#}
+{#          <script type="text/javascript">#}
+{#            $(function () {#}
+{#                $('#datetimepicker1').datetimepicker();#}
+{#            });#}
+{#        </script>#}
+{#      </div>#}
+{#    </div>#}
+{#  </div>#}
+{##}
+{#    </div>#}
+{#    </div>#}
+{##}
+{#              <div class="container">#}
+{#    <div class="row">#}
+{#        <div class='col-sm-6'>#}
+{#            <div class="form-group">#}
+{#                <div class='input-group date' id='datetimepicker1'>#}
+{#                    <input type='text' class="form-control" />#}
+{#                    <span class="input-group-addon">#}
+{#                        <span class="glyphicon glyphicon-calendar"></span>#}
+{#                    </span>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#        <script type="text/javascript">#}
+{#            $(function () {#}
+{#                $('#datetimepicker1').datetimepicker();#}
+{#            });#}
+{#        </script>#}
+{#    </div>#}
+{#</div>#}
+
           </div>
 
           <button class="navbar-toggler" type="button" data-toggle="collapse" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,9 +99,9 @@
             <span class="navbar-toggler-icon icon-bar"></span>
           </button>
           <div class="collapse navbar-collapse justify-content-end">
-            <form class="navbar-form">
+            <form action="{% url 'search' %}" class="navbar-form" method="get">
               <div class="input-group no-border">
-                <input type="text" value="" class="form-control" placeholder="Search...">
+                <input id="q" name="q" type="text" value="" class="form-control" placeholder="Search...">
                 <button type="submit" class="btn btn-white btn-round btn-just-icon">
                   <i class="material-icons">search</i>
                   <div class="ripple-container"></div>
@@ -70,7 +118,7 @@
                   </p>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownProfile">
-                    <span class="dropdown-item">{{ user }}</span>
+                    <span class="dropdown-item">{% user_display user %}</span>
                   <a class="dropdown-item" href="/accounts/logout" data-toggle="modal" data-target="#logoutModal">Log out</a>
                 </div>
               </li>
@@ -82,8 +130,7 @@
       <div class="content">
           <div class="container-fluid">
 
-          <div class="col-md-6"><h2>{{ page_name }}</h2>
-              </div>
+
 
 {#                <h1 class="h3 mb-4 text-gray-800">{{ page_name }}</h1>#}
 
@@ -134,22 +181,27 @@
 
   <!--   Core JS Files   -->
 
-{#  <script src="{% static 'js/bootstrap.min.js'%}"></script>#}
-{#  <script src="{% static 'js/bootstrap.bundle.min.js'%}"></script>#}
+  <script src="{% static 'js/bootstrap.min.js'%}"></script>
+  <script src="{% static 'js/plugins/moment.min.js'%}"></script>
+  <script src="{% static 'js/bootstrap.bundle.min.js'%}"></script>
   <script src="{% static 'js/core/jquery.min.js'%}"></script>
   <script src="{% static 'js/core/popper.min.js'%}"></script>
+  <script src="{% static 'js/collapse.js'%}"></script>
+
+  <script src="{% static 'js/plugins/bootstrap-selectpicker.js'%}"></script>
+  <script src="{% static 'js/plugins/bootstrap-datetimepicker.min.js'%}"></script>
+
 
   <script src="{% static 'js/main.js'%}"></script>
+  <script src="{% static 'js/filters.js'%}"></script>
 
 
 {# <script src="{% static  '_old/js/jquery-easing/jquery.easing.min.js' %}"></script>#}
 
   <script src="{% static 'js/core/bootstrap-material-design.min.js'%}"></script>
   <script src="{% static 'js/plugins/perfect-scrollbar.jquery.min.js'%}"></script>
-<script src="//yastatic.net/share2/share.js" async="async"></script>
 
-
-
+  <script src="//yastatic.net/share2/share.js" async="async"></script>
 
 
 {% block javascript %}

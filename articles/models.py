@@ -1,7 +1,7 @@
-
 from django.conf import settings
 from django.db import models
 
+from core.search import ArticleIndex
 
 User = settings.AUTH_USER_MODEL
 
@@ -27,7 +27,6 @@ class Article(models.Model):
     has_category_bar = models.BooleanField(default=False)
     has_ngram_stat = models.BooleanField(default=False)
 
-
     class Meta:
         verbose_name = 'Article'
         verbose_name_plural = 'Articles'
@@ -35,6 +34,14 @@ class Article(models.Model):
 
     def __str__(self):
         return self.title
+
+    def indexing(self):
+        obj = ArticleIndex(
+            meta={'id': self.id},
+            title=self.title
+        )
+        obj.save()
+        return obj.to_dict(include_meta=True)
 
 
 class Author(models.Model):

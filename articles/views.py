@@ -12,10 +12,10 @@ from el_pagination.decorators import page_template
 from el_pagination.views import AjaxListView
 from django.contrib.auth import login
 
-from articles.documents import ArticleDocument
 # from core.forms import UserSignUpForm, UserLoginForm
 from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation, \
     CategoriesVSDate
+from search.documents import ArticleDocument
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
 from django_ajax.mixin import AJAXMixin
 
@@ -183,6 +183,11 @@ class ArticlesMixin(object):
     def notes(self):
         article_user = ArticleUser.objects.filter(user=self.request.user, note__isnull=False)
         return dict(article_user.values_list('article', 'note'))
+
+    @property
+    def categories(self):
+        cats = list(Article.objects.all().values_list('category'))
+        return list(sorted(list(set(cats))))  # OMG LOL KEK
 
 
 class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJAXMixin):
@@ -392,31 +397,6 @@ def like_dislike(request, article_id):
     article_user.save()
 
     return JsonResponse({})
-
-
-@page_template('articles_list_page.html')
-@login_required(login_url='/accounts/login')
-def search(request, search_query, template='articles_list.html', extra_context=None):
-    print('SEARCH!!!')
-    s = ArticleDocument.search().query("match", title=search_query)
-
-    for art in s:
-        print(art)
-
-    user_articles = request.user.articles.all()
-
-    context = {
-        'articles': s.to_queryset(),
-        'user_articles': user_articles,
-        'page_name': 'Articles',
-        'is_lib': False
-    }
-
-    if extra_context is not None:
-        context.update(extra_context)
-
-    rendered_template = render(request, template, context)
-    return HttpResponse(rendered_template, content_type='text/html')
 
 
 def landing_view(request):

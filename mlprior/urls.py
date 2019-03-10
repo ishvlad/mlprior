@@ -15,9 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+import search.views as search_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
     path('articles/', include('articles.urls')),
+    path('search', search_views.ArticlesSearchView.as_view(), name='search')
 ]

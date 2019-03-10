@@ -37,10 +37,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'django_elasticsearch_dsl',
+    'django_elasticsearch_dsl',
     'social_django',
     'el_pagination',
     'django_ajax',
+
+    'core',
+    'articles',
+    'search',
 
     'django.contrib.sites',  # new
     # 3rd party
@@ -48,8 +52,6 @@ INSTALLED_APPS = [
     'allauth.account',  # new
     'allauth.socialaccount',  # new
 
-    'core',
-    'articles',
 ]
 
 MIDDLEWARE = [

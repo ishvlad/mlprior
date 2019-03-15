@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'social_django',
     'el_pagination',
     'django_ajax',
+    'automated_logging',
 
     'core',
     'articles',
@@ -62,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'automated_logging.middleware.AutomatedLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'mlprior.urls'

@@ -12,3 +12,5 @@ social-auth-app-django
 tqdm
 djangoajax
 django-allauth
+psycopg2
+django-automated-logging

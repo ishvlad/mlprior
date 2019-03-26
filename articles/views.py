@@ -16,6 +16,7 @@ from django.contrib.auth import login
 from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation, \
     CategoriesVSDate
 from search.documents import ArticleDocument
+from search.forms import SearchForm
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
 from django_ajax.mixin import AJAXMixin
 
@@ -196,6 +197,7 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJ
     page_template = 'articles/articles_list_page.html'
     model = Article
     context_object_name = 'articles'
+    form = SearchForm
 
     @property
     def tab(self):
@@ -271,18 +273,18 @@ class ArticlesOfAuthor(ArticlesView):
     template_name = 'articles/author_details.html'
 
     def get_queryset(self):
-        user = Author.objects.get(name=self.kwargs['author_name'])
+        author = Author.objects.get(name=self.kwargs['author_name'])
 
-        return user.articles.order_by('-date')
+        return author.articles.order_by('-date')
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
 
-        user = Author.objects.get(name=self.kwargs['author_name'])
-        context['page_name'] = '%s' % user.name
+        author = Author.objects.get(name=self.kwargs['author_name'])
+        context['page_name'] = '%s' % author.name
 
-        n_articles = Author.objects.get(name=self.kwargs['author_name']).articles.count()
+        n_articles = author.articles.count()
         context['n_articles'] = n_articles
 
         return context

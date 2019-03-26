@@ -21,5 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
     path('articles/', include('articles.urls')),
-    path('search', search_views.ArticlesSearchView.as_view(), name='search')
+    path('', include('search.urls')),
 ]

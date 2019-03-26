@@ -7,6 +7,7 @@ from articles.views import home, landing_view
 urlpatterns = [
     path('', landing_view, name='landing'),
     path('home/', home, name='home'),
+    # path('feedback', FeedBackView.as_view(), 'feedback'),
     path('accounts/', include('allauth.urls')),
     path('auth/', include('social_django.urls', namespace='social'))
 ]

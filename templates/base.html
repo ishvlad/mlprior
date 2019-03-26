@@ -24,6 +24,7 @@
 
     <link href="{% static 'fontawesome/css/all.min.css' %}" rel="stylesheet" type="text/css">
     <link href="{% static 'css/bootstrap-select.min.css'%}" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" />
 
     <link href="{% static 'css/mystyle.css' %}" rel="stylesheet">
 {#    <link href="{% static 'css/share.css' %}" rel="stylesheet">#}
@@ -45,51 +46,6 @@
             <div class="col-md-4 ml-auto mr-auto">
                 {% include 'articles/articles_navigation.html' %}
             </div>
-
-{#              <div class="row">#}
-{#<div class="col-md-4 ml-auto mr-auto">#}
-{#<div class="card">#}
-{#    <div class="card-header card-header-rose card-header-text">#}
-{#      <div class="card-icon">#}
-{#        <i class="material-icons">library_books</i>#}
-{#      </div>#}
-{#      <h4 class="card-title">Date Picker</h4>#}
-{#    </div>#}
-{#    <div class="card-body ">#}
-{#      <div class="form-group bmd-form-group is-filled" id='datetimepicker22'>#}
-{#        <input type="text" class="form-control datepicker" value="10/06/2018">#}
-{#          <script type="text/javascript">#}
-{#            $(function () {#}
-{#                $('#datetimepicker1').datetimepicker();#}
-{#            });#}
-{#        </script>#}
-{#      </div>#}
-{#    </div>#}
-{#  </div>#}
-{##}
-{#    </div>#}
-{#    </div>#}
-{##}
-{#              <div class="container">#}
-{#    <div class="row">#}
-{#        <div class='col-sm-6'>#}
-{#            <div class="form-group">#}
-{#                <div class='input-group date' id='datetimepicker1'>#}
-{#                    <input type='text' class="form-control" />#}
-{#                    <span class="input-group-addon">#}
-{#                        <span class="glyphicon glyphicon-calendar"></span>#}
-{#                    </span>#}
-{#                </div>#}
-{#            </div>#}
-{#        </div>#}
-{#        <script type="text/javascript">#}
-{#            $(function () {#}
-{#                $('#datetimepicker1').datetimepicker();#}
-{#            });#}
-{#        </script>#}
-{#    </div>#}
-{#</div>#}
-
           </div>
 
           <button class="navbar-toggler" type="button" data-toggle="collapse" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
@@ -129,10 +85,6 @@
       <!-- End Navbar -->
       <div class="content">
           <div class="container-fluid">
-
-
-
-{#                <h1 class="h3 mb-4 text-gray-800">{{ page_name }}</h1>#}
 
                 {% block content %}
 
@@ -185,6 +137,7 @@
   <script src="{% static 'js/plugins/moment.min.js'%}"></script>
   <script src="{% static 'js/bootstrap.bundle.min.js'%}"></script>
   <script src="{% static 'js/core/jquery.min.js'%}"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js" type="text/javascript"></script>
   <script src="{% static 'js/core/popper.min.js'%}"></script>
   <script src="{% static 'js/collapse.js'%}"></script>
 

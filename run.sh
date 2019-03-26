@@ -5,7 +5,7 @@ python manage.py makemigrations
 python manage.py makemigrations articles
 python manage.py makemigrations core
 python manage.py migrate
-python scripts/increment.py --max_articles 50 -all
+python scripts/increment.py --max_articles 500 -all
 python manage.py search_index --rebuild
 
 

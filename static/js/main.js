@@ -240,6 +240,14 @@ $(function() {
 
     $(document).ready();
 
+
+    $(function() {
+      $("#search").autocomplete({
+        source: "/api/search/",
+        minLength: 2,
+      });
+    });
+
     // $('.selectpicker').selectpicker();
 
     // $(document).ready(function() {

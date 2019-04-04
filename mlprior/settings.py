@@ -16,7 +16,6 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 STATICFILE_DIR = os.path.join(BASE_DIR, 'static')
-STATIC_ROOT=os.path.join(BASE_DIR, 'static')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
@@ -25,9 +24,19 @@ STATIC_ROOT=os.path.join(BASE_DIR, 'static')
 SECRET_KEY = '4)re*)pg$qi*i$uo2hv3_03^pr4eswx&+&f&k2z5d*f#7+xry8'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ["www.mlprior.com", "mlprior.com"]
+if DEBUG:
+    STATICFILES_DIRS = [
+        STATICFILE_DIR,
+    ]
+    ALLOWED_HOSTS = []
+else:
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    ALLOWED_HOSTS = ['www.mlprior.com', 'mlprior.com']
+
+
+
 
 # Application definition
 
@@ -44,7 +53,7 @@ INSTALLED_APPS = [
     'social_django',
     'el_pagination',
     'django_ajax',
-    'automated_logging',
+    # 'automated_logging',
 
     'core',
     'articles',
@@ -141,10 +150,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
-
-#STATICFILES_DIRS = [
-#    STATICFILE_DIR,
-#]
 
 LOGIN_URL = 'accounts/login'
 

@@ -220,8 +220,12 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
                 logger.debug(idx + '. pdf2txt: Failed to generate TXT (No .txt file)). NEXT')
                 continue
 
-        with open(file_txt, 'r', encoding='unicode_escape') as f:
-            text = ' '.join(f.readlines())[:100000]
+        try:
+            with open(file_txt, 'r', encoding='unicode_escape') as f:
+                text = ' '.join(f.readlines())[:100000]
+        except Exception as e:
+            logger.debug(idx + '. Decode problem. No .txt file (Next): ' + str(e))
+            continue
 
         new_items.append(ArticleText(
             article_origin_id=pk,

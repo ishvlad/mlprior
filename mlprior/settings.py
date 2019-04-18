@@ -24,7 +24,7 @@ STATICFILE_DIR = os.path.join(BASE_DIR, 'static')
 SECRET_KEY = '4)re*)pg$qi*i$uo2hv3_03^pr4eswx&+&f&k2z5d*f#7+xry8'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     STATICFILES_DIRS = [

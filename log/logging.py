@@ -27,9 +27,9 @@ def timeit(logger, tag=None, level=None, format='%s: %s minutes'):
 
 def get_logger(name, log_file=None, level=logging.DEBUG):
     if log_file is None:
-        log_file = 'logs/' + name + '.log'
+        log_file = 'data/logs/' + name + '.log'
 
-    if not os.path.exists('logs'):
+    if not os.path.exists('data/logs'):
         os.mkdir('logs')
 
     formatter = logging.Formatter('%(asctime)s:%(levelname)s: %(message)s')
@@ -50,24 +50,3 @@ def get_logger(name, log_file=None, level=logging.DEBUG):
     return logger
 
 
-def log_post(url, action, source_url='', args={}):
-    '''
-    Логирование происходящего для трекинка через POST запросы.
-    :param url: либо localhost, либо mlprior.com
-    :param action: 5 вариантов:
-        1 (move): перемещение с одной страницы на другую. в args:
-                target_url: указать, на какую страницу переходит
-        0 (other): любое другое действие
-
-    :param source_url: указать, с какой страницы пришёл запрос на действие
-    :param args: см. action
-    :return: Nothing
-    '''
-
-    data = {
-        'action': action,  # int
-        'source_url': source_url,  # str
-        'args': json.dumps(args)  # str
-    }
-    requests.post(url + "/api/v1/log", data=data)
-    return

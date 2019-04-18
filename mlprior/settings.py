@@ -113,7 +113,7 @@ DATABASES = {
         'USER': 'mlprioradmin',
         'PASSWORD': '1qwe324r6y8ytr',
         'HOST': 'rc1b-zmubjdml3fofgsu4.mdb.yandexcloud.net',
-        'PORT': '5432',
+        'PORT': '6432',
     }
 }
 

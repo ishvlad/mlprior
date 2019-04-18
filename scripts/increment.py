@@ -2,7 +2,6 @@ import argparse
 import datetime
 import logging
 import numpy as np
-import operator
 import os
 import pandas as pd
 import re
@@ -30,10 +29,10 @@ from urllib.request import urlopen
 from utils.constants import GLOBAL__CATEGORIES
 from utils.recommendation import RelationModel
 
-import utils.logging
+import log.logging
 
 file_tag = str(datetime.datetime.now())
-logger = utils.logging.get_logger('Increment_' + file_tag)
+logger = log.logging.get_logger('Increment_' + file_tag)
 
 
 def parse_args():
@@ -85,7 +84,7 @@ def _get_max_articles(articles, max_articles):
     return max_articles
 
 
-@utils.logging.timeit(logger, 'Download Meta Time', level=logging.INFO)
+@log.logging.timeit(logger, 'Download Meta Time', level=logging.INFO)
 def download_meta(args):
     logger.info('START downloading metas from arXiv')
     arxiv_api = ArXivAPI(args.sleep_time)
@@ -139,7 +138,7 @@ def download_meta(args):
     logger.info('FINISH downloading %d metas from arXiv' % len(ok_list))
 
 
-@utils.logging.timeit(logger, 'Download PDF Time', level=logging.INFO)
+@log.logging.timeit(logger, 'Download PDF Time', level=logging.INFO)
 def download_pdf(args, path_pdf='data/pdfs'):
     logger.info('START downloading PDFs from arXiv')
 
@@ -180,7 +179,7 @@ def download_pdf(args, path_pdf='data/pdfs'):
         Article.objects.filter(pk__in=ok_list).update(has_pdf=True)
 
 
-@utils.logging.timeit(logger, 'PDF 2 TXT Time', level=logging.INFO)
+@log.logging.timeit(logger, 'PDF 2 TXT Time', level=logging.INFO)
 def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
     logger.info('START generating TXTs from PDFs')
     db = DBManager()
@@ -243,7 +242,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
         Article.objects.filter(pk__in=ok_list).update(has_txt=True)
 
 
-@utils.logging.timeit(logger, 'Retraining model Time', level=logging.INFO)
+@log.logging.timeit(logger, 'Retraining model Time', level=logging.INFO)
 def retrain(args):
     logger.info('START Retraining model')
 
@@ -261,7 +260,7 @@ def retrain(args):
     logger.info('FINISH Retraining model')
 
 
-@utils.logging.timeit(logger, 'Calculate Inner Vector Time', level=logging.INFO)
+@log.logging.timeit(logger, 'Calculate Inner Vector Time', level=logging.INFO)
 def calc_inner_vector(args):
     logger.info('START making relations')
     db = DBManager()
@@ -298,7 +297,7 @@ def calc_inner_vector(args):
     logger.info('FINISH making relations')
 
 
-@utils.logging.timeit(logger, 'Calculate nearest articles', level=logging.INFO)
+@log.logging.timeit(logger, 'Calculate nearest articles', level=logging.INFO)
 def calc_nearest_articles(args, n_nearest=20):
     logger.info('START calculating nearest articles')
     db = DBManager()
@@ -367,7 +366,7 @@ def calc_nearest_articles(args, n_nearest=20):
     logger.info('FINISH calculating nearest articles')
 
 
-@utils.logging.timeit(logger, 'Update categories Time', level=logging.INFO)
+@log.logging.timeit(logger, 'Update categories Time', level=logging.INFO)
 def update_categories_name():
     logger.info('START Updating categories')
     ok, not_ok = 0, 0
@@ -383,7 +382,7 @@ def update_categories_name():
     logger.info('FINISH Updating categories (%d updated and %d not specified)' % (ok, not_ok))
 
 
-@utils.logging.timeit(logger, 'Stacked Bar Time', level=logging.INFO)
+@log.logging.timeit(logger, 'Stacked Bar Time', level=logging.INFO)
 def stacked_bar(args):
     logger.info('START Stacked bar')
     db = DBManager()
@@ -503,7 +502,7 @@ def get_grams_dict(sentences, max_ngram_len=5):
     return dic, key_store
 
 
-@utils.logging.timeit(logger, 'Ngram Trend Line Time', level=logging.INFO)
+@log.logging.timeit(logger, 'Ngram Trend Line Time', level=logging.INFO)
 def trend_ngrams(args, max_n_for_grams=3):
     logger.info('START Ngram Trend Line')
     db = DBManager()
@@ -574,7 +573,7 @@ def trend_ngrams(args, max_n_for_grams=3):
         Article.objects.filter(pk=row['id']).update(has_ngram_stat=True)
 
 
-@utils.logging.timeit(logger, 'Total Time', level=logging.INFO)
+@log.logging.timeit(logger, 'Total Time', level=logging.INFO)
 def main(args):
     path, path_pdf, path_txt = 'data', 'data/pdfs', 'data/txts'
     for d in [path, path_pdf, path_txt]:

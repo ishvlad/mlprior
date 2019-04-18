@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'core',
     'articles',
     'search',
+    'log',
 
     'django.contrib.sites',  # new
     # 3rd party
@@ -75,7 +76,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'automated_logging.middleware.AutomatedLoggingMiddleware',
+    'log.middleware.AutomatedLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'mlprior.urls'
@@ -92,7 +93,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.request',  ## For EL-pagination
+                'django.template.context_processors.request',  # For EL-pagination
                 'social_django.context_processors.backends',  # auth
                 'social_django.context_processors.login_redirect'  # auth
             ],
@@ -198,3 +199,27 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '84590134255-r0m62tcgtktifk6ct36po6g4q8k3rg1g.ap
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'vT1E0qYP27NMBQjZlN-MbvKQ'  # Paste Secret Key
 
 AUTH_USER_MODEL = 'core.User'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'db': {
+            'level': 'INFO',
+            'class': 'log.handlers.DatabaseHandler',
+        }
+    },
+    'loggers': {
+        'automated_logging': {
+            'level': 'INFO',
+            'handlers': ['db'],
+            'propagate': True,
+        },
+        'django': {
+            'level': 'INFO',
+            'handlers': ['db'],
+            'propagate': True,
+        },
+    },
+}
+

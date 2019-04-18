@@ -118,6 +118,7 @@ def trend_view(request, keywords_raw=None):
         min_tick = min(min_tick, min([x[2] for x in freq]))
 
     now = datetime.datetime.now()
+    # now = datetime.date(year=2007, month=10, day=1)
     if min_tick == 300000:
         min_tick = (now.year - 1) * 100 + now.month
 
@@ -135,7 +136,7 @@ def trend_view(request, keywords_raw=None):
         } for k, c in zip(keywords, colors)]
     }
 
-    while not (year == now.year and month > now.month):
+    while not ((year == now.year and month > now.month) or year > now.year):
         label = datetime.date(year, month, 1).strftime('%b %y')
         line_data['labels'].append(label)
         for i, kw in enumerate(keywords):

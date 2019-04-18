@@ -13,5 +13,4 @@ tqdm
 djangoajax
 django-allauth
 psycopg2
-django-automated-logging
 django-autocomplete-light

@@ -35,9 +35,6 @@ else:
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
     ALLOWED_HOSTS = ['www.mlprior.com', 'mlprior.com']
 
-
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -111,8 +108,12 @@ WSGI_APPLICATION = 'mlprior.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'mlpriordb',
+        'USER': 'mlprioradmin',
+        'PASSWORD': '1qwe324r6y8ytr',
+        'HOST': 'rc1b-zmubjdml3fofgsu4.mdb.yandexcloud.net',
+        'PORT': '5432',
     }
 }
 
@@ -222,4 +223,3 @@ LOGGING = {
         },
     },
 }
-

@@ -193,6 +193,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
 
     pbar = tqdm.tqdm(total=max_articles)
     ok_list = []
+    idx_list = []
     new_items = []
     for pk, idx in articles.values_list('pk', 'arxiv_id'):
         if len(ok_list) >= max_articles:
@@ -207,12 +208,13 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
             if len(arts) != 0 and arts[0]['text'] is not None:
                 logger.debug('TXT ' + idx + ' already exists. Just update flag')
                 ok_list.append(pk)
+                idx_list.append(idx)
                 pbar.update(1)
                 continue
             else:
                 logger.debug('TXT ' + idx + ' already exists, but text not appears in DB. Save text')
         else:
-            cmd = "pdftotext %s %s 2> logs/pdf2txt_%s.log" % (file_pdf, file_txt, idx)
+            cmd = "pdftotext %s %s 2> data/logs/pdf2txt_%s.log" % (file_pdf, file_txt, idx)
             os.system(cmd)
 
             if not os.path.isfile(file_txt) or os.path.getsize(file_txt) == 0:
@@ -233,6 +235,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
             text=text
         ))
         ok_list.append(pk)
+        idx_list.append(idx)
         pbar.update(1)
 
     pbar.close()
@@ -240,6 +243,11 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
     if len(ok_list) != 0:
         db.bulk_create(new_items)
         Article.objects.filter(pk__in=ok_list).update(has_txt=True)
+    for idx in idx_list:
+        f = os.path.join(path_pdf, idx + '.pdf')
+        if os.path.exists(f):
+            cmd = "rm -rf %s" % f
+            os.system(cmd)
 
 
 @log.logging.timeit(logger, 'Retraining model Time', level=logging.INFO)

@@ -35,3 +35,8 @@ tar -xzf elasticsearch-6.6.1.tar.gz
 ./elasticsearch-6.6.1/bin/elasticsearch
 ```
 
+In case of read-only:
+```bash
+curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_settings -d '{"index.blocks.read_only_allow_delete": null}'
+```
+

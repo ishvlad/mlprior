@@ -171,7 +171,7 @@ def download_pdf(args, path_pdf='data/pdfs'):
             ok_list.append(pk)
             pbar.update(1)
         except Exception as e:
-            logger.debug(idx + ' (' + str(url) + '): Cannot download PDF. Exception: ' + e)
+            logger.debug(str(idx) + ' (' + str(url) + '): Cannot download PDF. Exception: ' + str(e))
 
     pbar.close()
     logger.info('FINISH downloading PDFs from arXiv. Now update flags of %d articles' % len(ok_list))

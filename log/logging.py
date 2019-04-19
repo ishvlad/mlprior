@@ -30,7 +30,7 @@ def get_logger(name, log_file=None, level=logging.DEBUG):
         log_file = 'data/logs/' + name + '.log'
 
     if not os.path.exists('data/logs'):
-        os.mkdir('logs')
+        os.mkdir('data/logs')
 
     formatter = logging.Formatter('%(asctime)s:%(levelname)s: %(message)s')
 

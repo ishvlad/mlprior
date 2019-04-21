@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 STATICFILE_DIR = os.path.join(BASE_DIR, 'static')
 
@@ -23,17 +23,7 @@ STATICFILE_DIR = os.path.join(BASE_DIR, 'static')
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '4)re*)pg$qi*i$uo2hv3_03^pr4eswx&+&f&k2z5d*f#7+xry8'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
 
-if DEBUG:
-    STATICFILES_DIRS = [
-        STATICFILE_DIR,
-    ]
-    ALLOWED_HOSTS = []
-else:
-    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-    ALLOWED_HOSTS = ['www.mlprior.com', 'mlprior.com']
 
 # Application definition
 
@@ -106,16 +96,6 @@ WSGI_APPLICATION = 'mlprior.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'mlpriordb',
-        'USER': 'mlprioradmin',
-        'PASSWORD': '1qwe324r6y8ytr',
-        'HOST': 'rc1b-zmubjdml3fofgsu4.mdb.yandexcloud.net',
-        'PORT': '6432',
-    }
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators

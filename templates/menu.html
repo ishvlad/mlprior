@@ -6,7 +6,7 @@
         </a>
       </div>
       <div class="sidebar-wrapper" id="main-navbar">
-        <ul class="nav navbar-nav" >
+        <ul class="nav navbar-nav">
           <li class="nav-item {% if page_id == 'home' %}active{% endif %}">
             <a class="nav-link" href="/home/">
               <i class="material-icons">dashboard</i>
@@ -23,6 +23,13 @@
             <a class="nav-link" href="/articles/library">
               <i class="material-icons">bookmarks</i>
               <p>Library</p>
+            </a>
+          </li>
+        <hr>
+        <li class="nav-item {% if page_id == 'feedback' %}active{% endif %}">
+            <a class="nav-link" href="/feedback">
+              <i class="material-icons">feedback</i>
+              <p>Feature request</p>
             </a>
           </li>
         </ul>

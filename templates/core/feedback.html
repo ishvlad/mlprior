@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+    <div class="card">
+                <div class="card-header card-header-primary">
+                  <h4 class="card-title">Feature request</h4>
+                  <p class="card-category">Tell us what features you want to see in our service</p>
+                </div>
+                <div class="card-body">
+
+                    <form class="contact-form" method="post">
+                        {% csrf_token %}
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="bmd-label-floating">Your Name</label>
+                      {{ form.name }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="bmd-label-floating">Your Email</label>
+                      {{ form.email }}
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="exampleMessage" class="bmd-label-floating">Your Message</label>
+                  {{ form.message }}
+              </div>
+                    {{ form.errors }}
+              <div class="row">
+                <div class="col-md-4 ml-auto mr-auto text-center">
+                  <button class="btn btn-primary btn-raised" type="submit">
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </form>
+                </div>
+              </div>
+
+{% endblock %}

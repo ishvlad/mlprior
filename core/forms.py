@@ -1,6 +1,6 @@
 from allauth.account.forms import LoginForm, SignupForm
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-
+from django import forms
 from .models import User
 
 
@@ -43,3 +43,18 @@ class CustomUserChangeForm(UserChangeForm):
     class Meta:
         model = User
         fields = ('username', 'email')
+
+
+class FeedbackForm(forms.Form):
+    name = forms.CharField()
+    email = forms.EmailField()
+
+    message = forms.CharField(widget=forms.Textarea)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['name'].widget.attrs['class'] = 'form-control'
+        self.fields['email'].widget.attrs['class'] = 'form-control'
+        self.fields['message'].widget.attrs['class'] = 'form-control'
+

@@ -5,8 +5,7 @@ from articles.models import Article
 articles = Index('articles')
 articles.settings(
     number_of_shards=1,
-    number_of_replicas=0,
-    read_only_allow_delete=None
+    number_of_replicas=0
 )
 
 

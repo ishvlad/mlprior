@@ -224,6 +224,8 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
         try:
             with open(file_txt, 'r', encoding='unicode_escape') as f:
                 text = ' '.join(f.readlines())[:100000]
+                if '\x00' in text:
+                    text = text.replace('\x00', ' ')
         except Exception as e:
             logger.debug(idx + '. Decode problem. No .txt file (Next): ' + str(e))
             continue
@@ -590,7 +592,7 @@ def main(args):
 
     overall_stats()
 
-    if args.update_categories:
+    if args.update_categories or args.clean:
         update_categories_name()
 
     if args.download_meta or args.all:

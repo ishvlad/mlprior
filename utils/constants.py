@@ -20,9 +20,9 @@ class _color:
         else:
             return (all_colors * math.ceil(num/len(all_colors)))[:num]
 
-
 GLOBAL__CATEGORIES = {
     "cs.AI": "Artificial Intelligence",
+    "cs.AR": "Hardware Architecture",
     "cs.CC": "Computational Complexity",
     "cs.CG": "Computational Geometry",
     "cs.CE": "Computational Engineering, Finance, and Science",
@@ -40,7 +40,6 @@ GLOBAL__CATEGORIES = {
     "cs.GT": "Computer Science and Game Theory",
     "cs.GL": "General Literature",
     "cs.GR": "Graphics",
-    "cs.AR": "Hardware Architecture",
     "cs.HC": "Human-Computer Interaction",
     "cs.IR": "Information Retrieval",
     "cs.IT": "Information Theory",

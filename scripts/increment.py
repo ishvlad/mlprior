@@ -53,6 +53,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=100)
     parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=200)
     parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=5)
+    parser.add_argument('--verbose', type=bool, help='Do we need to print all?', default=True)
 
     args = parser.parse_args()
     return args
@@ -128,7 +129,10 @@ def download_meta(args):
         if len(entries) != 0:
             logger.debug('There are %d new articles. Append to list' % len(entries))
             ok_list += entries
-            for a in tqdm.tqdm(entries):
+            arr = entries
+            if args.verbose:
+                arr = tqdm.tqdm(entries)
+            for a in arr:
                 db.add_article(a)
             pbar.update(len(entries))
         else:
@@ -224,6 +228,8 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
         try:
             with open(file_txt, 'r', encoding='unicode_escape') as f:
                 text = ' '.join(f.readlines())[:100000]
+                if '\x00' in text:
+                    text = text.replace('\x00', ' ')
         except Exception as e:
             logger.debug(idx + '. Decode problem. No .txt file (Next): ' + str(e))
             continue
@@ -549,15 +555,23 @@ def trend_ngrams(args, max_n_for_grams=3):
 
         db.bulk_create([NGramsSentence(sentence=k) for k in new_keys])
         months = NGramsMonth.objects.filter(label_code=date_code).order_by('length')
+        arr = new_keys
+        if args.verbose:
+            arr = tqdm.tqdm(new_keys, desc='New sentences in %d' % date_code)
+
         db.bulk_create([SentenceVSMonth(
             from_corpora=months[len(key.split()) - 1],
             from_item=NGramsSentence.objects.filter(sentence=key)[0],
             freq_title=dics_ttl[len(key.split()) - 1].get(key, 0),
             freq_abstract=dics_abs[len(key.split()) - 1].get(key, 0),
             freq_text=dics_txt[len(key.split()) - 1].get(key, 0)
-        ) for key in tqdm.tqdm(new_keys, desc='New sentences in %d' % date_code)])
+        ) for key in arr])
 
-        for key in tqdm.tqdm(existed_keys, 'Update sentences in %d' % date_code):
+        arr = existed_keys
+        if args.verbose:
+            arr = tqdm.tqdm(existed_keys, 'Update sentences in %d' % date_code)
+
+        for key in arr:
             idx_len = len(key.split()) - 1
             target = SentenceVSMonth.objects.filter(
                 from_corpora=months[idx_len],
@@ -590,7 +604,7 @@ def main(args):
 
     overall_stats()
 
-    if args.update_categories:
+    if args.update_categories or args.clean:
         update_categories_name()
 
     if args.download_meta or args.all:

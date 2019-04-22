@@ -17,8 +17,7 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
   <!-- CSS Files -->
   <link href="{% static 'css/material-kit.css'%}" rel="stylesheet" />
-  <!-- CSS Just for demo purpose, don't include it in your project -->
-  <link href="{% static 'demo/demo.css'%}" rel="stylesheet" />
+  <link href="{% static 'css/mystyle.css'%}" rel="stylesheet" />
     {% include 'core/yandex_metrics.html' %}
 </head>
 
@@ -178,6 +177,42 @@
 {#          </div>#}
 {#        </div>#}
 {#      </div>#}
+<section class="section section-shaped">
+{#      <div class="shape shape-style-1 shape-default">#}
+{#        <span></span>#}
+{#        <span></span>#}
+{#        <span></span>#}
+{#        <span></span>#}
+{#        <span></span>#}
+{#        <span></span>#}
+{#      </div>#}
+
+        <div class="container py-md">
+        <div class="row row-grid justify-content-between align-items-center">
+          <div class="col-lg-4 col-md-10 ml-auto">
+            <h3 class="title">Storing and recommending research articles
+{#              <span class="">completed with examples</span>#}
+            </h3>
+            <h4 class="description">We store, analyze and recommend more than 100000 AI research papers... Log in to use our powerful recomndation system</h4>
+            <div class="btn-wrapper">
+              <a href="/accounts/login" class="btn btn-primary">Login Page</a>
+              <a href="/accounts/signup" class="btn btn-white">Register Page</a>
+            </div>
+          </div>
+          <div class="col-lg-7 col-md-12 ml-auto">
+            <div class="transform-perspective-right">
+              <div class="card bg-secondary shadow border-0">
+                    <img src="{% static 'img/landing/articles_screenshot.jpg' %}" class="img-fluid">
+{#
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+
       <div class="section section-contacts">
         <div class="row">
           <div class="col-md-8 ml-auto mr-auto">

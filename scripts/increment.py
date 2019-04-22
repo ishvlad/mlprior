@@ -437,7 +437,7 @@ def stacked_bar(args):
 
             if Categories.objects.count() != 0:
                 db.bulk_create([CategoriesVSDate(
-                    category=c,
+                    from_category=c,
                     from_month=new_date,
                     count=0
                 ) for c in Categories.objects.all()])
@@ -550,6 +550,7 @@ def trend_ngrams(args, max_n_for_grams=3):
         dics_txt, keys_txt = get_grams_dict([row['articletext__text']], max_n_for_grams)
 
         keys = list(set(np.concatenate((keys_ttl, keys_abs, keys_txt))))
+        keys = [k[:250] for k in keys]
         existed_keys = list(NGramsSentence.objects.filter(sentence__in=keys).values_list(flat=True))
         new_keys = np.array(keys)[~np.in1d(keys, existed_keys)]
 

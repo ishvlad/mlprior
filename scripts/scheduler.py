@@ -78,7 +78,6 @@ def main(args):
             time = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
             cmd = "source activate py37; "
             cmd += "python " + script_path + (" -%s --max_articles=%s --verbose=False " % (task, args.max_articles))
-            cmd += "1> " + os.path.join(logs_path, "scheduler_%s_%s.log " % (time, task))
             cmd += "2> " + os.path.join(logs_path, "scheduler_%s_%s.err " % (time, task))
             os.system(cmd)
 

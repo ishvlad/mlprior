@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import json
+import numpy
 import os
 import sys
 
@@ -57,21 +58,22 @@ def main(args):
         else:
             queue = {}
 
+        coin = numpy.random.randint(7)
 
-        if 'category_bar' not in queue and (total_count - has_categories > border):
-            task = 'category_bar'
-        elif 'knn' not in queue and (has_inner_vector - has_nn > border):
-            task = 'knn'
-        elif 'inner_vector' not in queue and (has_txt - has_inner_vector > border):
-            task = 'inner_vector'
-        elif 'pdf2txt' not in queue and (has_pdf - has_txt > border):
-            task = 'pdf2txt'
-        elif 'download_pdf' not in queue and (total_count - has_pdf > border):
-            task = 'download_pdf'
-        elif 'download_meta' not in queue:
-            task = 'download_meta'
-        elif 'ngrams' not in queue and (has_txt - has_ngrams_stat > border):
+        if coin == 0 and 'ngrams' not in queue and (has_txt - has_ngrams_stat > border):
             task = 'ngrams'
+        elif coin == 1 and 'category_bar' not in queue and (total_count - has_categories > border):
+            task = 'update_categories -category_bar'
+        elif coin == 2 and 'knn' not in queue and (has_inner_vector - has_nn > border):
+            task = 'knn'
+        elif coin == 3 and 'inner_vector' not in queue and (has_txt - has_inner_vector > border):
+            task = 'inner_vector'
+        elif coin == 4 and 'pdf2txt' not in queue and (has_pdf - has_txt > border):
+            task = 'pdf2txt'
+        elif coin == 5 and 'download_pdf' not in queue and (total_count - has_pdf > border):
+            task = 'download_pdf'
+        elif coin == 6 and 'download_meta' not in queue:
+            task = 'download_meta'
 
         if task != '':
             queue[task] = key

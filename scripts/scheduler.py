@@ -13,6 +13,7 @@ def parse_args():
     parser.add_argument('--border', type=int, help='Difference for start', default=10)
     parser.add_argument('--max_articles', type=int, help='Difference for start', default=100)
     parser.add_argument('--path', type=str, default='/home/mlprior/git_app/')
+    parser.add_argument('--python', type=str, default='/home/mlprior/anaconda3/envs/py37/bin/python ')
 
     args = parser.parse_args()
     return args
@@ -76,8 +77,8 @@ def main(args):
             with open(queue_path, 'w+') as outfile:
                 json.dump(queue, outfile)
             time = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
-            cmd = "source activate py37; "
-            cmd += "python " + script_path + (" -%s --max_articles=%s --verbose=False " % (task, args.max_articles))
+            cmd = args.python + ' ' + script_path
+            cmd += (" -%s --max_articles=%s --verbose=False " % (task, args.max_articles))
             cmd += "2> " + os.path.join(logs_path, "scheduler_%s_%s.err " % (time, task))
             os.system(cmd)
 

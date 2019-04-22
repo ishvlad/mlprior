@@ -130,7 +130,7 @@ class SentenceVSMonth(models.Model):
 
 
 class Categories(models.Model):
-    category = models.CharField(max_length=10, primary_key=True)
+    category = models.CharField(max_length=50, primary_key=True)
     category_full = models.CharField(max_length=1000)
 
     month = models.ManyToManyField('CategoriesDate', through='CategoriesVSDate')

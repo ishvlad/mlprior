@@ -59,25 +59,28 @@ def main(args):
         else:
             queue = {}
 
+        coin = []
+        if 'ngrams' not in queue and (has_txt - has_ngrams_stat > border):
+            coin.append('ngrams')
+        if 'category_bar' not in queue and (total_count - has_categories > border):
+            coin.append('category_bar')
+        if 'knn' not in queue and (has_inner_vector - has_nn > border):
+            coin.append('knn')
+        if 'inner_vector' not in queue and (has_txt - has_inner_vector > border):
+            coin.append('inner_vector')
+        if 'pdf2txt' not in queue and (has_pdf - has_txt > border):
+            coin.append('pdf2txt')
+        if 'download_pdf' not in queue and (total_count - has_pdf > border):
+            coin.append('download_pdf')
+        if 'download_meta' not in queue:
+            coin.append('download_meta')
+
         coin = numpy.random.randint(7)
 
-        if coin == 0 and 'ngrams' not in queue and (has_txt - has_ngrams_stat > border):
-            task = 'ngrams'
-        elif coin == 1 and 'category_bar' not in queue and (total_count - has_categories > border):
-            task = 'category_bar'
-        elif coin == 2 and 'knn' not in queue and (has_inner_vector - has_nn > border):
-            task = 'knn'
-        elif coin == 3 and 'inner_vector' not in queue and (has_txt - has_inner_vector > border):
-            task = 'inner_vector'
-        elif coin == 4 and 'pdf2txt' not in queue and (has_pdf - has_txt > border):
-            task = 'pdf2txt'
-            max_articles *= 10
-        elif coin == 5 and 'download_pdf' not in queue and (total_count - has_pdf > border):
-            task = 'download_pdf'
-        elif coin == 6 and 'download_meta' not in queue:
-            task = 'download_meta'
-
-        if task != '':
+        if len(coin) != 0:
+            task = numpy.random.choice(coin)
+            if task == 'pdf2txt':
+                max_articles *= 10
             queue[task] = key
             with open(queue_path, 'w+') as outfile:
                 json.dump(queue, outfile)

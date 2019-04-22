@@ -82,7 +82,7 @@ def main(args):
             time = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
             cmd = args.python + ' ' + script_path
             if task == 'category_bar':
-                cmd += ' -update_category'
+                cmd += ' -update_categories'
             cmd += (" -%s --max_articles=%s --verbose=False " % (task, args.max_articles))
             cmd += "2> " + os.path.join(logs_path, "scheduler_%s_%s.err " % (task, time))
             os.system(cmd)

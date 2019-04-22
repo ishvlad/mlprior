@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import json
+import numpy
 import os
 import sys
 
@@ -13,6 +14,7 @@ def parse_args():
     parser.add_argument('--border', type=int, help='Difference for start', default=10)
     parser.add_argument('--max_articles', type=int, help='Difference for start', default=100)
     parser.add_argument('--path', type=str, default='/home/mlprior/git_app/')
+    parser.add_argument('--python', type=str, default='/home/mlprior/anaconda3/envs/py37/bin/python ')
 
     args = parser.parse_args()
     return args
@@ -26,6 +28,7 @@ def main(args):
     key = str(uuid4())
     task = ''
     border = args.border
+    max_articles = args.max_articles
 
     if not os.path.exists(logs_path):
         os.mkdir(logs_path)
@@ -56,30 +59,35 @@ def main(args):
         else:
             queue = {}
 
+        coin = []
         if 'ngrams' not in queue and (has_txt - has_ngrams_stat > border):
-            task = 'ngrams'
-        elif 'category_bar' not in queue and (total_count - has_categories > border):
-            task = 'category_bar'
-        elif 'knn' not in queue and (has_inner_vector - has_nn > border):
-            task = 'knn'
-        elif 'inner_vector' not in queue and (has_txt - has_inner_vector > border):
-            task = 'inner_vector'
-        elif 'pdf2txt' not in queue and (has_pdf - has_txt > border):
-            task = 'pdf2txt'
-        elif 'download_pdf' not in queue and (total_count - has_pdf > border):
-            task = 'download_pdf'
-        elif 'download_meta' not in queue:
-            task = 'download_meta'
+            coin.append('ngrams')
+        if 'category_bar' not in queue and (total_count - has_categories > border):
+            coin.append('category_bar')
+        if 'knn' not in queue and (has_inner_vector - has_nn > border):
+            coin.append('knn')
+        if 'inner_vector' not in queue and (has_txt - has_inner_vector > border):
+            coin.append('inner_vector')
+        if 'pdf2txt' not in queue and (has_pdf - has_txt > border):
+            coin.append('pdf2txt')
+        if 'download_pdf' not in queue and (total_count - has_pdf > border):
+            coin.append('download_pdf')
+        if 'download_meta' not in queue:
+            coin.append('download_meta')
 
-        if task != '':
+        if len(coin) != 0:
+            task = numpy.random.choice(coin)
+            if task == 'pdf2txt':
+                max_articles *= 10
             queue[task] = key
             with open(queue_path, 'w+') as outfile:
                 json.dump(queue, outfile)
             time = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
-            cmd = "source activate py37; "
-            cmd += "python " + script_path + (" -%s --max_articles=%s --verbose=False " % (task, args.max_articles))
-            cmd += "1> " + os.path.join(logs_path, "scheduler_%s_%s.log " % (time, task))
-            cmd += "2> " + os.path.join(logs_path, "scheduler_%s_%s.err " % (time, task))
+            cmd = args.python + ' ' + script_path
+            if task == 'category_bar':
+                cmd += ' -update_categories'
+            cmd += (" -%s --max_articles=%s --verbose=False " % (task, max_articles))
+            cmd += "2> " + os.path.join(logs_path, "scheduler_%s_%s.err " % (task, time))
             os.system(cmd)
 
     except Exception as e:

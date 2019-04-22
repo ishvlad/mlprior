@@ -97,22 +97,22 @@ def download_meta(args):
     pbar = tqdm.tqdm(total=args.max_articles, desc='Total articles')
 
     while len(ok_list) < args.max_articles:
-        logger.debug('BUFFER is empty. arXiv.API -- Try to get %d articles...' % args.batch_size)
+        logger.info('BUFFER is empty. arXiv.API -- Try to get %d articles...' % args.batch_size)
 
         entries = arxiv_api.search(
             categories=['cat:' + c for c in GLOBAL__CATEGORIES],
             start=start, max_result=args.batch_size
         )
-        logger.debug('... received %d articles from arXiv' % len(entries))
+        logger.info('... received %d articles from arXiv' % len(entries))
 
         start += args.batch_size
         if len(entries) == 0:
             start -= args.batch_size
             if attempt < 4:
-                logger.debug('Empty buffer again. ArXiv is over :) Attempt %d.' % attempt)
+                logger.info('Empty buffer again. ArXiv is over :) Attempt %d.' % attempt)
                 attempt += 1
             else:
-                logger.debug('Empty buffer again. ArXiv is over :) Stop downloading.')
+                logger.info('Empty buffer again. ArXiv is over :) Stop downloading.')
                 break
         else:
             attempt = 1
@@ -127,7 +127,7 @@ def download_meta(args):
         entries = list(np.array(records)[records_idx])
 
         if len(entries) != 0:
-            logger.debug('There are %d new articles. Append to list' % len(entries))
+            logger.info('There are %d new articles. Append to list' % len(entries))
             ok_list += entries
             arr = entries
             if args.verbose:
@@ -136,7 +136,7 @@ def download_meta(args):
                 db.add_article(a)
             pbar.update(len(entries))
         else:
-            logger.debug('arXiv.API: no new articles')
+            logger.info('arXiv.API: no new articles')
 
     pbar.close()
     logger.info('FINISH downloading %d metas from arXiv' % len(ok_list))
@@ -163,7 +163,7 @@ def download_pdf(args, path_pdf='data/pdfs'):
         url += '.pdf'
 
         if os.path.exists(file_pdf) and os.path.getsize(file_pdf) != 0:
-            logger.debug('PDF ' + idx + ' already exists. Just update flag')
+            logger.info('PDF ' + idx + ' already exists. Just update flag')
             ok_list.append(pk)
             pbar.update(1)
             continue
@@ -175,7 +175,7 @@ def download_pdf(args, path_pdf='data/pdfs'):
             ok_list.append(pk)
             pbar.update(1)
         except Exception as e:
-            logger.debug(str(idx) + ' (' + str(url) + '): Cannot download PDF. Exception: ' + str(e))
+            logger.info(str(idx) + ' (' + str(url) + '): Cannot download PDF. Exception: ' + str(e))
 
     pbar.close()
     logger.info('FINISH downloading PDFs from arXiv. Now update flags of %d articles' % len(ok_list))
@@ -210,19 +210,19 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
             arts = ArticleText.objects.filter(article_origin=pk).values('text')
 
             if len(arts) != 0 and arts[0]['text'] is not None:
-                logger.debug('TXT ' + idx + ' already exists. Just update flag')
+                logger.info('TXT ' + idx + ' already exists. Just update flag')
                 ok_list.append(pk)
                 idx_list.append(idx)
                 pbar.update(1)
                 continue
             else:
-                logger.debug('TXT ' + idx + ' already exists, but text not appears in DB. Save text')
+                logger.info('TXT ' + idx + ' already exists, but text not appears in DB. Save text')
         else:
             cmd = "pdftotext %s %s 2> data/logs/pdf2txt_%s.log" % (file_pdf, file_txt, idx)
             os.system(cmd)
 
             if not os.path.isfile(file_txt) or os.path.getsize(file_txt) == 0:
-                logger.debug(idx + '. pdf2txt: Failed to generate TXT (No .txt file)). NEXT')
+                logger.info(idx + '. pdf2txt: Failed to generate TXT (No .txt file)). NEXT')
                 continue
 
         try:
@@ -231,7 +231,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
                 if '\x00' in text:
                     text = text.replace('\x00', ' ')
         except Exception as e:
-            logger.debug(idx + '. Decode problem. No .txt file (Next): ' + str(e))
+            logger.info(idx + '. Decode problem. No .txt file (Next): ' + str(e))
             continue
 
         new_items.append(ArticleText(
@@ -299,7 +299,7 @@ def calc_inner_vector(args):
         articles.articletext__text.values,
     )
 
-    logger.debug('Saving features (len: %d)' % len(features))
+    logger.info('Saving features (len: %d)' % len(features))
     items = []
     for idx, feature in zip(articles.id.values, features):
         items.append(ArticleVector(
@@ -417,10 +417,10 @@ def stacked_bar(args):
     min_date_code_in_db = CategoriesDate.objects.order_by('date').first()
     if min_date_code_in_db is None:
         min_date_code_in_db = next_month.month + next_month.year * 100
-        logger.debug('No dates in DB. Select min date: %d' % min_date_code_in_db)
+        logger.info('No dates in DB. Select min date: %d' % min_date_code_in_db)
     else:
         min_date_code_in_db = min_date_code_in_db.date_code
-        logger.debug('Min date in DB: %d' % min_date_code_in_db)
+        logger.info('Min date in DB: %d' % min_date_code_in_db)
 
     min_date = articles.date.min()
     min_date_code = min_date.month + min_date.year * 100
@@ -437,7 +437,7 @@ def stacked_bar(args):
 
             if Categories.objects.count() != 0:
                 db.bulk_create([CategoriesVSDate(
-                    category=c,
+                    from_category=c,
                     from_month=new_date,
                     count=0
                 ) for c in Categories.objects.all()])
@@ -550,6 +550,7 @@ def trend_ngrams(args, max_n_for_grams=3):
         dics_txt, keys_txt = get_grams_dict([row['articletext__text']], max_n_for_grams)
 
         keys = list(set(np.concatenate((keys_ttl, keys_abs, keys_txt))))
+        keys = [k[:250] for k in keys]
         existed_keys = list(NGramsSentence.objects.filter(sentence__in=keys).values_list(flat=True))
         new_keys = np.array(keys)[~np.in1d(keys, existed_keys)]
 
@@ -631,9 +632,9 @@ def main(args):
     if args.ngrams or args.all or args.clean:
         trend_ngrams(args)
 
-    logger.debug('#'*50)
+    logger.info('#'*50)
     overall_stats()
-    logger.debug('#'*50)
+    logger.info('#'*50)
 
 
 if __name__ == '__main__':

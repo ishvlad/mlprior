@@ -57,9 +57,8 @@ def main(args):
         else:
             queue = {}
 
-        if 'ngrams' not in queue and (has_txt - has_ngrams_stat > border):
-            task = 'ngrams'
-        elif 'category_bar' not in queue and (total_count - has_categories > border):
+
+        if 'category_bar' not in queue and (total_count - has_categories > border):
             task = 'category_bar'
         elif 'knn' not in queue and (has_inner_vector - has_nn > border):
             task = 'knn'
@@ -71,6 +70,8 @@ def main(args):
             task = 'download_pdf'
         elif 'download_meta' not in queue:
             task = 'download_meta'
+        elif 'ngrams' not in queue and (has_txt - has_ngrams_stat > border):
+            task = 'ngrams'
 
         if task != '':
             queue[task] = key

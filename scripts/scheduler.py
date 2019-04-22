@@ -28,6 +28,7 @@ def main(args):
     key = str(uuid4())
     task = ''
     border = args.border
+    max_articles = args.max_articles
 
     if not os.path.exists(logs_path):
         os.mkdir(logs_path)
@@ -70,6 +71,7 @@ def main(args):
             task = 'inner_vector'
         elif coin == 4 and 'pdf2txt' not in queue and (has_pdf - has_txt > border):
             task = 'pdf2txt'
+            max_articles *= 10
         elif coin == 5 and 'download_pdf' not in queue and (total_count - has_pdf > border):
             task = 'download_pdf'
         elif coin == 6 and 'download_meta' not in queue:
@@ -83,7 +85,7 @@ def main(args):
             cmd = args.python + ' ' + script_path
             if task == 'category_bar':
                 cmd += ' -update_categories'
-            cmd += (" -%s --max_articles=%s --verbose=False " % (task, args.max_articles))
+            cmd += (" -%s --max_articles=%s --verbose=False " % (task, max_articles))
             cmd += "2> " + os.path.join(logs_path, "scheduler_%s_%s.err " % (task, time))
             os.system(cmd)
 

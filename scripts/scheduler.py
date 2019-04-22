@@ -63,7 +63,7 @@ def main(args):
         if coin == 0 and 'ngrams' not in queue and (has_txt - has_ngrams_stat > border):
             task = 'ngrams'
         elif coin == 1 and 'category_bar' not in queue and (total_count - has_categories > border):
-            task = 'update_categories -category_bar'
+            task = 'category_bar'
         elif coin == 2 and 'knn' not in queue and (has_inner_vector - has_nn > border):
             task = 'knn'
         elif coin == 3 and 'inner_vector' not in queue and (has_txt - has_inner_vector > border):
@@ -81,6 +81,8 @@ def main(args):
                 json.dump(queue, outfile)
             time = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
             cmd = args.python + ' ' + script_path
+            if task == 'category_bar':
+                cmd += ' -update_category'
             cmd += (" -%s --max_articles=%s --verbose=False " % (task, args.max_articles))
             cmd += "2> " + os.path.join(logs_path, "scheduler_%s_%s.err " % (task, time))
             os.system(cmd)

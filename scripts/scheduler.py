@@ -5,7 +5,6 @@ import numpy
 import os
 import sys
 
-from pickle import load, dump
 from uuid import uuid4
 
 

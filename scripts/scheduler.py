@@ -75,8 +75,6 @@ def main(args):
         if 'download_meta' not in queue:
             coin.append('download_meta')
 
-        coin = numpy.random.randint(7)
-
         if len(coin) != 0:
             task = numpy.random.choice(coin)
             if task == 'pdf2txt':

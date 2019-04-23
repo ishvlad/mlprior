@@ -5,7 +5,6 @@ import numpy
 import os
 import sys
 
-from pickle import load, dump
 from uuid import uuid4
 
 
@@ -77,8 +76,8 @@ def main(args):
 
         if len(coin) != 0:
             task = numpy.random.choice(coin)
-            if task == 'pdf2txt':
-                max_articles *= 10
+            if task == 'pdf2txt' or task == 'download_meta':
+                max_articles *= 5
             queue[task] = key
             with open(queue_path, 'w+') as outfile:
                 json.dump(queue, outfile)

@@ -23,8 +23,6 @@ STATICFILE_DIR = os.path.join(BASE_DIR, 'static')
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '4)re*)pg$qi*i$uo2hv3_03^pr4eswx&+&f&k2z5d*f#7+xry8'
 
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -52,6 +50,8 @@ INSTALLED_APPS = [
     'allauth',  # new
     'allauth.account',  # new
     'allauth.socialaccount',  # new
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
 
 ]
 
@@ -157,7 +157,27 @@ SOCIALACCOUNT_PROVIDERS = {
         'AUTH_PARAMS': {
             'access_type': 'online',
         }
-    }
+    },
+    'facebook':
+        {'METHOD': 'oauth2',
+         'SCOPE': ['email', 'public_profile'],
+         'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
+         'FIELDS': [
+             'id',
+             'email',
+             'name',
+             'first_name',
+             'last_name',
+             'verified',
+             'locale',
+             'timezone',
+             'link',
+             'gender',
+             'updated_time'],
+         'EXCHANGE_TOKEN': True,
+         'LOCALE_FUNC': lambda request: 'kr_KR',
+         'VERIFIED_EMAIL': False,
+         'VERSION': 'v2.4'}
 }
 
 LOGIN_REDIRECT_URL = '/home'

@@ -5,7 +5,7 @@ import time
 
 class ArXivAPI(object):
     BASE_URL = 'http://export.arxiv.org/api/query?'
-    PARAMS_TEMPLATE = 'search_query={categories}&start={start}&max_results={max_result}'
+    PARAMS_TEMPLATE = 'search_query={categories}&start={start}&max_results={max_result}&sortBy=lastUpdatedDate'
 
     def __init__(self, wait_time=5):
         self.wait_time = wait_time

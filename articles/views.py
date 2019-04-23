@@ -50,7 +50,7 @@ def category_view(request, categories=None):
     if request.method == 'POST':
         categories = request.POST.get('categories')
     elif categories is None:
-        categories = list(GLOBAL__CATEGORIES.keys())[:6]
+        categories = [c for c in GLOBAL__CATEGORIES.keys() if c.startswith('cs.')][:6]
 
     colors = GLOBAL__COLORS.get_colors_code(len(categories))
 

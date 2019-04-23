@@ -100,7 +100,7 @@ def download_meta(args):
         logger.info('BUFFER is empty. arXiv.API -- Try to get %d articles...' % args.batch_size)
 
         entries = arxiv_api.search(
-            categories=['cat:' + c for c in GLOBAL__CATEGORIES],
+            categories=['cat:' + c for c in GLOBAL__CATEGORIES if c.startswith('cs.')],
             start=start, max_result=args.batch_size
         )
         logger.info('... received %d articles from arXiv' % len(entries))

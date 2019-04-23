@@ -8,7 +8,7 @@ class ArticlesSearchView(ArticlesView):
     def get_queryset(self):
         q = self.request.GET.get('q')
         articles = ArticleDocument.search().query('multi_match', query=q, fields=['title', 'abstract'])
-        articles = articles.to_queryset()
+        articles = articles[:articles.count()].to_queryset()
         return articles
 
     def get_context_data(self, **kwargs):

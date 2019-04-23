@@ -52,7 +52,7 @@ def parse_args():
 
     parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=100)
     parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=200)
-    parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=5)
+    parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=6)
     parser.add_argument('--verbose', type=bool, help='Do we need to print all?', default=True)
 
     args = parser.parse_args()
@@ -108,7 +108,7 @@ def download_meta(args):
         start += args.batch_size
         if len(entries) == 0:
             start -= args.batch_size
-            if attempt < 4:
+            if attempt < 6:
                 logger.info('Empty buffer again. ArXiv is over :) Attempt %d.' % attempt)
                 attempt += 1
             else:

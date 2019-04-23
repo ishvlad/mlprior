@@ -21,6 +21,9 @@ class _color:
             return (all_colors * math.ceil(num/len(all_colors)))[:num]
 
 GLOBAL__CATEGORIES = {
+    'astro-ph': "Astrophysics",
+    'astro-ph.IM': "Instrumentation and Methods for Astrophysics",
+
     "cs.AI": "Artificial Intelligence",
     "cs.AR": "Hardware Architecture",
     "cs.CC": "Computational Complexity",
@@ -103,6 +106,8 @@ GLOBAL__CATEGORIES = {
 
     'math-ph': "Mathematical Physics",
 
+    'nlin.AO': "Adaptation and Self-Organizing Systems",
+
     'physics.acc-ph': "Accelerator Physics",
     'physics.app-ph': "Applied Physics",
     'physics.ao-ph': "Atmospheric and Oceanic Physics",
@@ -132,6 +137,8 @@ GLOBAL__CATEGORIES = {
     'stat.ME': "Methodology",
     'stat.OT': "Other Statistics",
     'stat.TH': "Statistics Theory",
+
+    'quant-ph': "Quantum Physics",
 
     'q-bio.BM': "Biomolecules",
     'q-bio.CB': "Cell Behavior",

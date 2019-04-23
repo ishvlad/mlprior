@@ -413,63 +413,59 @@ def stacked_bar(args):
     articles = pd.DataFrame(articles)
     articles['date'] = pd.to_datetime(articles['date'])
 
-    next_month = datetime.datetime.now() + relativedelta(months=1)
-    min_date_code_in_db = CategoriesDate.objects.order_by('date').first()
-    if min_date_code_in_db is None:
-        min_date_code_in_db = next_month.month + next_month.year * 100
-        logger.info('No dates in DB. Select min date: %d' % min_date_code_in_db)
-    else:
-        min_date_code_in_db = min_date_code_in_db.date_code
-        logger.info('Min date in DB: %d' % min_date_code_in_db)
+    min_date_code_in_db = 198001
+    today = datetime.datetime.now()
+    today = today.month + today.year * 100
 
-    min_date = articles.date.min()
-    min_date_code = min_date.month + min_date.year * 100
-
-    if min_date_code >= min_date_code_in_db:
-        logger.info('All months are present')
-    else:
-        logger.info('Append new months from %d to %d' % (min_date_code, min_date_code_in_db))
-        date_code = min_date_code
-        while date_code != min_date_code_in_db:
+    # if very first run
+    if CategoriesDate.objects.count() == 0:
+        logging.info('Very first run')
+        date_code = min_date_code_in_db
+        new_dates = []
+        while date_code < today:
             date = datetime.date(year=date_code // 100, month=date_code % 100, day=1)
-            new_date, _ = CategoriesDate.objects.update_or_create(date_code=date_code, date=date.strftime('%b %y'))
-            new_date.save()
-
-            if Categories.objects.count() != 0:
-                db.bulk_create([CategoriesVSDate(
-                    from_category=c,
-                    from_month=new_date,
-                    count=0
-                ) for c in Categories.objects.all()])
-
+            new_dates.append(CategoriesDate(
+                date_code=date_code,
+                date=date.strftime('%b %y')
+            ))
             if date_code % 100 == 12:
                 date_code = date_code - 11 + 100
             else:
                 date_code += 1
+        db.bulk_create(new_dates)
 
-    new_categories = articles.category.unique()
-    old_categories = list(Categories.objects.values_list('category', flat=True))
+    # if first run in the month
+    if CategoriesDate.objects.filter(date_code=today).count() == 0:
+        logging.info('First run in the month')
+        new_date = datetime.date(year=today // 100, month=today % 100, day=1)
+        new_date = CategoriesDate(
+            date_code=today,
+            date=new_date.strftime('%b %y')
+        )
+        new_date.save()
 
-    append_categories = new_categories[~np.in1d(new_categories, old_categories)]
-    if len(append_categories) == 0:
-        logger.info('All categories are present')
-    else:
-        logger.warning('Categories does not exists: ' + ', '.join(append_categories))
-        logger.warning('!!! You need to manually specify this category in DB')
-        logger.warning('!!! And append this category to utils.constants.GLOBAL__CATEGORIES')
+        db.bulk_create([CategoriesVSDate(
+            from_category=c,
+            from_month=new_date,
+            count=0
+        ) for c in Categories.objects.all()])
 
-        for cat in append_categories:
-            new_category, _ = Categories.objects.update_or_create(category=cat, category_full='NOT SPECIFIED')
-            new_category.save()
+    logging.info('Update bar counts')
+    for _, row in tqdm.tqdm(articles.iterrows(), total=len(articles)):
+        # new category
+        if Categories.objects.filter(category=row['category']).count() == 0:
+            logger.warning('Category does not exists: ' +  row['category'])
+            logger.warning('!!! And append this category to utils.constants.GLOBAL__CATEGORIES')
+
+            category = Categories(category=row['category'])
+            category.save()
 
             db.bulk_create([CategoriesVSDate(
-                from_category=new_category,
+                from_category=category,
                 from_month=d,
                 count=0
             ) for d in CategoriesDate.objects.all()])
 
-    logging.info('Update bar counts')
-    for _, row in tqdm.tqdm(articles.iterrows(), total=len(articles)):
         date_code = row['date'].month + row['date'].year * 100
         CategoriesVSDate.objects.filter(
             from_category__category=row['category'],

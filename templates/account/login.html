@@ -41,15 +41,13 @@
                 <div class="card-header card-header-prior text-center">
                   <h4 class="card-title">Login</h4>
                   <div class="social-line">
-
-{#                      {% providers_media_js %}#}
-{#                    <a href="{% provider_login_url "facebook" %}" class="btn btn-just-icon btn-link btn-white">#}
-{#                      <i class="fab fa-facebook"></i>#}
-{#                    </a>#}
+                    <a href="{% url 'social:begin' 'facebook' %}" class="btn btn-just-icon btn-link btn-white">
+                      <i class="fab fa-facebook"></i>
+                    </a>
 {#                    <a href="#pablo" class="btn btn-just-icon btn-link btn-white">#}
 {#                      <i class="fa fa-twitter"></i>#}
 {#                    </a>#}
-                    <a href="{% provider_login_url 'google' %}" class="btn btn-just-icon btn-link btn-white">
+                    <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-just-icon btn-link btn-white">
 {#                      <i class="fab fa-google fa-fw"></i>#}
                         <i class="fab fa-google"></i>
                     </a>

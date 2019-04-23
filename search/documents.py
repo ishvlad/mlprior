@@ -5,7 +5,8 @@ from articles.models import Article
 articles = Index('articles')
 articles.settings(
     number_of_shards=1,
-    number_of_replicas=0
+    number_of_replicas=0,
+    queryset_pagination=1000
 )
 
 

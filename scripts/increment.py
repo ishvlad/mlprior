@@ -229,6 +229,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
                 text = ' '.join(f.readlines())[:100000]
                 if '\x00' in text:
                     text = text.replace('\x00', ' ')
+                text = text.encode('utf-8', 'replace').decode('utf-8')
         except Exception as e:
             logger.info(idx + '. Decode problem. No .txt file (Next): ' + str(e))
             continue

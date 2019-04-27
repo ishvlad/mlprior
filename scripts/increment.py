@@ -20,7 +20,6 @@ from articles.models import Article, ArticleVector, ArticleArticleRelation, \
                             CategoriesVSDate, Categories, CategoriesDate, \
                             NGramsSentence, NGramsMonth, SentenceVSMonth, ArticleText
 from arxiv import ArXivArticle, ArXivAPI
-from dateutil.relativedelta import relativedelta
 from django.db.models import F, Q
 from nltk import ngrams
 from sklearn.neighbors import NearestNeighbors
@@ -100,7 +99,7 @@ def download_meta(args):
         logger.info('BUFFER is empty. arXiv.API -- Try to get %d articles...' % args.batch_size)
 
         entries = arxiv_api.search(
-            categories=['cat:' + c for c in GLOBAL__CATEGORIES],
+            categories=['cat:' + c for c in GLOBAL__CATEGORIES if c.startswith('cs.')],
             start=start, max_result=args.batch_size
         )
         logger.info('... received %d articles from arXiv' % len(entries))
@@ -503,11 +502,12 @@ def get_grams_dict(sentences, max_ngram_len=5):
                 #     continue
 
                 key = ' '.join(key)
-                if key in dic[n - 1]:
-                    dic[n - 1][key] += 1
-                else:
-                    dic[n - 1][key] = 1
-                key_store.append(key)
+                if len(key) < 250:
+                    if key in dic[n - 1]:
+                        dic[n - 1][key] += 1
+                    else:
+                        dic[n - 1][key] = 1
+                    key_store.append(key)
 
     return dic, key_store
 
@@ -529,9 +529,9 @@ def trend_ngrams(args, max_n_for_grams=3):
     articles = pd.DataFrame(articles)
     articles['date'] = pd.to_datetime(articles['date'])
     articles['idx_sort'] = articles.date.dt.month + articles.date.dt.year * 100
+    df_group = articles.groupby('idx_sort')
 
-    for _, row in tqdm.tqdm(articles.iterrows(), total=len(articles), desc='Total'):
-        date_code = row['idx_sort']
+    for date_code, row in tqdm.tqdm(df_group, total=len(df_group), desc='Total'):
 
         if NGramsMonth.objects.filter(label_code=date_code).count() == 0:
             label = datetime.date(date_code//100, date_code%100, 1).strftime('%b %y')
@@ -541,12 +541,11 @@ def trend_ngrams(args, max_n_for_grams=3):
                 length=i+1
             ) for i in range(max_n_for_grams)])
 
-        dics_ttl, keys_ttl = get_grams_dict([row['title']], max_n_for_grams)
-        dics_abs, keys_abs = get_grams_dict([row['abstract']], max_n_for_grams)
-        dics_txt, keys_txt = get_grams_dict([row['articletext__text']], max_n_for_grams)
+        dics_ttl, keys_ttl = get_grams_dict(list(row.title.values), max_n_for_grams)
+        dics_abs, keys_abs = get_grams_dict(list(row.abstract.values), max_n_for_grams)
+        dics_txt, keys_txt = get_grams_dict(list(row.articletext__text.values), max_n_for_grams)
 
         keys = list(set(np.concatenate((keys_ttl, keys_abs, keys_txt))))
-        keys = [k[:250] for k in keys]
         existed_keys = list(NGramsSentence.objects.filter(sentence__in=keys).values_list(flat=True))
         new_keys = np.array(keys)[~np.in1d(keys, existed_keys)]
 
@@ -589,7 +588,8 @@ def trend_ngrams(args, max_n_for_grams=3):
                     freq_text=F('freq_text') + dics_txt[idx_len].get(key, 0),
                 )
 
-        Article.objects.filter(pk=row['id']).update(has_ngram_stat=True)
+        pks = list(row['id'].values)
+        Article.objects.filter(pk__in=pks).update(has_ngram_stat=True)
 
 
 @log.logging.timeit(logger, 'Total Time', level=logging.INFO)

@@ -81,6 +81,8 @@ GLOBAL__CATEGORIES = {
     'cs.SY': "Systems and Control",
 
     'econ.EM': "Econometrics",
+    'econ.GN': "General Economics",
+    'econ.TH': "Theoretical Economics",
 
     'eess.AS': "Audio and Speech Processing",
     'eess.IV': "Image and Video Processing",

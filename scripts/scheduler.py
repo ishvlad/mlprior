@@ -90,7 +90,7 @@ def main(args):
             os.system(cmd)
 
     except Exception as e:
-        with open(os.path.join(logs_path, 'scheduler.err'), 'w+') as f:
+        with open(os.path.join(logs_path, 'scheduler.err'), 'a+') as f:
             string = datetime.datetime.now().strftime('%Y-%m-%d-%H.%M.%S')
             string += ' ' + task + ': ' + str(e) + '\n'
             f.write(string)

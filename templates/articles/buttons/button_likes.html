@@ -1,3 +1,5 @@
+
+    {% if is_authorised %}
 <button data-article-id="{{ article.id }}" class="btn btn-primary btn-round btn-fab likebutton">
     {% if article.id in like_articles_ids %}
     <i class="fas fa-thumbs-up fa-sm" id="like-{{ article.id }}"></i>
@@ -13,3 +15,22 @@
     <i class="far fa-thumbs-down fa-sm" id="dislike-{{ article.id }}"></i>
     {% endif %}
 </button>
+{% else %}
+
+<a href="/accounts/login/" data-article-id="{{ article.id }}" class="btn btn-primary btn-round btn-fab likebutton">
+    {% if article.id in like_articles_ids %}
+    <i class="fas fa-thumbs-up fa-sm" id="like-{{ article.id }}"></i>
+    {% else %}
+    <i class="far fa-thumbs-up fa-sm" id="like-{{ article.id }}"></i>
+    {% endif %}
+</a>
+
+<a href="/accounts/login/" data-article-id="{{ article.id }}" class="btn btn-primary btn-round btn-fab dislikebutton">
+    {% if article.id in dislike_articles_ids %}
+    <i class="fas fa-thumbs-down fa-sm" id="dislike-{{ article.id }}"></i>
+    {% else %}
+    <i class="far fa-thumbs-down fa-sm" id="dislike-{{ article.id }}"></i>
+    {% endif %}
+</a>
+
+{% endif %}

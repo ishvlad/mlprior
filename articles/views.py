@@ -4,21 +4,16 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q, When, Case
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import FormView
+from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView
-from el_pagination.decorators import page_template
+from django_ajax.mixin import AJAXMixin
 from el_pagination.views import AjaxListView
-from django.contrib.auth import login
 
-# from core.forms import UserSignUpForm, UserLoginForm
 from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation, \
     CategoriesVSDate
-from search.documents import ArticleDocument
 from search.forms import SearchForm
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
-from django_ajax.mixin import AJAXMixin
 
 
 @login_required(login_url='/accounts/login')
@@ -322,8 +317,9 @@ class LikedDisliked(ArticlesView, LoginRequiredMixin):
         return context
 
 
-class ArticleDetailsView(AjaxListView, ArticlesMixin):
+class ArticleDetailsView(AjaxListView, ArticlesMixin, LoginRequiredMixin):
     model = Article
+    login_url = '/accounts/login'
 
     template_name = 'articles/article_details.html'
     page_template = 'articles/related_articles_page.html'
@@ -335,19 +331,22 @@ class ArticleDetailsView(AjaxListView, ArticlesMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['lib_articles_ids'] = self.lib_ids
-        context['like_articles_ids'] = self.like_ids
-        context['dislike_articles_ids'] = self.dislike_ids
-        context['notes'] = self.notes
-
         article = get_object_or_404(Article, id=self.kwargs['pk'])
 
         related_articles = article.related.order_by('related_articles__distance')
         context['related_articles'] = related_articles
-
         context['page_template'] = 'articles/related_articles_page.html'
-
         context['page_id'] = 'articles'
+        context['is_authorised'] = True
+
+        if self.request.user.is_anonymous:
+            context['is_authorised'] = False
+            return context
+
+        context['lib_articles_ids'] = self.lib_ids
+        context['like_articles_ids'] = self.like_ids
+        context['dislike_articles_ids'] = self.dislike_ids
+        context['notes'] = self.notes
 
         return context
 

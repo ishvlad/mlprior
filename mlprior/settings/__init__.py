@@ -1,4 +1,4 @@
-IS_DEBUG = False
+IS_DEBUG = True
 
 
 if IS_DEBUG:

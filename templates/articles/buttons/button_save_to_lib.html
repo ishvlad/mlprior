@@ -11,13 +11,13 @@
 
 {% else %}
     {% if is_authorised %}
-<a class="btn btn-primary btn-round savetolibrary" id="button-{{ article.id }}"
+<button class="btn btn-primary btn-round savetolibrary" id="button-{{ article.id }}"
    data-article-id="{{ article.id }}">
 <span class="icon">
 <i class="material-icons">bookmark</i>
 </span>
 <span class="text">Save to Library</span>
-</a>
+</button>
 
 {% else %}
 <a href="/accounts/login/" class="btn btn-primary btn-round savetolibrary" id="button-{{ article.id }}"

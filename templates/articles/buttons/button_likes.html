@@ -1,5 +1,5 @@
 
-    {% if is_authorised %}
+{% if is_authorised %}
 <button data-article-id="{{ article.id }}" class="btn btn-primary btn-round btn-fab likebutton">
     {% if article.id in like_articles_ids %}
     <i class="fas fa-thumbs-up fa-sm" id="like-{{ article.id }}"></i>

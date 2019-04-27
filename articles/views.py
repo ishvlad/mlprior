@@ -261,6 +261,7 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJ
         context['tab'] = self.tab
 
         context['page_id'] = 'articles'
+        context['is_authorised'] = self.request.user.is_authenticated
 
         return context
 
@@ -337,7 +338,7 @@ class ArticleDetailsView(AjaxListView, ArticlesMixin, LoginRequiredMixin):
         context['related_articles'] = related_articles
         context['page_template'] = 'articles/related_articles_page.html'
         context['page_id'] = 'articles'
-        context['is_authorised'] = True
+        context['is_authorised'] = self.request.user.is_authenticated
 
         if self.request.user.is_anonymous:
             context['is_authorised'] = False

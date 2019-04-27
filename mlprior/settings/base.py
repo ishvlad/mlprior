@@ -64,7 +64,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'log.middleware.AutomatedLoggingMiddleware',
-    'core.middleware.AuthRequiredMiddleware'
 ]
 
 ROOT_URLCONF = 'mlprior.urls'

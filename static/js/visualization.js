@@ -17,8 +17,10 @@ function chart_bar_d3(data) {
         dates = data.dates.map(d => parseDate(d)),
         data = data.data;
 
-    var stack = d3.stack(),
-        data = d3.range(n).map(function() { return bumpLayer(m, .1); });
+    // console.log(data);
+    var stack = d3.stack();//,
+        // data = d3.range(n).map(function() { return bumpLayer(m, .1); });
+    // console.log(data);
 
     var formatPercent = d3.format(".0%");
     var formatNumber = d3.format("");
@@ -302,6 +304,7 @@ function chart_bar_d3(data) {
             .delay(function(d, i) { return 0; })
             .attr("y", function(d) {
                 var total = d3.sum(d3.values(d.data));
+                if (total == 0) return 0;
                 return y(d[1] / total); })
             .attr("height", function(d, i) {
                     if (d.date < x.domain()[0] || d.date > x.domain()[1]) {
@@ -309,6 +312,7 @@ function chart_bar_d3(data) {
                     }
                     else {
                         var total = d3.sum(d3.values(d.data));
+                        if (total == 0) return 0;
                         return y(d[0] / total) - y(d[1] / total);
                     }})
         .transition()
@@ -319,9 +323,11 @@ function chart_bar_d3(data) {
             .delay(function(d, i) { return 0; })
             .attr("y", function(d) {
                 var total = d3.sum(d3.values(d.data));
+                if (total == 0) return 0;
                 return y2(d[1] / total); })
             .attr("height", function(d) {
                 var total = d3.sum(d3.values(d.data));
+                if (total == 0) return 0;
                 return y2(d[0] / total) - y2(d[1] / total); })
         .transition()
             .attr("x", function(d, i) { return x2(d.date); })
@@ -358,7 +364,10 @@ function chart_bar_d3(data) {
       for (i = 0; i < n; ++i) a[i] = o + o * Math.random();
       for (i = 0; i < 5; ++i) bump(a);
 
-      return a.map(function(d, i) { return Math.max(0, d); });
+      return a.map(function(d, i) {
+
+          return Math.floor(Math.random() * 2) * Math.max(0, d);
+      });
     }
 
 
@@ -407,6 +416,7 @@ function chart_bar_d3(data) {
         } else if (change_value == 'percent') {
             rect.attr("y", function(d) {
                     var total = d3.sum(d3.values(d.data));
+                    if (total == 0) return 0;
                     return y(d[1] / total); })
                 .attr("height", function(d, i) {
                     if (d.date < x.domain()[0] || d.date > x.domain()[1]) {
@@ -414,6 +424,7 @@ function chart_bar_d3(data) {
                     }
                     else {
                         var total = d3.sum(d3.values(d.data));
+                        if (total == 0) return 0;
                         return y(d[0] / total) - y(d[1] / total);
                     }})
                 .attr("x", function(d, i) { return x(d.date) - width/num_look/2; })
@@ -421,16 +432,14 @@ function chart_bar_d3(data) {
         }
 
 		xAxisG.call(xAxis);
-        var left=x2(x.domain()[0]);
-		var right = x2(x.domain()[1]) + Math.max(width/m - padding, 2);
+        // var left=x2(x.domain()[0]);
+		// var right = x2(x.domain()[1]) + Math.max(width/m - padding, 2);
 
-		brush.move([left,right]);
-
+		// brush.move([left,right]);
 
 		 /*svg.select(".zoom").call(zoom.transform, d3.zoomIdentity
 			.scale(width / (brushArea[1] - brushArea[0]))
 			.translate(-brushArea[0], 0));*/
-
 	}
 
 

@@ -11,7 +11,7 @@ from django_ajax.mixin import AJAXMixin
 from el_pagination.views import AjaxListView
 
 from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation, \
-    CategoriesVSDate
+    CategoriesVSDate, CategoriesDate
 from search.forms import SearchForm
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
 
@@ -29,8 +29,7 @@ def home(request):
     context = {
         'n_articles': n_articles,
         'n_articles_in_lib': n_articles_in_lib,
-        'stacked_bar_chart': json.dumps(category_data['data']),
-        'stacked_bar_chart_full': json.dumps(category_data['data_full']),
+        'stacked_bar_chart': json.dumps(category_data),
         'trend_data': json.dumps(trend_data['data']),
         'trend_data_full': json.dumps(trend_data['data_full']),
         'keywords_raw': "Machine Learning, Neural Networks, Computer Vision, Deep Learning",
@@ -45,43 +44,34 @@ def category_view(request, categories=None):
     if request.method == 'POST':
         categories = request.POST.get('categories')
     elif categories is None:
-        categories = [c for c in GLOBAL__CATEGORIES.keys() if c.startswith('cs.')][:6]
+        categories = [c for c in GLOBAL__CATEGORIES.keys() if c.startswith('cs.')][:4]
 
     colors = GLOBAL__COLORS.get_colors_code(len(categories))
+    dates = list(CategoriesDate.objects.filter(date_code__gte=200000).order_by('date_code').values_list('date', flat=True))
 
-    labels, datasets = [], []
-    for color, cat in zip(colors, categories):
-        data = {
-            'label': cat + ': ' + GLOBAL__CATEGORIES[cat],
-            'fill': False,
-            'backgroundColor': color,
-            'borderColor': color
-        }
+    def insert(arr):
+        if int(arr[1]) > 50:
+            return arr[0] + ' 19' + arr[1]
+        else:
+            return arr[0] + ' 20' + arr[1]
 
-        counts = CategoriesVSDate.objects.filter(from_category=cat).order_by('from_month__date_code')
-        data['data'] = list(counts.values_list('count', flat=True))
+    dates = [insert(d.split(' ')) for d in dates]
+    names = [c + ': ' + GLOBAL__CATEGORIES[c] for c in categories]
 
-        if len(labels) == 0:
-            labels = list(counts.values_list('from_month__date', flat=True))
+    datasets = []
+    for cat in categories:
+        counts = CategoriesVSDate.objects.filter(from_category=cat, from_month__date_code__gte=200000).order_by('from_month__date_code')
+        datasets.append(list(counts.values_list('count', flat=True)))
 
-        datasets.append(data)
-
-    data = {
-        'labels': labels,
-        'datasets': datasets
-    }
-    full_data = {
-        'labels': labels,
-        'datasets': [x['data'] for x in datasets]
-    }
-
-    data['labels'] = full_data['labels'][-VISUALIZATION__INITIAL_NUM_BARS:]
-    for x in data['datasets']:
-        x['data'] = x['data'][-VISUALIZATION__INITIAL_NUM_BARS:]
+    for i in range(len(datasets)):
+        if len(datasets[i]) == 0:
+            datasets[i] = [0]*len(dates)
 
     return JsonResponse({
-        'data': data,
-        'data_full': full_data
+        'colors': colors,
+        'names': names,
+        'dates': dates,
+        'data': datasets
     })
 
 

@@ -4,10 +4,54 @@
 
 {% block content %}
 
+<style>
+
+.stacked-chart path,
+.stacked-chart line,
+.stacked-chart rect {
+    shape-rendering: crispEdges;
+}
+
+
+.stacked-chart text {
+    font: 10px sans-serif;
+}
+
+.stacked-chart .axis path,
+.stacked-chart .axis line {
+    fill: none;
+    stroke: lightgrey;
+    stroke-width: 0.3px;
+}
+
+.stacked-chart .layer rect {
+    opacity: 0.8;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.stacked-chart .series-label {
+    fill: black;
+    text-anchor: end;
+    alignment-baseline: central;
+}
+
+.zoom {
+  cursor: move;
+  fill: none;
+  pointer-events: all;
+}
+
+
+</style>
+
     <!-- Visualization -->
-    <script src="{% static 'js/d3.v3.min.js' %}" charset="utf-8"></script>
+{#    <script src="{% static 'js/d3.v3.min.js' %}" charset="utf-8"></script>#}
     <script src="{% static 'js/chart.js/Chart.min.js' %}" charset="utf-8"></script>
     <script src="{% static 'js/visualization.js' %}" charset="utf-8"></script>
+    <script src="{% static 'js/d3.v4.min.js' %}" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js" crossorigin="anonymous"></script>
+
 
     <!-- Content Row -->
           <div class="row mb-4">
@@ -90,6 +134,7 @@
 
           </div>
 
+        {# Categories #}
         <div class="row">
         <div class="col-md-12">
         <div class="card ">
@@ -117,9 +162,35 @@
                 </script>
             </div>
         </div>
+        </div></div></div>
+
+        {# Categories D3 #}
+        <div class="row">
+        <div class="col-md-12">
+        <div class="card ">
+        <div class="card-header card-header-success card-header-icon">
+          <div class="card-icon">
+                      <i class="material-icons">equalizer</i>
+                    </div>
+            <h4 class="card-title">All Categories</h4>
         </div>
-</div>
+        <div class="stacked-chart-container js-stacked-chart-container">
+          <form>
+            <label><input type="radio" name="mode" value="percent"> Percent</label>
+            <label><input type="radio" name="mode" value="grouped"> Grouped</label>
+            <label><input type="radio" name="mode" value="stacked" checked> Stacked</label>
+          </form>
+          <svg class="stacked-chart js-stacked-chart"></svg>
+          <script type="text/javascript">
+            chart_bar_d3({{ stacked_bar_chart|safe }})
+          </script>
+        </div>
     </div>
+</div>
+
+        </div>
+
+    {# Trends #}
     <div class="row">
 <div class="col-md-12">
         <div class="card shadow mb-4">

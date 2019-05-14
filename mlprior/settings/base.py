@@ -62,8 +62,6 @@ INSTALLED_APPS = [
     'rest_framework',  # django rest framework
     'djng',  # django-angular
 
-    'djangobower',
-
     'django.contrib.sites',  # new
     # 3rd party
     'allauth',  # new

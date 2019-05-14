@@ -7,7 +7,7 @@ var app = angular.module('drf-angular', [
 
 ]);
 
-app.constant('BASE_URL', 'http://localhost:8000/articles/api/');
+app.constant('BASE_URL', 'http://0.0.0.0:8000/articles/api/');
 
 app.config(function($stateProvider, $urlRouterProvider, $interpolateProvider, $httpProvider){
     // $stateProvider

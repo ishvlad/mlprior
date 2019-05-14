@@ -15,7 +15,21 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-STATICFILE_DIR = os.path.join(BASE_DIR, 'static')
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'node_modules'),
+]
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticroot')
+
+
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'npm.finders.NpmFinder'
+]
+
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
@@ -45,6 +59,11 @@ INSTALLED_APPS = [
     'search',
     'log',
 
+    'rest_framework',  # django rest framework
+    'djng',  # django-angular
+
+    'djangobower',
+
     'django.contrib.sites',  # new
     # 3rd party
     'allauth',  # new
@@ -64,6 +83,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'log.middleware.AutomatedLoggingMiddleware',
+    'djng.middleware.AngularUrlMiddleware'
 ]
 
 ROOT_URLCONF = 'mlprior.urls'
@@ -227,3 +247,5 @@ LOGGING = {
         },
     },
 }
+
+FORM_RENDERER = 'djng.forms.renderers.DjangoAngularTemplates'

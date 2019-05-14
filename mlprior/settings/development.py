@@ -2,9 +2,9 @@ from .base import *
 
 DEBUG = True
 
-STATICFILES_DIRS = [
-    STATICFILE_DIR,
-]
+# STATICFILES_DIRS = [
+#     STATICFILE_DIR,
+# ]
 ALLOWED_HOSTS = []
 
 DATABASES = {

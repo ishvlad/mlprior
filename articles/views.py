@@ -4,14 +4,21 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q, When, Case
+from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
+from django.views import View
+from django.views.generic import CreateView
+from django.views.generic import FormView
 from django.views.generic import ListView
+from django.views.generic import TemplateView
 from django_ajax.mixin import AJAXMixin
 from el_pagination.views import AjaxListView
 
+from articles.forms import AddBlogPostForm
 from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation, \
-    CategoriesVSDate, CategoriesDate
+    CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost
+from core.views import AjaxableResponseMixin
 from search.forms import SearchForm
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
 
@@ -155,6 +162,12 @@ class ArticlesMixin(object):
     def like_ids(self):
         article_user = ArticleUser.objects.filter(user=self.request.user, like_dislike=True)
         return article_user.values_list('article', flat=True)
+
+    @property
+    def blog_posts_like_ids(self):
+        blog_post_user = BlogPostUser.objects.filter(user=self.request.user, is_like=True)
+        print(blog_post_user)
+        return blog_post_user.values_list('blog_post', flat=True)
 
     @property
     def dislike_ids(self):
@@ -308,9 +321,11 @@ class LikedDisliked(ArticlesView, LoginRequiredMixin):
         return context
 
 
-class ArticleDetailsView(AjaxListView, ArticlesMixin, LoginRequiredMixin):
+class ArticleDetailsView(AjaxListView, ArticlesMixin, LoginRequiredMixin, FormView):
     model = Article
     login_url = '/accounts/login'
+
+    form_class = AddBlogPostForm
 
     template_name = 'articles/article_details.html'
     page_template = 'articles/related_articles_page.html'
@@ -322,6 +337,8 @@ class ArticleDetailsView(AjaxListView, ArticlesMixin, LoginRequiredMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        print(context)
+
         article = get_object_or_404(Article, id=self.kwargs['pk'])
 
         related_articles = article.related.order_by('related_articles__distance')
@@ -329,6 +346,7 @@ class ArticleDetailsView(AjaxListView, ArticlesMixin, LoginRequiredMixin):
         context['page_template'] = 'articles/related_articles_page.html'
         context['page_id'] = 'articles'
         context['is_authorised'] = self.request.user.is_authenticated
+        context['form'] = AddBlogPostForm()
 
         if self.request.user.is_anonymous:
             context['is_authorised'] = False
@@ -338,8 +356,25 @@ class ArticleDetailsView(AjaxListView, ArticlesMixin, LoginRequiredMixin):
         context['like_articles_ids'] = self.like_ids
         context['dislike_articles_ids'] = self.dislike_ids
         context['notes'] = self.notes
+        print(self.blog_posts_like_ids)
+        # context['blogposts'] = article.blog_post.all()
+        context['like_blog_posts_ids'] = self.blog_posts_like_ids
 
         return context
+
+    def form_valid(self, form):
+        print(form)
+        return HttpResponseRedirect(self.request.path_info)
+
+
+class BlogPostCreate(AjaxableResponseMixin, CreateView):
+    model = BlogPost
+    fields = ['title', 'url']
+
+    def form_valid(self, form):
+        # self.success_url = self.request.path_info
+        form.instance.article_id = self.request.POST['article_id']
+        return super().form_valid(form)
 
 
 @login_required(login_url='/accounts/login')
@@ -376,6 +411,24 @@ def change_note(request, article_id):
 
 
 @login_required(login_url='/accounts/login')
+def like_dislike_blogpost(request, blogpost_id):
+    blogpost = get_object_or_404(BlogPost, id=blogpost_id)
+    blogpost_user, _ = BlogPostUser.objects.get_or_create(blog_post=blogpost, user=request.user)
+
+    if request.POST['like'] == '1':
+        blogpost_user.is_like = True
+        blogpost.rating += 1
+    else:
+        blogpost_user.is_like = False
+        blogpost.rating -= 1
+
+    blogpost_user.save()
+    blogpost.save()
+
+    return JsonResponse({})
+
+
+@login_required(login_url='/accounts/login')
 def like_dislike(request, article_id):
     article = get_object_or_404(Article, id=article_id)
     article_user, _ = ArticleUser.objects.get_or_create(article=article, user=request.user)
@@ -390,7 +443,3 @@ def like_dislike(request, article_id):
     article_user.save()
 
     return JsonResponse({})
-
-
-def landing_view(request):
-    return render(request, 'landing.html', context={})

@@ -44,6 +44,23 @@ class Article(models.Model):
         return obj.to_dict(include_meta=True)
 
 
+class BlogPost(models.Model):
+    url = models.URLField(verbose_name='URL')
+    title = models.CharField(verbose_name='title', max_length=300)
+    article = models.ForeignKey(Article, on_delete='CASCADE', related_name='blog_post')
+    rating = models.PositiveIntegerField(verbose_name='rating', default=0)
+
+    users = models.ManyToManyField(User, 'blog_posts', through='BlogPostUser')
+
+    class Meta:
+        verbose_name = 'Blog post'
+        verbose_name_plural = 'Blog posts'
+        ordering = ['-rating']
+
+    def __str__(self):
+        return self.title
+
+
 class Author(models.Model):
     name = models.CharField(max_length=100, verbose_name='Author name', primary_key=True)
 
@@ -56,6 +73,16 @@ class Author(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class BlogPostUser(models.Model):
+    blog_post = models.ForeignKey(BlogPost, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    is_like = models.BooleanField(verbose_name='like', default=False)
+
+    class Meta:
+        unique_together = (('blog_post', 'user'),)
 
 
 class ArticleUser(models.Model):

@@ -14,3 +14,8 @@ djangoajax
 django-allauth
 psycopg2
 django-autocomplete-light
+django-angular
+djangorestframework
+markdown
+django-filter
+django-npm

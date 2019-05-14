@@ -1,12 +1,12 @@
 from django.urls import path, include
 
-from articles.views import home, landing_view
+from articles.views import home
 # from core.forms import UserLoginForm
-from core.views import FeedbackView
+from core.views import FeedbackView, LandingView
 
 
 urlpatterns = [
-    path('', landing_view, name='landing'),
+    path('', LandingView.as_view(), name='landing'),
     path('home/', home, name='home'),
     path('feedback/', FeedbackView.as_view(), name='feedback'),
     path('accounts/', include('allauth.urls')),

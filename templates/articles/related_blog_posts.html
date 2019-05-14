@@ -1,0 +1,127 @@
+<div class="card shadow mb-4">
+    <div class="card-header card-header-danger card-header-icon">
+
+        <div class="card-icon">
+            <i class="material-icons">library_books</i>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                    <h4 class="card-title">Blog posts</h4>
+            </div>
+{#                <div class="col-sm-1" style="float: left;">#}
+{#                    <a class="dropbtn" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#}
+{#                      <i class="material-icons">share</i>#}
+{#                    </a>#}
+{#                </div>#}
+
+        </div>
+
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-sm-10">
+            </div>
+            <div class="col-sm-2">
+                 <button class="btn btn-primary btn-round btn-fab note" type="button" aria-controls="collapseUtilities"
+                            aria-expanded="false" style="margin-left: 30px;" data-toggle="collapse" data-target="#note-collapse-{{ article.id }}">
+                        <i class="fas fa-plus"></i>
+                    </button>
+            </div>
+        </div>
+
+
+        <div ng-app="drf-angular">
+    <div ng-controller="MainCtrl">
+
+        <div class="collapse" id="note-collapse-{{ article.id }}">
+            <div class="col-sm-12">
+                    <input value="{{ article.id }}" ng-model="newBlogPost.article_id" placeholder="article_id" hidden>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                          <div class="form-group">
+                            <label class="bmd-label-floating">Title</label>
+                              <input type="text" ng-model="newBlogPost.title" placeholder="title" class='form-control' />
+                          </div>
+                        </div>
+                      </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                          <div class="form-group">
+                            <label class="bmd-label-floating">URL</label>
+                              <input type="url" ng-model="newBlogPost.url" placeholder="url" class='form-control' />
+                          </div>
+                        </div>
+                      </div>
+
+                        <div class="card-footer justify-content-center">
+                              <button class="btn btn-primary btn-user btn-block" type="submit" ng-click="addBlogPost()">Submit</button>
+                        </div>
+
+              </div>
+
+            <span ng-show="!created" class="text-danger">
+                The blog post is already attached...
+            </span>
+        </div>
+
+
+
+{% verbatim %}
+    <table class="table">
+            <tbody>
+                <tr ng-repeat="blogpost in blogposts | orderBy:['-rating', '-title']">
+                    <td><a href="{$ blogpost.url $}">{$ blogpost.title$}</a></td>
+                    <td class="td-actions text-right">
+                        <span class="blogpostrating" id="blogpost-rating-{$ blogpost.id $}">{$ blogpost.rating $}</span>
+                        <button type="button" rel="tooltip" title="" ng-click="changeLike(blogpost)" class="btn btn-primary btn-link" data-original-title="Edit Task">
+
+<i class="fas fa-heart blogpostlike" id="blogpost-like-{$ blogpost.id $}" ng-if="blogpost.is_like"></i>
+<i class="far fa-heart blogpostlike" id="blogpost-like-{$ blogpost.id $}" ng-if="!blogpost.is_like"></i>
+
+                        </button>
+                    </td>
+                </tr>
+
+                <div ng-show="!blogposts.length">
+                    <span>
+                        There is no assigned blog posts. Yet...
+                    </span>
+                </div>
+
+            </tbody>
+        </table>
+
+
+ {% endverbatim %}
+{#            </script>#}
+
+</div>
+</div>
+
+
+{#    <hr>#}
+{#        <table class="table">#}
+{#            <tbody>#}
+{#            {% for blogpost in blogposts %}#}
+{#                <tr>#}
+{#                id {{ z.id }}#}
+{#                    <td><a href="{{ blogpost.url }}">{{ blogpost.title}}</a></td>#}
+{#                    <td class="td-actions text-right">#}
+{#                        <span class="blogpostrating" id="blogpost-rating-{{ blogpost.id }}">{{ blogpost.rating }}</span>#}
+{#                        <button type="button" rel="tooltip" title="" class="btn btn-primary btn-link" data-original-title="Edit Task">#}
+{##}
+{#                            {% if blogpost.id in like_blog_posts_ids %}#}
+{#                                <i class="fas fa-heart blogpostlike" data-blogpost-id="{{ blogpost.id }}" id="blogpost-like-{{ blogpost.id }}"></i>#}
+{#                            {% else %}#}
+{#                                <i class="far fa-heart blogpostlike" data-blogpost-id="{{ blogpost.id }}" id="blogpost-like-{{ blogpost.id }}"></i>#}
+{#                            {% endif %}#}
+{#                        </button>#}
+{#                    </td>#}
+{#                </tr>#}
+{#            {% endfor %}#}
+{##}
+{#            </tbody>#}
+{#        </table>#}
+    </div>
+</div>

@@ -1,7 +1,5 @@
-from django.urls import path, include
+from django.urls import path
 
-from articles.views import home, landing_view
-# from core.forms import UserLoginForm
 import search.views as search_views
 
 

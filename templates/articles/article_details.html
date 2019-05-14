@@ -38,30 +38,39 @@
       </div>
    </div>
    <p></p>
-   {% if is_authorised %}
-   <div class="card shadow mb-4">
-      <div class="card-header card-header-warning card-header-icon">
-         <div class="card-icon">
-            <i class="material-icons">comment</i>
+    <div class="row">
+        <div class="col-md-12">
+         {% if is_authorised %}
+         <div class="card shadow mb-4">
+            <div class="card-header card-header-warning card-header-icon">
+               <div class="card-icon">
+                  <i class="material-icons">comment</i>
+               </div>
+               <h4 class="card-title">Note</h4>
+            </div>
+            <!-- Card Body -->
+            <div class="card-body">
+               <textarea class="form-control  note-area note-form"
+                  placeholder="You type, we save..."
+                  id="note-{{ article.id }}"
+                  data-article-id="{{ article.id }}" rows="3">{{ notes|lookup:article.id }}</textarea>
+            </div>
          </div>
-         <h4 class="card-title">Note</h4>
+         {% endif %}
       </div>
-      <!-- Card Body -->
-      <div class="card-body">
-         <textarea class="form-control  note-area note-form"
-            placeholder="You type, we save..."
-            id="note-{{ article.id }}"
-            data-article-id="{{ article.id }}" rows="3">{{ notes|lookup:article.id }}</textarea>
+    </div>
+   <div class="row">
+      <div class="col-md-6">
+         {% include 'articles/related_blog_posts.html' %}
       </div>
    </div>
-   {% endif %}
 </div>
-     {% if is_authorised %}
+{% if is_authorised %}
 <h1 class="h3 mb-4 text-gray-800">Related Articles</h1>
 {% include page_template %}
 {% block js %}
 {{ block.super }}
-<script src="{% static 'js/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
 <script src="{% static 'el-pagination/js/el-pagination.js' %}"></script>
 <script>
    $.endlessPaginate({
@@ -71,6 +80,5 @@
 
 </script>
 {% endblock js %}
-
-    {% endif %}
+{% endif %}
 {% endblock %}

@@ -20,9 +20,10 @@ class ArticleList(viewsets.ViewSet):
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):
-        article = Article.objects.get(id=pk, article_user__user=self.request.user)
+        article = Article.objects.get(id=pk)
 
-        article_user = ArticleUser.objects.get(user=self.request.user, article_id=pk)
+        article_user, is_created = ArticleUser.objects.get_or_create(user=self.request.user, article_id=pk)
+        article_user.save()
         blogpost = BlogPost.objects.filter(article_id=pk)
         # print(article_user)
 

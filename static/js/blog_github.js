@@ -6,7 +6,9 @@ var app = angular.module('drf-angular', [
 
 ]);
 
-app.constant('BASE_URL', 'http://localhost:8000/articles/api/');
+
+// app.constant('BASE_URL', 'http://localhost:8000/articles/api/');
+app.constant('BASE_URL', 'http://mlprior.com/articles/api/');
 
 app.config(function($stateProvider, $urlRouterProvider, $interpolateProvider, $httpProvider){
     // $stateProvider
@@ -62,6 +64,10 @@ app.service('BlogPosts', function($location, $http, BASE_URL){
     var getArticleId = function () {
         return $location.absUrl().split('/')[5].replace(/\D/g,'');
     };
+
+    // var url = $location.;
+    // console.log('URL');
+    // console.log(url);
 
     BlogPosts.all = function(callbackFunc){
         id = getArticleId();

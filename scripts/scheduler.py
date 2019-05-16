@@ -24,7 +24,7 @@ def main(args):
     queue_path = os.path.join(path, 'scripts/queue.json')
     script_path = os.path.join(path, 'scripts/increment.py')
     logs_path = os.path.join(path, 'data/logs/scheduler/')
-    key = str(uuid4())
+    key = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
     task = ''
     border = args.border
     max_articles = args.max_articles
@@ -81,12 +81,11 @@ def main(args):
             queue[task] = key
             with open(queue_path, 'w+') as outfile:
                 json.dump(queue, outfile)
-            time = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
             cmd = args.python + ' ' + script_path
             if task == 'category_bar':
                 cmd += ' -update_categories'
             cmd += (" -%s --max_articles=%s --verbose=False " % (task, max_articles))
-            cmd += "2> " + os.path.join(logs_path, "scheduler_%s_%s.err " % (task, time))
+            cmd += "2> " + os.path.join(logs_path, "scheduler_%s_%s.err " % (task, key))
             os.system(cmd)
 
     except Exception as e:

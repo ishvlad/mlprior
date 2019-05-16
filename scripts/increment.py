@@ -191,7 +191,6 @@ def download_pdf(args, path_pdf='data/pdfs'):
     if len(ok_list) != 0:
         Article.objects.filter(pk__in=ok_list).update(has_pdf=True)
 
-
 @log.logging.timeit(logger, 'PDF 2 TXT Time', level=logging.INFO)
 def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
     logger.info('START generating TXTs from PDFs')
@@ -227,12 +226,11 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
             else:
                 logger.info('TXT ' + idx + ' already exists, but text not appears in DB. Save text')
         else:
-            cmd = "pdftotext %s %s 2> data/logs/pdf2txt_%s.log" % (file_pdf, file_txt, idx)
+            cmd = "pdftotext %s %s " % (file_pdf, file_txt, idx)
             os.system(cmd)
 
             if not os.path.isfile(file_txt) or os.path.getsize(file_txt) == 0:
                 logger.info(idx + '. pdf2txt: Failed to generate TXT (No .txt file)). NEXT')
-                continue
 
         try:
             with open(file_txt, 'r', encoding='unicode_escape') as f:
@@ -241,8 +239,8 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
                     text = text.replace('\x00', ' ')
                 text = text.encode('utf-8', 'replace').decode('utf-8')
         except Exception as e:
-            logger.info(idx + '. Decode problem. No .txt file (Next): ' + str(e))
-            continue
+            logger.info(idx + '. Decode problem. No .txt file. NEXT: ' + str(e))
+            text = 'NO TEXT'
 
         new_items.append(ArticleText(
             article_origin_id=pk,

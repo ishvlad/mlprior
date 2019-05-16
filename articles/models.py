@@ -49,6 +49,7 @@ class BlogPost(models.Model):
     title = models.CharField(verbose_name='title', max_length=300)
     article = models.ForeignKey(Article, on_delete='CASCADE', related_name='blog_post')
     rating = models.PositiveIntegerField(verbose_name='rating', default=0)
+    approved = models.BooleanField(verbose_name='approved', default=False)
 
     users = models.ManyToManyField(User, 'blog_posts', through='BlogPostUser')
 
@@ -86,8 +87,8 @@ class BlogPostUser(models.Model):
 
 
 class ArticleUser(models.Model):
-    article = models.ForeignKey(Article, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='article_user')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='article_user')
 
     note = models.TextField(verbose_name='Note', default='')
     like_dislike = models.NullBooleanField()

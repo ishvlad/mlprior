@@ -2,8 +2,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, generics, permissions
 from rest_framework import permissions
 
-from articles.models import Article, BlogPost, BlogPostUser
-from articles.serializers import ArticleSerializer, BlogPostSerializer, BlogPostUserSerializer
+from articles.models import Article, BlogPost, BlogPostUser, ArticleUser
+from articles.serializers import ArticleSerializer, BlogPostSerializer, BlogPostUserSerializer, ArticleUserSerializer
 from rest_framework.response import Response
 
 
@@ -19,15 +19,29 @@ class ArticleList(viewsets.ViewSet):
         serializer = ArticleSerializer(queryset, many=True)
         return Response(serializer.data)
 
-
     def retrieve(self, request, pk=None):
-        article = Article.objects.get(id=pk)
+        article = Article.objects.get(id=pk, article_user__user=self.request.user)
+
+        article_user = ArticleUser.objects.get(user=self.request.user, article_id=pk)
+        blogpost = BlogPost.objects.filter(article_id=pk)
+        # print(article_user)
 
         # blog_posts = BlogPost.objects.filter(blogpostuser__user_id=request.user.id,
         #                                      blogpostuser__is_like=True, article=article)
 
-
-        serializer = ArticleSerializer(article)
+        serializer = ArticleSerializer({
+            'id': article.id,
+            'title': article.title,
+            'abstract': article.abstract,
+            'url': article.url,
+            'blog_post': blogpost,
+            'date': article.date,
+            'category': article.category,
+            'arxiv_id': article.arxiv_id,
+            'note': article_user.note,
+            'in_lib': article_user.in_lib,
+            'like_dislike': article_user.like_dislike
+        })
         return Response(serializer.data)
 
 
@@ -78,7 +92,6 @@ class BlogPostList(viewsets.ViewSet):
             'created': True
         })
 
-
     def list(self, request):
         print(request.user.id)
         blogpost_user = BlogPost.objects.filter(blogpostuser__user_id=request.user.id, blogpostuser__is_like=True)
@@ -98,5 +111,20 @@ class BlogPostUserList(viewsets.ViewSet):
         queryset = BlogPostUser.objects.filter(user=request.user, is_like=True)
         queryset = queryset.values_list('blog_post', flat=True)
         return Response(queryset)
+
+
+class ArticleUserList(generics.RetrieveAPIView):
+    permission_classes = [
+        permissions.AllowAny
+    ]
+
+    def get_queryset(self):
+        queryset = ArticleUser.objects.get(user=self.request.user, article_id=self.kwargs['pk'])
+
+        print(queryset)
+
+        serializer = ArticleUserSerializer(queryset, many=False)
+        return Response(serializer.data)
+
 
 

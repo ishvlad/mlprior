@@ -6,14 +6,9 @@
         </div>
         <div class="row">
             <div class="col-sm-12">
-                    <h4 class="card-title">Blog posts</h4>
-            </div>
-{#                <div class="col-sm-1" style="float: left;">#}
-{#                    <a class="dropbtn" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#}
-{#                      <i class="material-icons">share</i>#}
-{#                    </a>#}
-{#                </div>#}
+                    <h4 class="card-title">Blog posts <a style="color: #4e73df !important;" data-toggle="popover" data-trigger="hover" data-content="Blogposts, that are related to the article. We appreciate if you add one more..."><i class="fas fa-question"></i></a></h4>
 
+            </div>
         </div>
 
     </div>
@@ -29,9 +24,6 @@
             </div>
         </div>
 
-
-        <div ng-app="drf-angular">
-    <div ng-controller="MainCtrl">
 
         <div class="collapse" id="note-collapse-{{ article.id }}">
             <div class="col-sm-12">
@@ -65,19 +57,23 @@
             </span>
         </div>
 
-
-
-{% verbatim %}
     <table class="table">
             <tbody>
                 <tr ng-repeat="blogpost in blogposts | orderBy:['-rating', '-title']">
-                    <td><a href="{$ blogpost.url $}">{$ blogpost.title$}</a></td>
+                    <td><a href="{$ blogpost.url $}">
+                        <span ng-if="blogpost.approved" class="text-warning">
+                            {$ blogpost.title$}
+                        </span>
+                        <span ng-if="!blogpost.approved" class="text-danger">
+                            {$ blogpost.title$}
+                        </span>
+                    </a></td>
                     <td class="td-actions text-right">
                         <span class="blogpostrating" id="blogpost-rating-{$ blogpost.id $}">{$ blogpost.rating $}</span>
                         <button type="button" rel="tooltip" title="" ng-click="changeLike(blogpost)" class="btn btn-primary btn-link" data-original-title="Edit Task">
 
-<i class="fas fa-heart blogpostlike" id="blogpost-like-{$ blogpost.id $}" ng-if="blogpost.is_like"></i>
-<i class="far fa-heart blogpostlike" id="blogpost-like-{$ blogpost.id $}" ng-if="!blogpost.is_like"></i>
+                        <i class="fas fa-heart blogpostlike" id="blogpost-like-{$ blogpost.id $}" ng-if="blogpost.is_like"></i>
+                        <i class="far fa-heart blogpostlike" id="blogpost-like-{$ blogpost.id $}" ng-if="!blogpost.is_like"></i>
 
                         </button>
                     </td>
@@ -93,35 +89,8 @@
         </table>
 
 
- {% endverbatim %}
-{#            </script>#}
-
 </div>
 </div>
 
-
-{#    <hr>#}
-{#        <table class="table">#}
-{#            <tbody>#}
-{#            {% for blogpost in blogposts %}#}
-{#                <tr>#}
-{#                id {{ z.id }}#}
-{#                    <td><a href="{{ blogpost.url }}">{{ blogpost.title}}</a></td>#}
-{#                    <td class="td-actions text-right">#}
-{#                        <span class="blogpostrating" id="blogpost-rating-{{ blogpost.id }}">{{ blogpost.rating }}</span>#}
-{#                        <button type="button" rel="tooltip" title="" class="btn btn-primary btn-link" data-original-title="Edit Task">#}
-{##}
-{#                            {% if blogpost.id in like_blog_posts_ids %}#}
-{#                                <i class="fas fa-heart blogpostlike" data-blogpost-id="{{ blogpost.id }}" id="blogpost-like-{{ blogpost.id }}"></i>#}
-{#                            {% else %}#}
-{#                                <i class="far fa-heart blogpostlike" data-blogpost-id="{{ blogpost.id }}" id="blogpost-like-{{ blogpost.id }}"></i>#}
-{#                            {% endif %}#}
-{#                        </button>#}
-{#                    </td>#}
-{#                </tr>#}
-{#            {% endfor %}#}
-{##}
-{#            </tbody>#}
-{#        </table>#}
-    </div>
-</div>
+{#    </div>#}
+{#</div>#}

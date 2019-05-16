@@ -3,15 +3,13 @@ from django.urls import include
 from django.urls import path
 from rest_framework import routers
 
-from articles.api import BlogPostList, ArticleList, BlogPostUserList
+from articles.api import BlogPostList, ArticleList, BlogPostUserList, ArticleUserList
 from articles import views
 
 blogpost_router = routers.DefaultRouter()
 blogpost_router.register(r'blogposts', BlogPostList, base_name='blogposts')
 blogpost_router.register(r'articles', ArticleList, base_name='articleslist')
 blogpost_router.register(r'blogpostuser', BlogPostUserList, base_name='blogpostuser')
-# blogpost_router.register(r'articles', ArticleDetail, base_name='articlesdetails')
-
 
 apiurls = [
     path('api/', include(blogpost_router.urls)),
@@ -26,7 +24,6 @@ urlpatterns = [
     path('disliked', login_required(views.LikedDisliked.as_view(), login_url='/accounts/login'), name='disliked'),
 
     path('details/<int:pk>', views.ArticleDetailsView.as_view(), name='article_details'),
-
 
     path('authors/<author_name>', login_required(views.ArticlesOfAuthor.as_view(), login_url='/accounts/login'), name='author_articles'),
     path('api/v1/library/add/<article_id>', login_required(views.add_remove_from_library, login_url='/accounts/login'), name='lib_add'),

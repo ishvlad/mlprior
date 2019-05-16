@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
+
+    <div ng-app="drf-angular">
+    <div ng-controller="MainCtrl">
+
 <div id="article-{{ article.id }}">
    <div class="card shadow mb-4">
       <div class="card-header py-3">
@@ -53,7 +57,7 @@
                <textarea class="form-control  note-area note-form"
                   placeholder="You type, we save..."
                   id="note-{{ article.id }}"
-                  data-article-id="{{ article.id }}" rows="3">{{ notes|lookup:article.id }}</textarea>
+                  data-article-id="{{ article.id }}" rows="3">{{ article.note }}</textarea>
             </div>
          </div>
          {% endif %}
@@ -63,8 +67,14 @@
       <div class="col-md-6">
          {% include 'articles/related_blog_posts.html' %}
       </div>
+{#       <div class="col-md-6">#}
+{#         {% include 'articles/related_blog_posts.html' %}#}
+{#      </div>#}
    </div>
 </div>
+
+    </div>
+    </div>
 {% if is_authorised %}
 <h1 class="h3 mb-4 text-gray-800">Related Articles</h1>
 {% include page_template %}

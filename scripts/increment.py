@@ -90,6 +90,7 @@ def download_meta(args):
     arxiv_api = ArXivAPI(args.sleep_time)
     db = DBManager()
 
+    proba_for_random = 0.2
     attempt = 1
     start = 0
     ok_list = []
@@ -98,16 +99,25 @@ def download_meta(args):
     while len(ok_list) < args.max_articles:
         logger.info('BUFFER is empty. arXiv.API -- Try to get %d articles...' % args.batch_size)
 
+        random_search = np.random.rand() < proba_for_random
+        if random_search:
+            start_random = np.random.randint(start, 2 * Article.objects.count())
+        else:
+            start_random = start
+
         entries = arxiv_api.search(
             categories=['cat:' + c for c in GLOBAL__CATEGORIES if c.startswith('cs.')],
-            start=start, max_result=args.batch_size
+            start=start_random, max_result=args.batch_size
         )
-        logger.info('... received %d articles from arXiv' % len(entries))
+        logger.info('... received %d articles from arXiv start from %d index' % (len(entries), start_random))
 
-        start += args.batch_size
+        if not random_search:
+            start += args.batch_size
+
         if len(entries) == 0:
-            start -= args.batch_size
-            if attempt < 6:
+            if not random_search:
+                start -= args.batch_size
+            if attempt < 10:
                 logger.info('Empty buffer again. ArXiv is over :) Attempt %d.' % attempt)
                 attempt += 1
             else:

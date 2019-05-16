@@ -17,15 +17,15 @@
             <div class="col-sm-10">
             </div>
             <div class="col-sm-2">
-                 <button class="btn btn-primary btn-round btn-fab note" type="button" aria-controls="collapseUtilities"
-                            aria-expanded="false" style="margin-left: 30px;" data-toggle="collapse" data-target="#note-collapse-{{ article.id }}">
+                 <button class="btn btn-primary btn-round btn-fab note" type="button" aria-controls="blogpost-collapse-{{ article.id }}"
+                            aria-expanded="false"  data-toggle="collapse" data-target="#blogpost-collapse-{{ article.id }}">
                         <i class="fas fa-plus"></i>
                     </button>
             </div>
         </div>
 
 
-        <div class="collapse" id="note-collapse-{{ article.id }}">
+        <div class="collapse" id="blogpost-collapse-{{ article.id }}">
             <div class="col-sm-12">
                     <input value="{{ article.id }}" ng-model="newBlogPost.article_id" placeholder="article_id" hidden>
 
@@ -33,7 +33,7 @@
                         <div class="col-md-12">
                           <div class="form-group">
                             <label class="bmd-label-floating">Title</label>
-                              <input type="text" ng-model="newBlogPost.title" placeholder="title" class='form-control' />
+                              <input type="text" ng-model="newBlogPost.title" placeholder="Nice blog post about Deep Learning..." class='form-control' />
                           </div>
                         </div>
                       </div>
@@ -41,7 +41,7 @@
                         <div class="col-md-12">
                           <div class="form-group">
                             <label class="bmd-label-floating">URL</label>
-                              <input type="url" ng-model="newBlogPost.url" placeholder="url" class='form-control' />
+                              <input type="url" placeholder="http://example.com" ng-model="newBlogPost.url" class='form-control' />
                           </div>
                         </div>
                       </div>

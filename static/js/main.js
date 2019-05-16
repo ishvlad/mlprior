@@ -153,6 +153,9 @@ $(function() {
                 success: function (data) {
                     span = document.getElementById('note-badge-' + article_id);
 
+                    if (span == null) {
+                        return;
+                    }
                     if (note != ''){
                         span.classList.remove('d-none');
                     } else {

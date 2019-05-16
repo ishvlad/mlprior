@@ -27,7 +27,7 @@ from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLO
 def home(request):
     n_articles = Article.objects.count()
 
-    articles_lib = Article.objects.filter(articleuser__user=request.user, articleuser__in_lib=True)
+    articles_lib = Article.objects.filter(article_user__user=request.user, article_user__in_lib=True)
     n_articles_in_lib = articles_lib.count()
 
     category_data = json.loads(category_view(request).content)
@@ -219,7 +219,7 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJ
 
         if current_tab == 'popular':
             # todo fix
-            return Article.objects.annotate(n_likes=Count('articleuser__like_dislike')).order_by('-n_likes')
+            return Article.objects.annotate(n_likes=Count('article_user__like_dislike')).order_by('-n_likes')
 
         if current_tab == 'recommended':
             # articles_negative = ArticleUser.objects.filter(user=self.request.user, like_dislike=False).values('article')
@@ -294,7 +294,7 @@ class ArticlesLibrary(ArticlesView, LoginRequiredMixin):
     login_url = '/accounts/login'
 
     def get_queryset(self):
-        return Article.objects.filter(articleuser__user=self.request.user, articleuser__in_lib=True)
+        return Article.objects.filter(article_user__user=self.request.user, article_user__in_lib=True)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -309,7 +309,7 @@ class LikedDisliked(ArticlesView, LoginRequiredMixin):
 
     def get_queryset(self):
         liked = 'disliked' not in self.request.get_raw_uri()
-        return Article.objects.filter(articleuser__user=self.request.user, articleuser__like_dislike=liked)
+        return Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=liked)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

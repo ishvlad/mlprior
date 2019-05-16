@@ -101,7 +101,7 @@ def download_meta(args):
 
         random_search = np.random.rand() < proba_for_random
         if random_search:
-            start_random = np.random.randint(start, 2 * Article.objects.count() + 10)
+            start_random = np.random.randint(start, max(2 * Article.objects.count(), start + args.batch_size))
         else:
             start_random = start
 

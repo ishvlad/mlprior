@@ -27,6 +27,7 @@
 
         <div class="collapse" id="blogpost-collapse-{{ article.id }}">
             <div class="col-sm-12">
+                <form name="blogPostForm" ng-submit="addBlogPost()" id="blogPostForm" novalidate>
                     <input value="{{ article.id }}" ng-model="newBlogPost.article_id" placeholder="article_id" hidden>
 
                     <div class="row">
@@ -47,9 +48,9 @@
                       </div>
 
                         <div class="card-footer justify-content-center">
-                              <button class="btn btn-primary btn-user btn-block" type="submit" ng-click="addBlogPost()">Submit</button>
+                              <button class="btn btn-primary btn-user btn-block" type="submit">Submit</button>
                         </div>
-
+                </form>
               </div>
 
             <span ng-show="!created" class="text-danger">

@@ -112,6 +112,12 @@ app.controller('MainCtrl', function($location, $scope, BlogPosts, Articles, $sta
         });
     }
 
+    function resetForm() {
+        $scope.blogPostForm.$setPristine();
+                $scope.newBlogPost = {};
+                $scope.blogPostForm.$setUntouched()
+    }
+
     updateBlogPosts();
 
     Articles.get(function (dataResponse) {
@@ -123,6 +129,7 @@ app.controller('MainCtrl', function($location, $scope, BlogPosts, Articles, $sta
             .then(function(res){
                 $scope.created = res.data.created;
                 updateBlogPosts();
+                resetForm()
             });
     };
 

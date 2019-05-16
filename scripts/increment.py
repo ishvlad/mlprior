@@ -534,7 +534,7 @@ def trend_ngrams(args, max_n_for_grams=3):
         logger.info('FINISH Ngram Trend Line')
         return
 
-    articles = articles.values('id', 'date', 'title', 'abstract', 'articletext__text')[:max_articles]
+    articles = articles.values('id', 'date', 'title', 'abstract')[:max_articles]
     articles = pd.DataFrame(articles)
     articles['date'] = pd.to_datetime(articles['date'])
     articles['idx_sort'] = articles.date.dt.month + articles.date.dt.year * 100
@@ -552,9 +552,8 @@ def trend_ngrams(args, max_n_for_grams=3):
 
         dics_ttl, keys_ttl = get_grams_dict(list(row.title.values), max_n_for_grams)
         dics_abs, keys_abs = get_grams_dict(list(row.abstract.values), max_n_for_grams)
-        dics_txt, keys_txt = get_grams_dict(list(row.articletext__text.values), max_n_for_grams)
 
-        keys = list(set(np.concatenate((keys_ttl, keys_abs, keys_txt))))
+        keys = list(set(np.concatenate((keys_ttl, keys_abs))))
         existed_keys = list(NGramsSentence.objects.filter(sentence__in=keys).values_list(flat=True))
         new_keys = np.array(keys)[~np.in1d(keys, existed_keys)]
 
@@ -569,7 +568,7 @@ def trend_ngrams(args, max_n_for_grams=3):
             from_item=NGramsSentence.objects.filter(sentence=key)[0],
             freq_title=dics_ttl[len(key.split()) - 1].get(key, 0),
             freq_abstract=dics_abs[len(key.split()) - 1].get(key, 0),
-            freq_text=dics_txt[len(key.split()) - 1].get(key, 0)
+            freq_text=0
         ) for key in arr])
 
         arr = existed_keys
@@ -588,13 +587,13 @@ def trend_ngrams(args, max_n_for_grams=3):
                     from_item=NGramsSentence.objects.filter(sentence=key)[0],
                     freq_title=dics_ttl[idx_len].get(key, 0),
                     freq_abstract=dics_abs[idx_len].get(key, 0),
-                    freq_text=dics_txt[idx_len].get(key, 0),
+                    freq_text=0,
                 )
             else:
                 target.update(
                     freq_title=F('freq_title') + dics_ttl[idx_len].get(key, 0),
                     freq_abstract=F('freq_abstract') + dics_abs[idx_len].get(key, 0),
-                    freq_text=F('freq_text') + dics_txt[idx_len].get(key, 0),
+                    freq_text=0,
                 )
 
         pks = list(row['id'].values)

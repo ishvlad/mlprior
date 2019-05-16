@@ -30,12 +30,16 @@ def home(request):
     articles_lib = Article.objects.filter(article_user__user=request.user, article_user__in_lib=True)
     n_articles_in_lib = articles_lib.count()
 
+    n_blog_posts = BlogPost.objects.count()
+
     category_data = json.loads(category_view(request).content)
     trend_data = json.loads(trend_view(request).content)
 
     context = {
         'n_articles': n_articles,
         'n_articles_in_lib': n_articles_in_lib,
+        'n_blog_posts': n_blog_posts,
+        'n_githubs': n_blog_posts,  # todo change to github
         'stacked_bar_chart': json.dumps(category_data),
         'trend_data': json.dumps(trend_data['data']),
         'trend_data_full': json.dumps(trend_data['data_full']),

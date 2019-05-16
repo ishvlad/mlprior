@@ -101,7 +101,7 @@ def download_meta(args):
 
         random_search = np.random.rand() < proba_for_random
         if random_search:
-            start_random = np.random.randint(start, 2 * Article.objects.count())
+            start_random = np.random.randint(start, 2 * Article.objects.count() + 10)
         else:
             start_random = start
 
@@ -226,7 +226,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
             else:
                 logger.info('TXT ' + idx + ' already exists, but text not appears in DB. Save text')
         else:
-            cmd = "pdftotext %s %s " % (file_pdf, file_txt, idx)
+            cmd = "pdftotext %s %s " % (file_pdf, file_txt)
             os.system(cmd)
 
             if not os.path.isfile(file_txt) or os.path.getsize(file_txt) == 0:
@@ -299,12 +299,11 @@ def calc_inner_vector(args):
         logger.info('FINISH making relations')
         return
 
-    articles = articles.values('id', 'title', 'abstract', 'articletext__text')[:max_articles]
+    articles = articles.values('id', 'title', 'abstract')[:max_articles]
     articles = pd.DataFrame(articles)
     features = model.get_features(
         articles.title.values,
-        articles.abstract.values,
-        articles.articletext__text.values,
+        articles.abstract.values
     )
 
     logger.info('Saving features (len: %d)' % len(features))

@@ -15,20 +15,18 @@ class RelationModel:
     def __init__(self, model_path='data/models/relations.pkl'):
         self.models_path = model_path
         if os.path.exists(self.models_path):
-            title, abstract, text, standart_scaler = pickle.load(open(self.models_path, 'rb+'))
+            title, abstract, standart_scaler = pickle.load(open(self.models_path, 'rb+'))
             self.title = title
             self.abstract = abstract
-            self.text = text
             self.standart_scaler = standart_scaler
             self.trained = True
         else:
             self.trained = False
 
-    def get_features(self, titles, abstracts, texts):
+    def get_features(self, titles, abstracts):
         features = [
             self.title.transform(titles).toarray(),
-            self.abstract.transform(abstracts).toarray(),
-            self.text.transform(texts).toarray()
+            self.abstract.transform(abstracts).toarray()
         ]
         features = self.standart_scaler.transform(np.hstack(features))
 
@@ -78,7 +76,7 @@ class RelationModel:
             train_size = max_articles
 
         logger.info('Take %d articles' % train_size)
-        articles = articles.order_by('date').values('title', 'abstract', 'articletext__text')[:train_size]
+        articles = articles.order_by('date').values('title', 'abstract')[:train_size]
         articles = pd.DataFrame(articles)
 
         logger.info('Training Title TD-IDF')
@@ -91,19 +89,13 @@ class RelationModel:
                                          ngram_range=(1, 2), stop_words='english', strip_accents='unicode')
         features_abstract = model_abstract.fit_transform(articles.abstract.values).toarray()
 
-        logger.info('Training Text TD-IDF')
-        model_text = TfidfVectorizer(decode_error='replace', max_features=230,
-                                     ngram_range=(1, 2), stop_words='english', strip_accents='unicode')
-        features_text = model_text.fit_transform(articles.articletext__text.values).toarray()
-
         logger.info('Training Standart Scaler')
         features = np.hstack([
             features_title,
-            features_abstract,
-            features_text
+            features_abstract
         ])
         ss = StandardScaler().fit(features)
 
         logger.info('Saving models')
-        pickle.dump((model_title, model_abstract, model_text, ss), open(self.models_path, 'wb+'))
+        pickle.dump((model_title, model_abstract, ss), open(self.models_path, 'wb+'))
         logger.info('Models saved. Total size = %s' % self._convert_bytes(os.path.getsize(self.models_path)))

@@ -1,6 +1,3 @@
-# Чтобы не забывать)
-mlprior/settings/__init__.py
-
 # Notebook Checkpoints
 .ipynb_checkpoints/
 

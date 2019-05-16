@@ -2,13 +2,11 @@ var app = angular.module('drf-angular', [
     'djng.urls',
     'ui.router',
     // 'djangoRESTResources',
-    'ngResource',
+    'ngResource'
 
 ]);
 
-
-// app.constant('BASE_URL', 'http://localhost:8000/articles/api/');
-app.constant('BASE_URL', 'http://mlprior.com/articles/api/');
+app.constant('BASE_URL', '/articles/api/');
 
 app.config(function($stateProvider, $urlRouterProvider, $interpolateProvider, $httpProvider){
     // $stateProvider
@@ -34,29 +32,6 @@ app.config(function($stateProvider, $urlRouterProvider, $interpolateProvider, $h
 });
 
 
-// app.factory('blogs', function ($resource) {
-//     return $resource(
-//             'http://localhost:8000/articles/api/articles/:id/',
-//             {},
-//             {
-//                 'query': {
-//                     method: 'GET',
-//                     isArray: true,
-//                     headers: {
-//                         'Content-Type':'application/json'
-//                     }
-//                 }
-//             },
-//             {
-//                 stripTrailingSlashes: false
-//             }
-//     );
-// });
-
-// app.service('articles', function($http, BASE_URL) {
-//
-// });
-
 
 app.service('BlogPosts', function($location, $http, BASE_URL){
     var BlogPosts = {};
@@ -65,18 +40,12 @@ app.service('BlogPosts', function($location, $http, BASE_URL){
         return $location.absUrl().split('/')[5].replace(/\D/g,'');
     };
 
-    // var url = $location.;
-    // console.log('URL');
-    // console.log(url);
-
     BlogPosts.all = function(callbackFunc){
         id = getArticleId();
         return $http.get(BASE_URL + 'articles/' + id).then(function (res) {
             blogposts = res.data['blog_post'];
 
-
             $http.get(BASE_URL + 'blogpostuser/').then(function (res) {
-                console.log(res.data);
                 blogposts.forEach(function (x) {
                     if (res.data.includes(x.id)){
                         x.is_like = true;
@@ -139,7 +108,6 @@ app.controller('MainCtrl', function($location, $scope, BlogPosts, Articles, $sta
 
     function updateBlogPosts() {
         BlogPosts.all(function(dataResponse) {
-            console.log(dataResponse);
             $scope.blogposts = dataResponse;
         });
     }
@@ -148,7 +116,6 @@ app.controller('MainCtrl', function($location, $scope, BlogPosts, Articles, $sta
 
     Articles.get(function (dataResponse) {
         $scope.article = dataResponse;
-        console.log($scope.article);
     });
 
     $scope.addBlogPost = function() {

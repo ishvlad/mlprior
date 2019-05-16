@@ -61,10 +61,7 @@
             <tbody>
                 <tr ng-repeat="blogpost in blogposts | orderBy:['-rating', '-title']">
                     <td><a href="{$ blogpost.url $}">
-                        <span ng-if="blogpost.approved" class="text-warning">
-                            {$ blogpost.title$}
-                        </span>
-                        <span ng-if="!blogpost.approved" class="text-danger">
+                        <span>
                             {$ blogpost.title$}
                         </span>
                     </a></td>

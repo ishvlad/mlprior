@@ -7,10 +7,11 @@ from rest_framework.fields import CurrentUserDefault
 
 class BlogPostSerializer(serializers.ModelSerializer):
     users = UserSerializer(many=True, read_only=True)
+    who_added = UserSerializer(many=False, read_only=True)
 
     class Meta:
         model = BlogPost
-        fields = ['id', 'title', 'url', 'users', 'rating', 'approved']
+        fields = ['id', 'title', 'url', 'users', 'rating', 'approved', 'who_added']
 
 
 class ArticleUserSerializer(serializers.ModelSerializer):

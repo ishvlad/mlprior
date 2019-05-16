@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 
 from core.search import ArticleIndex
+from core.models import User as UserModel
 
 User = settings.AUTH_USER_MODEL
 
@@ -52,6 +53,8 @@ class BlogPost(models.Model):
     approved = models.BooleanField(verbose_name='approved', default=False)
 
     users = models.ManyToManyField(User, 'blog_posts', through='BlogPostUser')
+    who_added = models.ForeignKey(User, related_name='added_blog_posts',
+                                  on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Blog post'

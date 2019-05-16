@@ -22,13 +22,9 @@ class ArticleList(viewsets.ViewSet):
     def retrieve(self, request, pk=None):
         article = Article.objects.get(id=pk)
 
-        article_user, is_created = ArticleUser.objects.get_or_create(user=self.request.user, article_id=pk)
+        article_user, is_created = ArticleUser.objects.get_or_create(user=request.user, article_id=pk)
         article_user.save()
         blogpost = BlogPost.objects.filter(article_id=pk)
-        # print(article_user)
-
-        # blog_posts = BlogPost.objects.filter(blogpostuser__user_id=request.user.id,
-        #                                      blogpostuser__is_like=True, article=article)
 
         serializer = ArticleSerializer({
             'id': article.id,
@@ -75,8 +71,6 @@ class BlogPostList(viewsets.ViewSet):
         return Response()
 
     def create(self, request):
-        print(request.data)
-
         is_exists = BlogPost.objects.filter(url=request.data['url'], article_id=request.data['article_id']).count() > 0
 
         if is_exists:
@@ -86,7 +80,9 @@ class BlogPostList(viewsets.ViewSet):
 
         blogpost = BlogPost.objects.create(title=request.data['title'],
                                            url=request.data['url'],
-                                           article_id=request.data['article_id'])
+                                           article_id=request.data['article_id'],
+                                           who_added=request.user)
+
         blogpost.save()
 
         return Response({
@@ -94,11 +90,8 @@ class BlogPostList(viewsets.ViewSet):
         })
 
     def list(self, request):
-        print(request.user.id)
         blogpost_user = BlogPost.objects.filter(blogpostuser__user_id=request.user.id, blogpostuser__is_like=True)
-        print(blogpost_user)
         queryset = blogpost_user
-        print('QUERYSET', queryset)
         serializer = BlogPostSerializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -121,8 +114,6 @@ class ArticleUserList(generics.RetrieveAPIView):
 
     def get_queryset(self):
         queryset = ArticleUser.objects.get(user=self.request.user, article_id=self.kwargs['pk'])
-
-        print(queryset)
 
         serializer = ArticleUserSerializer(queryset, many=False)
         return Response(serializer.data)

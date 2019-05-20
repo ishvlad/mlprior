@@ -47,11 +47,16 @@ class GitHubRepo(object):
 
     @property
     def languages(self):
-        languages = self.repo.get_languages()
+        git_languages = self.repo.get_languages()
+        languages = {}
 
-        factor = 1.0 / sum(languages.values())
-        for k in languages:
-            languages[k] = languages[k] * factor
+        factor = 1.0 / sum(git_languages.values())
+        for k in git_languages:
+
+            percent = int(git_languages[k] * factor * 100)
+            if percent < 1:
+                continue
+            languages[k] = percent
 
         return languages
 

@@ -168,6 +168,7 @@ class GitHubAPI(viewsets.ViewSet):
             url=request.data['url'],
             n_stars=g.n_stars,
             language=g.language,
+            languages=g.languages,
             framework=g.framework,
             article_id=request.data['article_id'],
             who_added=request.user

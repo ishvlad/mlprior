@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'social_django',
     'el_pagination',
     'django_ajax',
+    'django.contrib.postgres',
     # 'automated_logging',
 
     'core',

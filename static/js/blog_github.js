@@ -2,7 +2,7 @@ var app = angular.module('drf-angular', [
     'djng.urls',
     'ui.router',
     // 'djangoRESTResources',
-    'ngResource'
+    'ngResource',
 
 ]);
 
@@ -29,6 +29,17 @@ app.config(function($stateProvider, $urlRouterProvider, $interpolateProvider, $h
     $httpProvider.defaults.xsrfCookieName = 'csrftoken';
     $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
 
+});
+
+app.directive("randomBackground", function () {
+    return function(scope, element, attrs) {
+        angular.element(element).css('color','blue');
+    if (scope.$last){
+        var backgrounds = ['bg-success', 'bg-info', 'bg-primary', 'bg-danger', ''];
+        var show = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+        element[0].classList.add(show);
+    }
+  };
 });
 
 
@@ -223,4 +234,3 @@ app.controller('MainCtrl', function($location, $scope, BlogPosts, GitHubs, Artic
 $(document).ready(function(){
     $('[data-toggle="popover"]').popover();
 });
-

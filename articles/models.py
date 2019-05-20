@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.postgres.fields import HStoreField
 from django.db import models
 
 from core.search import ArticleIndex
@@ -73,6 +74,7 @@ class GitHubRepository(models.Model):
     n_stars = models.PositiveIntegerField(verbose_name='stars', default=0)
     language = models.CharField(verbose_name='language', max_length=100, default='')
     framework = models.CharField(verbose_name='language', max_length=100, default='')
+    languages = HStoreField(default=dict)
 
     article = models.ForeignKey(Article, on_delete='CASCADE', related_name='github_repos')
     users = models.ManyToManyField(User, 'github_repos', through='GithubRepoUser')

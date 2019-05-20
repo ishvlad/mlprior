@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from core.serializers import UserSerializer
 from .models import BlogPost, Article, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser
-from rest_framework.fields import CurrentUserDefault
+from rest_framework.fields import CurrentUserDefault, HStoreField
 
 
 class BlogPostSerializer(serializers.ModelSerializer):
@@ -17,10 +17,11 @@ class BlogPostSerializer(serializers.ModelSerializer):
 class GitHubSerializer(serializers.ModelSerializer):
     users = UserSerializer(many=True, read_only=True)
     who_added = UserSerializer(many=False, read_only=True)
+    languages = serializers.HStoreField()
 
     class Meta:
         model = GitHubRepository
-        fields = ['id', 'title', 'url', 'users', 'rating', 'framework', 'who_added', 'n_stars', 'language']
+        fields = ['id', 'title', 'url', 'users', 'rating', 'framework', 'languages', 'who_added', 'n_stars', 'language']
 
 
 class ArticleUserSerializer(serializers.ModelSerializer):

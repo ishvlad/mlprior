@@ -1,3 +1,4 @@
+{% load static %}
 <div class="card shadow mb-4">
     <div class="card-header card-header-info card-header-icon">
 
@@ -53,34 +54,38 @@
 
 
 <div id="accordion" role="tablist">
-   <div class="card-collapse" ng-repeat="github in githubs | orderBy:['-rating', '-title']">
-      <div class="card-header" role="tab" id="headingOne">
-         <div class="row">
-            <div class="col-md-6">
-               <a data-toggle="collapse" href="#collapse-{$ github.id $}" aria-expanded="false" aria-controls="collapse-{$ github.id $}" class="collapsed">
-               <i class="material-icons">keyboard_arrow_down</i>
-               {$ github.title$}
-               </a>
-            </div>
-            <div class="col-md-3">
-               {$ github.n_stars $}
-               <i class="fas fa-star" style="color: #4e73df;"></i>
-            </div>
-            <div class="col-md-3">
-               <div class="rating-and-like">
-                  <span id="github-rating-{$ github.id $}">{$ github.rating $}</span>
-                  <button type="button" rel="tooltip" title="" ng-click="changeGitHubLike(github)" class="btn btn-primary btn-link" data-original-title="Edit Task">
-                  <i class="fas fa-heart githublike" id="github-like-{$ github.id $}" ng-if="github.is_like"></i>
-                  <i class="far fa-heart githublike" id="github-like-{$ github.id $}" ng-if="!github.is_like"></i>
-                  </button>
-               </div>
+<div class="card-collapse" ng-repeat="github in githubs | orderBy:['-rating', '-title']">
+   <div class="card-header" role="tab" id="headingOne">
+      <div class="row">
+         <div class="col-md-6">
+            <a data-toggle="collapse" href="#collapse-{$ github.id $}" aria-expanded="false" aria-controls="collapse-{$ github.id $}" class="collapsed">
+            <i class="material-icons">keyboard_arrow_down</i>
+            {$ github.title$}
+            </a>
+         </div>
+         <div class="col-md-3">
+            {$ github.n_stars $}
+            <i class="fas fa-star" style="color: #4e73df;"></i>
+         </div>
+         <div class="col-md-3">
+            <div class="rating-and-like">
+               <span id="github-rating-{$ github.id $}">{$ github.rating $}</span>
+               <button type="button" rel="tooltip" title="" ng-click="changeGitHubLike(github)" class="btn btn-primary btn-link" data-original-title="Edit Task">
+               <i class="fas fa-heart githublike" id="github-like-{$ github.id $}" ng-if="github.is_like"></i>
+               <i class="far fa-heart githublike" id="github-like-{$ github.id $}" ng-if="!github.is_like"></i>
+               </button>
             </div>
          </div>
       </div>
-      <div id="collapse-{$ github.id $}" class="collapse" role="tabpanel" aria-labelledby="headingOne" data-parent="#accordion" style="">
-         <div class="card-body">
-            {$ github.language $}
-            {$ github.framework $}
+   </div>
+   <div id="collapse-{$ github.id $}" class="collapse" role="tabpanel" aria-labelledby="headingOne" data-parent="#accordion" style="">
+      <div class="card-body">
+         {$ github.framework $}
+         <img src="{% static 'img/frameworks/pytorch_logo.png' %}" height="20px" ng-if="github.framework == 'PyTorch'">
+         <img src="{% static 'img/frameworks/tf_logo.png' %}" height="20px" ng-if="github.framework == 'TensorFlow'">
+         <img src="{% static 'img/frameworks/theano_logo.png' %}" height="20px" ng-if="github.framework == 'Theano'">
+         <div class="progress">
+            <div class="progress-bar random-background" ng-repeat="(lang, value) in github.languages" role="progressbar" style="width: {$value$}%;" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100" random-background>{$ lang $} {$ value $}%</div>
          </div>
       </div>
    </div>
@@ -157,7 +162,6 @@
 {#</div>#}
 
 
-      <hr>
 
 {#    <table class="table">#}
 {#            <tbody>#}

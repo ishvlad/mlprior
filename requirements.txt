@@ -20,3 +20,4 @@ markdown
 django-filter
 django-npm
 PyGithub
+aiohttp

@@ -19,7 +19,7 @@ django.setup()
 from articles.models import Article, ArticleVector, ArticleArticleRelation, \
                             CategoriesVSDate, Categories, CategoriesDate, \
                             NGramsSentence, NGramsMonth, SentenceVSMonth, ArticleText
-from arxiv import ArXivArticle, ArXivAPI
+from services.arxiv import ArXivArticle, ArXivAPI
 from django.db.models import F, Q
 from nltk import ngrams
 from sklearn.neighbors import NearestNeighbors

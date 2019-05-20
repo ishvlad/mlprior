@@ -43,7 +43,7 @@ app.service('BlogPosts', function($location, $http, BASE_URL){
     BlogPosts.all = function(callbackFunc){
         id = getArticleId();
         return $http.get(BASE_URL + 'articles/' + id).then(function (res) {
-            blogposts = res.data['blog_post'];
+            blogposts = res.data['blog_posts'];
 
             $http.get(BASE_URL + 'blogpostuser/').then(function (res) {
                 blogposts.forEach(function (x) {
@@ -77,6 +77,51 @@ app.service('BlogPosts', function($location, $http, BASE_URL){
 });
 
 
+app.service('GitHubs', function($location, $http, BASE_URL){
+    var GitHubs = {};
+
+    var getArticleId = function () {
+        return $location.absUrl().split('/')[5].replace(/\D/g,'');
+    };
+
+    GitHubs.all = function(callbackFunc){
+        id = getArticleId();
+        return $http.get(BASE_URL + 'articles/' + id).then(function (res) {
+            githubs = res.data['githubs'];
+
+            $http.get(BASE_URL + 'githubuser/').then(function (res) {
+                githubs.forEach(function (x) {
+                    if (res.data.includes(x.id)){
+                        x.is_like = true;
+                    }
+                });
+
+                callbackFunc(githubs);
+            });
+
+
+        });
+
+    };
+
+    GitHubs.update = function(updatedTodo){
+        return $http.put(BASE_URL + 'githubs/' + updatedTodo.id + '/', updatedTodo);
+    };
+
+    GitHubs.delete = function(id){
+        return $http.delete(BASE_URL + id + '/');
+    };
+
+    GitHubs.addOne = function(newGitHub){
+        newGitHub.article_id = getArticleId();
+        return $http.post(BASE_URL + 'githubs/', newGitHub)
+    };
+
+    return GitHubs;
+});
+
+
+
 app.service('Articles', function ($location, $http, BASE_URL) {
     var Article = {};
 
@@ -101,14 +146,24 @@ app.service('Articles', function ($location, $http, BASE_URL) {
 
 
 
-app.controller('MainCtrl', function($location, $scope, BlogPosts, Articles, $state){
+app.controller('MainCtrl', function($location, $scope, BlogPosts, GitHubs, Articles, $state){
     $scope.newBlogPost = {};
+    $scope.newGitHub = {};
+
     $scope.blogposts = [];
+    $scope.githubs = [];
+
     $scope.created = true;
 
     function updateBlogPosts() {
         BlogPosts.all(function(dataResponse) {
             $scope.blogposts = dataResponse;
+        });
+    }
+
+    function updateGitHubs() {
+        GitHubs.all(function(dataResponse) {
+            $scope.githubs = dataResponse;
         });
     }
 
@@ -119,6 +174,7 @@ app.controller('MainCtrl', function($location, $scope, BlogPosts, Articles, $sta
     }
 
     updateBlogPosts();
+    updateGitHubs();
 
     Articles.get(function (dataResponse) {
         $scope.article = dataResponse;
@@ -133,19 +189,35 @@ app.controller('MainCtrl', function($location, $scope, BlogPosts, Articles, $sta
             });
     };
 
-    $scope.changeLike = function(blogpost) {
+    $scope.addGitHub = function() {
+        GitHubs.addOne($scope.newGitHub)
+            .then(function(res){
+                $scope.created = res.data.created;
+                updateGitHubs();
+                // resetForm() TODO update github form
+            });
+    };
+
+    $scope.changBlogPostLike = function(blogpost) {
         BlogPosts.update(blogpost).then(function () {
             updateBlogPosts();
         });
     };
 
-    $scope.deleteTodo = function(id){
-        Todos.delete(id);
-        // update the list in ui
-        $scope.todos = $scope.todos.filter(function(todo){
-            return todo.id !== id;
-        })
+    $scope.changeGitHubLike = function(github) {
+        GitHubs.update(github).then(function () {
+            updateGitHubs();
+        });
     };
+
+
+    // $scope.deleteTodo = function(id){
+    //     Todos.delete(id);
+    //     // update the list in ui
+    //     $scope.todos = $scope.todos.filter(function(todo){
+    //         return todo.id !== id;
+    //     })
+    // };
 });
 
 $(document).ready(function(){

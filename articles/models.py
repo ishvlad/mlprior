@@ -48,10 +48,10 @@ class Article(models.Model):
 class BlogPost(models.Model):
     url = models.URLField(verbose_name='URL')
     title = models.CharField(verbose_name='title', max_length=300)
-    article = models.ForeignKey(Article, on_delete='CASCADE', related_name='blog_post')
     rating = models.PositiveIntegerField(verbose_name='rating', default=0)
     approved = models.BooleanField(verbose_name='approved', default=False)
 
+    article = models.ForeignKey(Article, on_delete='CASCADE', related_name='blog_posts')
     users = models.ManyToManyField(User, 'blog_posts', through='BlogPostUser')
     who_added = models.ForeignKey(User, related_name='added_blog_posts',
                                   on_delete=models.CASCADE)
@@ -63,6 +63,20 @@ class BlogPost(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class GitHubRepository(models.Model):
+    url = models.URLField(verbose_name='URL')
+    title = models.CharField(verbose_name='title', max_length=300)
+    rating = models.PositiveIntegerField(verbose_name='rating', default=0)
+
+    n_stars = models.PositiveIntegerField(verbose_name='stars', default=0)
+    language = models.CharField(verbose_name='language', max_length=100)
+
+    article = models.ForeignKey(Article, on_delete='CASCADE', related_name='github_repos')
+    users = models.ManyToManyField(User, 'github_repos', through='GithubRepoUser')
+    who_added = models.ForeignKey(User, related_name='added_github_repo',
+                                  on_delete=models.CASCADE, default=1)
 
 
 class Author(models.Model):
@@ -87,6 +101,16 @@ class BlogPostUser(models.Model):
 
     class Meta:
         unique_together = (('blog_post', 'user'),)
+
+
+class GithubRepoUser(models.Model):
+    github_repo = models.ForeignKey(GitHubRepository, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    is_like = models.BooleanField(verbose_name='like', default=False)
+
+    class Meta:
+        unique_together = (('github_repo', 'user'),)
 
 
 class ArticleUser(models.Model):

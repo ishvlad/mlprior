@@ -3,13 +3,15 @@ from django.urls import include
 from django.urls import path
 from rest_framework import routers
 
-from articles.api import BlogPostList, ArticleList, BlogPostUserList, ArticleUserList
+from articles.api import BlogPostAPI, ArticleList, BlogPostUserList, ArticleUserList, GitHubAPI, GitHubUserList
 from articles import views
 
 blogpost_router = routers.DefaultRouter()
-blogpost_router.register(r'blogposts', BlogPostList, base_name='blogposts')
+blogpost_router.register(r'blogposts', BlogPostAPI, base_name='blogposts')
 blogpost_router.register(r'articles', ArticleList, base_name='articleslist')
 blogpost_router.register(r'blogpostuser', BlogPostUserList, base_name='blogpostuser')
+blogpost_router.register(r'githubuser', GitHubUserList, base_name='githubuser')
+blogpost_router.register(r'githubs', GitHubAPI, base_name='githubs')
 
 apiurls = [
     path('api/', include(blogpost_router.urls)),

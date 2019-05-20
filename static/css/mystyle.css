@@ -337,3 +337,19 @@ a:focus {
     padding-left: 0!important;
     padding-bottom: 5px!important;
 }
+
+.card-collapse .card-header a[aria-expanded=true] i {
+    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=2);
+    transform: rotate(180deg);
+}
+
+.animation-transition-fast, .bootstrap-datetimepicker-widget table td>div, .bootstrap-datetimepicker-widget table td span, .bootstrap-datetimepicker-widget table th, .bootstrap-datetimepicker-widget table th>div, .bootstrap-tagsinput .tag, .bootstrap-tagsinput [data-role=remove], .card-collapse .card-header a i, .navbar {
+    transition: all .15s ease 0s;
+}
+
+.card-collapse .card-header .rating-and-like  {
+    float: right;
+    top: -12px;
+
+    position: relative;
+}

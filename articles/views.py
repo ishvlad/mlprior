@@ -17,7 +17,7 @@ from el_pagination.views import AjaxListView
 
 from articles.forms import AddBlogPostForm
 from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation, \
-    CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost
+    CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost, GitHubRepository
 from core.views import AjaxableResponseMixin
 from search.forms import SearchForm
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
@@ -31,6 +31,7 @@ def home(request):
     n_articles_in_lib = articles_lib.count()
 
     n_blog_posts = BlogPost.objects.count()
+    n_github_repos = GitHubRepository.objects.count()
 
     category_data = json.loads(category_view(request).content)
     trend_data = json.loads(trend_view(request).content)
@@ -39,7 +40,7 @@ def home(request):
         'n_articles': n_articles,
         'n_articles_in_lib': n_articles_in_lib,
         'n_blog_posts': n_blog_posts,
-        'n_githubs': n_blog_posts,  # todo change to github
+        'n_githubs': n_github_repos,
         'stacked_bar_chart': json.dumps(category_data),
         'trend_data': json.dumps(trend_data['data']),
         'trend_data_full': json.dumps(trend_data['data_full']),

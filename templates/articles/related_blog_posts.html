@@ -68,7 +68,7 @@
                     </a></td>
                     <td class="td-actions text-right">
                         <span class="blogpostrating" id="blogpost-rating-{$ blogpost.id $}">{$ blogpost.rating $}</span>
-                        <button type="button" rel="tooltip" title="" ng-click="changeLike(blogpost)" class="btn btn-primary btn-link" data-original-title="Edit Task">
+                        <button type="button" rel="tooltip" title="" ng-click="changBlogPostLike(blogpost)" class="btn btn-primary btn-link" data-original-title="Edit Task">
 
                         <i class="fas fa-heart blogpostlike" id="blogpost-like-{$ blogpost.id $}" ng-if="blogpost.is_like"></i>
                         <i class="far fa-heart blogpostlike" id="blogpost-like-{$ blogpost.id $}" ng-if="!blogpost.is_like"></i>

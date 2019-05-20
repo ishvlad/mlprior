@@ -56,6 +56,10 @@ class GitHubRepo(object):
         return languages
 
     @property
+    def language(self):
+        return self.repo.language
+
+    @property
     def n_stars(self):
         return self.repo.stargazers_count
 
@@ -104,14 +108,13 @@ class GitHubRepo(object):
                 n_in_code['theano'] += current_file_code.count('theano')
 
                 print(n_in_code)
-                if self.is_python():
 
-                    if n_in_code['torch'] > N_FREQUENCY_OF_LIB_IN_CODE:
-                        return NAME_PYTORCH
-                    if n_in_code['tensorflow'] > N_FREQUENCY_OF_LIB_IN_CODE:
-                        return NAME_TENSORFLOW
-                    if n_in_code['theano'] > N_FREQUENCY_OF_LIB_IN_CODE:
-                        return NAME_THEANO
+                if n_in_code['torch'] > N_FREQUENCY_OF_LIB_IN_CODE:
+                    return NAME_PYTORCH
+                if n_in_code['tensorflow'] > N_FREQUENCY_OF_LIB_IN_CODE:
+                    return NAME_TENSORFLOW
+                if n_in_code['theano'] > N_FREQUENCY_OF_LIB_IN_CODE:
+                    return NAME_THEANO
 
         return ''
 

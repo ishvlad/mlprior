@@ -20,7 +20,7 @@ class GitHubSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GitHubRepository
-        fields = ['id', 'title', 'url', 'users', 'rating', 'who_added', 'n_stars', 'language']
+        fields = ['id', 'title', 'url', 'users', 'rating', 'framework', 'who_added', 'n_stars', 'language']
 
 
 class ArticleUserSerializer(serializers.ModelSerializer):

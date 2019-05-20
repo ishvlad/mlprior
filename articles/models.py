@@ -71,7 +71,8 @@ class GitHubRepository(models.Model):
     rating = models.PositiveIntegerField(verbose_name='rating', default=0)
 
     n_stars = models.PositiveIntegerField(verbose_name='stars', default=0)
-    language = models.CharField(verbose_name='language', max_length=100)
+    language = models.CharField(verbose_name='language', max_length=100, default='')
+    framework = models.CharField(verbose_name='language', max_length=100, default='')
 
     article = models.ForeignKey(Article, on_delete='CASCADE', related_name='github_repos')
     users = models.ManyToManyField(User, 'github_repos', through='GithubRepoUser')

@@ -167,9 +167,10 @@ class GitHubAPI(viewsets.ViewSet):
             title=g.name,
             url=request.data['url'],
             n_stars=g.n_stars,
-            language='lol',
+            language=g.language,
+            framework=g.framework,
             article_id=request.data['article_id'],
-            # who_added=request.user
+            who_added=request.user
         )
 
         repo.save()

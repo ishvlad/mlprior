@@ -169,7 +169,6 @@ class GitHubAPI(viewsets.ViewSet):
                 'who_added': request.user
             })
 
-
         repo = GitHubRepository.objects.create(
             **new_git
         )

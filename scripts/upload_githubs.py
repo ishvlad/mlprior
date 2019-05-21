@@ -15,7 +15,7 @@ futures = []
 
 for i in range(len(data)):
     print('Add GitHub for', data[i]['paper_arxiv_id'])
-
+    asyncio.sleep(1)
     futures.append(send_github_url_to_server(data[i]['repo_url'], data[i]['paper_arxiv_id']))
 
 loop = asyncio.get_event_loop()

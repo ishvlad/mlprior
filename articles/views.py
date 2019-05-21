@@ -249,6 +249,9 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJ
             jury = sorted(jury.items(), key=lambda x: min(x[1]))
             ids = [x[0] for x in jury]
 
+            if len(ids) == 0:
+                return Article.objects.order_by('-date')
+
             preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
             queryset = Article.objects.filter(pk__in=ids).order_by(preserved)
 

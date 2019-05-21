@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AnonymousUser
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, generics, permissions
 from rest_framework import permissions
@@ -137,10 +138,14 @@ class GitHubAPI(viewsets.ViewSet):
         return Response()
 
     def create(self, request):
+        print('API call')
         url = request.data['url']
-        is_exists = GitHubRepository.objects.filter(url=url).count() > 0
+        if 'arxiv_id' in request.data.keys():
+            article_id = Article.objects.get(arxiv_id=request.data['arxiv_id']).id
+        else:
+            article_id = request.data['article_id']
 
-        print(request)
+        is_exists = GitHubRepository.objects.filter(url=url, article_id=article_id).count() > 0
 
         if is_exists:
             return Response({
@@ -149,34 +154,27 @@ class GitHubAPI(viewsets.ViewSet):
 
         g = GitHubRepo(url)
 
-        """
-        url = models.URLField(verbose_name='URL')
-        title = models.CharField(verbose_name='title', max_length=300)
-        rating = models.PositiveIntegerField(verbose_name='rating', default=0)
-
-        n_stars = models.PositiveIntegerField(verbose_name='stars', default=0)
-        language = models.CharField(verbose_name='language', max_length=100)
-
-        article = models.ForeignKey(Article, on_delete='CASCADE', related_name='github_repos')
-        users = models.ManyToManyField(User, 'github_repos', through='GithubRepoUser')
-        who_added = models.ForeignKey(User, related_name='added_github_repo',
-                                  on_delete=models.CASCADE)
-                                  """
-
-        repo = GitHubRepository.objects.create(
+        new_git = dict(
             title=g.name,
             url=request.data['url'],
             n_stars=g.n_stars,
             language=g.language,
             languages=g.languages,
             framework=g.framework,
-            article_id=request.data['article_id'],
-            who_added=request.user
+            article_id=article_id
+        )
+
+        if type(request.user) != AnonymousUser:
+            new_git.update({
+                'who_added': request.user
+            })
+
+
+        repo = GitHubRepository.objects.create(
+            **new_git
         )
 
         repo.save()
-
-        print('repo created')
 
         return Response({
             'created': True

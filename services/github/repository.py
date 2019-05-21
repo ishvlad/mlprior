@@ -5,23 +5,8 @@ from github.GithubException import GithubException
 import base64
 import re
 import asyncio
-import aiohttp
 
-
-# or using an access token
-# g = Github("c0c86fd1d0073aa9e528e66d0ca32992ed50d8e4")
-#
-#
-# url = 'https://github.com/jadore801120/attention-is-all-you-need-pytorch'
-#
-# name = url.replace('https://github.com/', '')
-#
-# repo = g.get_repo(full_name_or_id=name)
-#
-# print(repo.get_topics())
-# print(repo.stargazers_count)
-# print(repo.language)
-
+from services.github.helpers import send_github_url_to_server
 
 NAME_PYTORCH = 'PyTorch'
 NAME_TENSORFLOW = 'TensorFlow'
@@ -134,15 +119,6 @@ class GitHubRepo(object):
         print(urls.group())
         return urls
 
-
-async def send_github_url_to_server(url, article_id):
-    async with aiohttp.ClientSession() as session:
-        async with session.post('http://localhost:8000/articles/api/githubs/', data={
-            'url': url,
-            'article_id': article_id
-        }) as response:
-            data = await response.text()
-            print(data)
 
 
 if __name__ == '__main__':

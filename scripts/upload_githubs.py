@@ -13,7 +13,7 @@ with open('./scripts/links-between-papers-and-code.json', 'r') as f:
 
 futures = []
 
-for i in range(len(data)):
+for i in range(5):
     print('Add GitHub for', data[i]['paper_arxiv_id'])
     asyncio.sleep(1)
     futures.append(send_github_url_to_server(data[i]['repo_url'], data[i]['paper_arxiv_id']))

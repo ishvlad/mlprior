@@ -17,3 +17,6 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
+
+API_HOST = 'http://localhost:8000/'

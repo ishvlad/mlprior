@@ -141,7 +141,12 @@ class GitHubAPI(viewsets.ViewSet):
         print('API call')
         url = request.data['url']
         if 'arxiv_id' in request.data.keys():
-            article_id = Article.objects.get(arxiv_id=request.data['arxiv_id']).id
+            try:
+                article_id = Article.objects.get(arxiv_id=request.data['arxiv_id']).id
+            except Exception as e:
+                return Response({
+                    'created': False
+                })
         else:
             article_id = request.data['article_id']
 

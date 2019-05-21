@@ -16,3 +16,6 @@ DATABASES = {
         'PORT': '6432',
     }
 }
+
+
+API_HOST = 'http://mlprior.com/'

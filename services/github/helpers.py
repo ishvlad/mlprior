@@ -9,7 +9,7 @@ async def send_github_url_to_server(url, arxiv_id):
     :return:
     """
     async with aiohttp.ClientSession() as session:
-        async with session.post('http://localhost:8000/articles/api/githubs/', data={
+        async with session.post('/articles/api/githubs/', data={
             'url': url,
             'arxiv_id': arxiv_id
         }) as response:

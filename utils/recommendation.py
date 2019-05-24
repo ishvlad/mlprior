@@ -34,7 +34,7 @@ class RelationModel:
 
     def get_knn_dist(self, ids, features, n_neighbors=21):
         db = ArticleVector.objects.values_list('article_origin_id', 'inner_vector')
-        db_features = [np.frombuffer(x[1]) for x in tqdm.tqdm(db)]
+        db_features = [x[1] for x in tqdm.tqdm(db)]
 
         all_ids = np.array([int(x[0]) for x in db] + list(ids))
 

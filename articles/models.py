@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.contrib.postgres.fields import HStoreField
+from django.contrib.postgres.fields import HStoreField, ArrayField
 from django.db import models
 
 from core.search import ArticleIndex
@@ -155,36 +155,18 @@ class ArticleVector(models.Model):
         primary_key=True,
     )
 
-    inner_vector = models.BinaryField(max_length=100000)
+    inner_vector = ArrayField(models.FloatField(), size=70)
 
 
 class NGramsMonth(models.Model):
-    length = models.IntegerField()
-    label = models.CharField(max_length=6)
-    label_code = models.IntegerField()
+    label = models.CharField(max_length=6)  # bbb YY
+    label_code = models.IntegerField()      # YYYYMM
+    type = models.IntegerField()            # 0 - title, 1 - abstract, 2 - text
 
-    related = models.ManyToManyField('NGramsSentence', through='SentenceVSMonth')
-
-    class Meta:
-        unique_together = (('length', 'label_code'),)
-
-
-class NGramsSentence(models.Model):
-    sentence = models.CharField(max_length=250, primary_key=True)
-
-    corpora = models.ManyToManyField(NGramsMonth, through='SentenceVSMonth')
-
-
-class SentenceVSMonth(models.Model):
-    from_corpora = models.ForeignKey(NGramsMonth, on_delete=models.CASCADE)
-    from_item = models.ForeignKey(NGramsSentence, on_delete=models.CASCADE)
-
-    freq_title = models.IntegerField(default=0)
-    freq_abstract = models.IntegerField(default=0)
-    freq_text = models.IntegerField(default=0)
+    sentences = HStoreField(default=dict)   # key -- sentence, value -- frequency (as string)
 
     class Meta:
-        unique_together = (('from_corpora', 'from_item'),)
+        unique_together = (('type', 'label_code'),)
 
 
 class Categories(models.Model):

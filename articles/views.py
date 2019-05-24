@@ -16,8 +16,8 @@ from django_ajax.mixin import AJAXMixin
 from el_pagination.views import AjaxListView
 
 from articles.forms import AddBlogPostForm
-from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation, \
-    CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost, GitHubRepository
+from articles.models import Article, Author, ArticleUser, ArticleArticleRelation, \
+    CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost, GitHubRepository, NGramsMonth
 from core.views import AjaxableResponseMixin
 from search.forms import SearchForm
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
@@ -89,35 +89,23 @@ def category_view(request, categories=None):
 
 @login_required(login_url='/accounts/login')
 def trend_view(request, keywords_raw=None):
+
     if request.method == 'POST':
         keywords_raw = request.POST.get('keywords_raw')
     elif keywords_raw is None:
         keywords_raw = "Machine Learning, Neural Networks, Computer Vision, Deep Learning"
 
-    keywords = [kw.strip() for kw in keywords_raw.split(',')]
+    keywords = [kw.strip().lower() for kw in keywords_raw.split(',')]
     colors = GLOBAL__COLORS.get_colors_code(len(keywords))
 
-    res = {}
-    min_tick = 300000
-    for kw in keywords:
-        res[kw] = {}
-        item = NGramsSentence.objects.filter(sentence=kw.lower())
-        if item.count() == 0:
-            continue
-        assert item.count() == 1
-
-        freq = SentenceVSMonth.objects.filter(from_item=item[0]).order_by('from_corpora__label_code')
-        freq = list(freq.values_list('freq_text', 'from_corpora__label', 'from_corpora__label_code'))
-
-        for f in freq:
-            res[kw][f[1]] = f[0]
-
-        min_tick = min(min_tick, min([x[2] for x in freq]))
+    items = NGramsMonth.objects.filter(type=1, sentences__has_any_keys=keywords).order_by('label_code')
+    items = items.values('label_code', 'label', 'sentences')
 
     now = datetime.datetime.now()
-    # now = datetime.date(year=2007, month=10, day=1)
-    if min_tick == 300000:
-        min_tick = (now.year - 1) * 100 + now.month
+    min_tick = (now.year - 1) * 100 + now.month
+
+    if items.count() != 0:
+        min_tick = min(items[0]['label_code'], min_tick)
 
     month = min_tick % 100
     year = min_tick // 100
@@ -132,15 +120,22 @@ def trend_view(request, keywords_raw=None):
             'data': []
         } for k, c in zip(keywords, colors)]
     }
-
+    a = [i['label'] for i in items]
+    count = 0
     while not ((year == now.year and month > now.month) or year > now.year):
         label = datetime.date(year, month, 1).strftime('%b %y')
         line_data['labels'].append(label)
-        for i, kw in enumerate(keywords):
-            if label in res[kw]:
-                line_data['datasets'][i]['data'].append(res[kw][label])
-            else:
+
+        if items.count() == count or items[count]['label'] != label:
+            for i, kw in enumerate(keywords):
                 line_data['datasets'][i]['data'].append(0)
+        else:
+            for i, kw in enumerate(keywords):
+                if kw in items[count]['sentences']:
+                    line_data['datasets'][i]['data'].append(int(items[count]['sentences'][kw]))
+                else:
+                    line_data['datasets'][i]['data'].append(0)
+            count += 1
 
         if month == 12:
             year += 1

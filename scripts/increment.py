@@ -18,7 +18,8 @@ django.setup()
 
 from articles.models import Article, ArticleVector, ArticleArticleRelation, \
                             CategoriesVSDate, Categories, CategoriesDate, \
-                            NGramsSentence, NGramsMonth, SentenceVSMonth, ArticleText
+                            NGramsMonth, ArticleText
+from collections import Counter
 from services.arxiv import ArXivArticle, ArXivAPI
 from django.db.models import F, Q
 from nltk import ngrams
@@ -49,8 +50,8 @@ def parse_args():
     parser.add_argument('-category_bar', action='store_true', help='Do we need to count articles in category bar?')
     parser.add_argument('-ngrams', action='store_true', help='Do we need to update Ngrams Trend lines?')
 
-    parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=100)
-    parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=200)
+    parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=50)
+    parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=50)
     parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=6)
     parser.add_argument('--verbose', type=bool, help='Do we need to print all?', default=True)
 
@@ -311,7 +312,7 @@ def calc_inner_vector(args):
     for idx, feature in zip(articles.id.values, features):
         items.append(ArticleVector(
             article_origin_id=idx,
-            inner_vector=feature.tobytes()
+            inner_vector=list(feature)
         ))
     db.bulk_create(items)
     Article.objects.filter(pk__in=list(articles.id.values)).update(has_inner_vector=True)
@@ -348,14 +349,14 @@ def calc_nearest_articles(args, n_nearest=20):
     articles = new_articles.values('id', 'articlevector__inner_vector')[:max_articles]
     articles = pd.DataFrame(articles)
     ids = articles.id.values
-    features = np.vstack(articles.articlevector__inner_vector.apply(np.frombuffer))
+    features = np.vstack(articles.articlevector__inner_vector)
 
     border = len(articles)
 
     if db_articles.count() != 0:
         df = pd.DataFrame(db_articles.values('id', 'articlevector__inner_vector'))
         ids = np.concatenate((ids, df['id'].values))
-        features = np.concatenate((features, np.vstack(df.articlevector__inner_vector.apply(np.frombuffer))))
+        features = np.concatenate((features, np.vstack(df.articlevector__inner_vector)))
 
     logger.info('FIT knn on {} articles'.format(len(features)))
     knn = NearestNeighbors()
@@ -492,9 +493,7 @@ def get_grams_dict(sentences, max_ngram_len=5):
     # ]
 
     p = re.compile('\w+[\-\w+]*', re.IGNORECASE)
-    dic = [{} for _ in range(max_ngram_len)]
-
-    key_store = []
+    dic = {}
 
     for n in range(1, max_ngram_len + 1):
         for s in sentences:
@@ -511,13 +510,12 @@ def get_grams_dict(sentences, max_ngram_len=5):
 
                 key = ' '.join(key)
                 if len(key) < 250:
-                    if key in dic[n - 1]:
-                        dic[n - 1][key] += 1
+                    if key in dic:
+                        dic[key] += 1
                     else:
-                        dic[n - 1][key] = 1
-                    key_store.append(key)
+                        dic[key] = 1
 
-    return dic, key_store
+    return dic
 
 
 @log.logging.timeit(logger, 'Ngram Trend Line Time', level=logging.INFO)
@@ -540,60 +538,26 @@ def trend_ngrams(args, max_n_for_grams=3):
     df_group = articles.groupby('idx_sort')
 
     for date_code, row in tqdm.tqdm(df_group, total=len(df_group), desc='Total'):
-
         if NGramsMonth.objects.filter(label_code=date_code).count() == 0:
-            label = datetime.date(date_code//100, date_code%100, 1).strftime('%b %y')
+            label = datetime.date(date_code // 100, date_code % 100, 1).strftime('%b %y')
             db.bulk_create([NGramsMonth(
                 label_code=date_code,
                 label=label,
-                length=i+1
-            ) for i in range(max_n_for_grams)])
+                type=i
+            ) for i in range(3)])  # 3 = title, abstract, text
 
-        dics_ttl, keys_ttl = get_grams_dict(list(row.title.values), max_n_for_grams)
-        dics_abs, keys_abs = get_grams_dict(list(row.abstract.values), max_n_for_grams)
+        dics_ttl = get_grams_dict(list(row.title.values), max_n_for_grams)
+        dics_abs = get_grams_dict(list(row.abstract.values), max_n_for_grams)
 
-        keys = list(set(np.concatenate((keys_ttl, keys_abs))))
-        existed_keys = list(NGramsSentence.objects.filter(sentence__in=keys).values_list(flat=True))
-        new_keys = np.array(keys)[~np.in1d(keys, existed_keys)]
+        db_ttl = NGramsMonth.objects.filter(label_code=date_code, type=0)[0]
+        s = Counter({k: int(v) for (k, v) in db_ttl.sentences.items()})
+        db_ttl.sentences = dict(Counter(s) + Counter(dics_ttl))
+        db_ttl.save()
 
-        db.bulk_create([NGramsSentence(sentence=k) for k in new_keys])
-        months = NGramsMonth.objects.filter(label_code=date_code).order_by('length')
-        arr = new_keys
-        if args.verbose:
-            arr = tqdm.tqdm(new_keys, desc='New sentences in %d' % date_code)
-
-        db.bulk_create([SentenceVSMonth(
-            from_corpora=months[len(key.split()) - 1],
-            from_item=NGramsSentence.objects.filter(sentence=key)[0],
-            freq_title=dics_ttl[len(key.split()) - 1].get(key, 0),
-            freq_abstract=dics_abs[len(key.split()) - 1].get(key, 0),
-            freq_text=0
-        ) for key in arr])
-
-        arr = existed_keys
-        if args.verbose:
-            arr = tqdm.tqdm(existed_keys, 'Update sentences in %d' % date_code)
-
-        for key in arr:
-            idx_len = len(key.split()) - 1
-            target = SentenceVSMonth.objects.filter(
-                from_corpora=months[idx_len],
-                from_item=NGramsSentence.objects.filter(sentence=key)[0]
-            )
-            if len(target) == 0:
-                SentenceVSMonth.objects.update_or_create(
-                    from_corpora=months[idx_len],
-                    from_item=NGramsSentence.objects.filter(sentence=key)[0],
-                    freq_title=dics_ttl[idx_len].get(key, 0),
-                    freq_abstract=dics_abs[idx_len].get(key, 0),
-                    freq_text=0,
-                )
-            else:
-                target.update(
-                    freq_title=F('freq_title') + dics_ttl[idx_len].get(key, 0),
-                    freq_abstract=F('freq_abstract') + dics_abs[idx_len].get(key, 0),
-                    freq_text=0,
-                )
+        db_abs = NGramsMonth.objects.filter(label_code=date_code, type=1)[0]
+        s = Counter({k: int(v) for (k, v) in db_abs.sentences.items()})
+        db_abs.sentences = dict(Counter(s) + Counter(dics_abs))
+        db_abs.save()
 
         pks = list(row['id'].values)
         Article.objects.filter(pk__in=pks).update(has_ngram_stat=True)

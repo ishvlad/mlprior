@@ -54,3 +54,11 @@ ALTER ROLE mlprioradmin CREATEDB;
 CREATE DATABASE mlpriordb;
 ```
 
+
+
+# Frontend
+
+sudo npm install -g bower 
+ng serve
+
+

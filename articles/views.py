@@ -1,5 +1,6 @@
 import datetime
 import json
+import numpy as np
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -16,12 +17,12 @@ from django_ajax.mixin import AJAXMixin
 from el_pagination.views import AjaxListView
 
 from articles.forms import AddBlogPostForm
-from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation, \
-    CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost, GitHubRepository
+from articles.models import Article, Author, ArticleUser, UserTags, \
+    CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost, GitHubRepository, NGramsMonth
 from core.views import AjaxableResponseMixin
 from search.forms import SearchForm
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
-
+from utils.recommendation import RelationModel
 
 @login_required(login_url='/accounts/login')
 def home(request):
@@ -89,35 +90,23 @@ def category_view(request, categories=None):
 
 @login_required(login_url='/accounts/login')
 def trend_view(request, keywords_raw=None):
+
     if request.method == 'POST':
         keywords_raw = request.POST.get('keywords_raw')
     elif keywords_raw is None:
         keywords_raw = "Machine Learning, Neural Networks, Computer Vision, Deep Learning"
 
-    keywords = [kw.strip() for kw in keywords_raw.split(',')]
+    keywords = [kw.strip().lower() for kw in keywords_raw.split(',')]
     colors = GLOBAL__COLORS.get_colors_code(len(keywords))
 
-    res = {}
-    min_tick = 300000
-    for kw in keywords:
-        res[kw] = {}
-        item = NGramsSentence.objects.filter(sentence=kw.lower())
-        if item.count() == 0:
-            continue
-        assert item.count() == 1
-
-        freq = SentenceVSMonth.objects.filter(from_item=item[0]).order_by('from_corpora__label_code')
-        freq = list(freq.values_list('freq_text', 'from_corpora__label', 'from_corpora__label_code'))
-
-        for f in freq:
-            res[kw][f[1]] = f[0]
-
-        min_tick = min(min_tick, min([x[2] for x in freq]))
+    items = NGramsMonth.objects.filter(type=1, sentences__has_any_keys=keywords).order_by('label_code')
+    items = items.values('label_code', 'label', 'sentences')
 
     now = datetime.datetime.now()
-    # now = datetime.date(year=2007, month=10, day=1)
-    if min_tick == 300000:
-        min_tick = (now.year - 1) * 100 + now.month
+    min_tick = (now.year - 1) * 100 + now.month
+
+    if items.count() != 0:
+        min_tick = min(items[0]['label_code'], min_tick)
 
     month = min_tick % 100
     year = min_tick // 100
@@ -133,14 +122,21 @@ def trend_view(request, keywords_raw=None):
         } for k, c in zip(keywords, colors)]
     }
 
+    count = 0
     while not ((year == now.year and month > now.month) or year > now.year):
         label = datetime.date(year, month, 1).strftime('%b %y')
         line_data['labels'].append(label)
-        for i, kw in enumerate(keywords):
-            if label in res[kw]:
-                line_data['datasets'][i]['data'].append(res[kw][label])
-            else:
+
+        if items.count() == count or items[count]['label'] != label:
+            for i, kw in enumerate(keywords):
                 line_data['datasets'][i]['data'].append(0)
+        else:
+            for i, kw in enumerate(keywords):
+                if kw in items[count]['sentences']:
+                    line_data['datasets'][i]['data'].append(int(items[count]['sentences'][kw]))
+                else:
+                    line_data['datasets'][i]['data'].append(0)
+            count += 1
 
         if month == 12:
             year += 1
@@ -227,28 +223,53 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJ
             return Article.objects.annotate(n_likes=Count('article_user__like_dislike')).order_by('-n_likes')
 
         if current_tab == 'recommended':
-            # articles_negative = ArticleUser.objects.filter(user=self.request.user, like_dislike=False).values('article')
-            articles_positive = list(ArticleUser.objects.filter(
+            articles_positive = ArticleUser.objects.filter(
                 Q(like_dislike=True) | Q(in_lib=True),
+                user=self.request.user, article__has_neighbors=True
+            )
+
+            # no saved or liked articles
+            if articles_positive.count() == 0:
+                return []
+
+            # get IDs from seen articles
+            viewed_articles_id = ArticleUser.objects.filter(
+                Q(like_dislike=True) | Q(like_dislike=False) | Q(in_lib=True),
                 user=self.request.user
-            ).values_list('article', flat=True))
+            ).values_list('id', flat=True)
 
-            if len(articles_positive) == 0:
-                return Article.objects.order_by('-date')
+            # get relations from 100 last liked articles
+            relations = articles_positive.order_by('-id')[:100].values('article__articletext__relations')
 
-            jury = {}
-            for art in articles_positive:
-                for x in ArticleArticleRelation.objects.filter(left_id=art).values('right_id', 'distance'):
-                    key = x['right_id']
-                    if key not in articles_positive:
-                        if key not in jury:
-                            jury[key] = [x['distance']]
-                        else:
-                            jury[key].append(x['distance'])
+            # get 1k nearest articles from each relation
+            result = {}
+            n_result = 10
+            for relation in relations:
+                relation = relation['article__articletext__relations']
+                relation = sorted(relation.items(), key=lambda x: x[1])
 
-            jury = sorted(jury.items(), key=lambda x: min(x[1]))
-            ids = [x[0] for x in jury]
+                # collect in 'result' all relations with min distance
+                count = 0
+                for k, v in relation:
+                    if int(k) not in viewed_articles_id:
+                        if k not in result:
+                            result[k] = v
+                        elif v < result[k]:
+                            result[k] = v
 
+                        count += 1
+                        if count > n_result:
+                            break
+
+            # (very rare case) -- user disliked all articles in DB except of one (which is saved or liked)
+            if len(result) == 0:
+                return []
+
+            # get nearest 'n_result' articles from 'result'
+            result = sorted(result.items(), key=lambda x: x[1])[:n_result]
+
+            # get sorted ids, create order for Django and order resulting articles
+            ids = [int(x[0]) for x in result]
             preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
             queryset = Article.objects.filter(pk__in=ids).order_by(preserved)
 
@@ -342,11 +363,15 @@ class ArticleDetailsView(AjaxListView, ArticlesMixin, LoginRequiredMixin, FormVi
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        print(context)
-
         article = get_object_or_404(Article, id=self.kwargs['pk'])
 
-        related_articles = article.related.order_by('related_articles__distance')
+        articles = Article.objects.filter(articletext__relations__has_key=str(self.kwargs['pk']))
+        if articles.count() == 0:
+            related_articles = []
+        else:
+            distance = 'articletext__relations__' + str(self.kwargs['pk'])
+            related_articles = articles.order_by(distance)
+
         context['related_articles'] = related_articles
         context['page_template'] = 'articles/related_articles_page.html'
         context['page_id'] = 'articles'
@@ -387,10 +412,18 @@ def add_remove_from_library(request, article_id):
     article = get_object_or_404(Article, id=article_id)
 
     article_user, _ = ArticleUser.objects.get_or_create(article=article, user=request.user)
+    user_tags, _ = UserTags.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
         article_user.in_lib = True
         article_user.save()
+
+        user_tags.tags = RelationModel.add_user_tags(
+            user_tags.tags, user_tags.n_articles,
+            article.articletext.tags, article.articletext.tags_norm
+        )
+        user_tags.n_articles += 1
+        user_tags.save()
     elif request.method == 'DELETE':
         article_user.in_lib = False
         article_user.save()
@@ -440,6 +473,15 @@ def like_dislike(request, article_id):
 
     if request.POST['like'] == '1':
         article_user.like_dislike = True
+
+        if article.has_inner_vector:
+            user_tags, _ = UserTags.objects.get_or_create(user=request.user)
+            user_tags.tags = RelationModel.add_user_tags(
+                user_tags.tags, user_tags.n_articles,
+                article.articletext.tags, article.articletext.tags_norm
+            )
+            user_tags.n_articles += 1
+            user_tags.save()
     elif request.POST['like'] == '-1':
         article_user.like_dislike = False
     else:

@@ -1,6 +1,6 @@
 import tqdm
 
-from articles.models import Article as ArticleModel, Author, ArticleText, ArticleVector, ArticleArticleRelation
+from articles.models import Article as ArticleModel, Author
 
 
 class DBManager(object):
@@ -54,9 +54,6 @@ class DBManager(object):
             start += batch_size
             pbar.update(batch_size)
         pbar.close()
-
-    def create_articles_relation(self, items):
-        ArticleArticleRelation.objects.bulk_create(items)
 
     def article_filter_by_existance(self, arxiv_ids):
         articles = ArticleModel.objects.filter(arxiv_id__in=arxiv_ids).values_list('arxiv_id', flat=True)

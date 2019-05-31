@@ -1,101 +1,115 @@
+import nltk
 import numpy as np
 import os
-import pandas as pd
-import pickle
-import tqdm
+import re
+import spacy
+import string
 
-from articles.models import ArticleVector, Article
-from django.db.models import Q
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.neighbors import NearestNeighbors
-from sklearn.preprocessing import StandardScaler
+from articles.models import UserTags
+from collections import Counter
+
 
 
 class RelationModel:
-    def __init__(self, model_path='data/models/relations.pkl'):
-        self.models_path = model_path
-        if os.path.exists(self.models_path):
-            title, abstract, standart_scaler = pickle.load(open(self.models_path, 'rb+'))
-            self.title = title
-            self.abstract = abstract
-            self.standart_scaler = standart_scaler
+    def __init__(self, bigram_path='data/models/bigram_model.pkl'):
+        self.model_path = bigram_path
+        if os.path.exists(self.model_path):
+            nltk.download('stopwords')
+            from nltk.corpus import stopwords
+            from gensim.utils import simple_preprocess
+            from gensim.models.phrases import Phraser
+
+            self.preprocess = simple_preprocess
+            self.bigram_model = Phraser.load(bigram_path)
+
+            self.stop_words = stopwords.words('english')
+            self.stop_words.extend([
+                'arxiv', 'com',
+                'leq', 'geq', 'cdot', 'frac'
+            ])
+
+            self.nlp = spacy.load('en', disable=['parser', 'ner'])
             self.trained = True
         else:
             self.trained = False
 
-    def get_features(self, titles, abstracts):
-        features = [
-            self.title.transform(titles).toarray(),
-            self.abstract.transform(abstracts).toarray()
-        ]
-        features = self.standart_scaler.transform(np.hstack(features))
+    def _sent_to_words(self, sentence):
+        important_words = ['3d', '2d', '1d']
+        replace = [''.join(np.random.choice(list(string.ascii_lowercase), 10)) for _ in important_words]
 
-        return features
+        # encode important numbers
+        new_sentence = sentence
+        for iw, r in zip(important_words, replace):
+            new_sentence = new_sentence.replace(iw, r)
 
-    def get_knn_dist(self, ids, features, n_neighbors=21):
-        db = ArticleVector.objects.values_list('article_origin_id', 'inner_vector')
-        db_features = [np.frombuffer(x[1]) for x in tqdm.tqdm(db)]
+        # delete bad text
+        words = self.preprocess(new_sentence, deacc=True, max_len=30)
+        words = [re.sub('[^A-Za-z )]', '', w) for w in words]
 
-        all_ids = np.array([int(x[0]) for x in db] + list(ids))
+        # delete stopwords
+        new_sentence = ' '.join([w for w in words if w not in self.stop_words])
+        # decode important numbers
+        for iw, r in zip(important_words, replace):
+            new_sentence = new_sentence.replace(r, iw)
 
-        # Find NN on full range (including new articles)
-        knn = NearestNeighbors()
-        knn.fit(np.concatenate((db_features, features)))
+        return new_sentence.split()
 
-        # Who have to be updated?
-        dists, nn = knn.kneighbors(db_features, n_neighbors)
-        update = []
-        for i in tqdm.tqdm(range(len(dists))):
-            nn_ids = all_ids[nn[i][1:]]
-            if np.any(np.in1d(nn_ids, ids)):
-                update.append([(all_ids[i], nn_ids[j], dists[i, j]) for j in range(len(nn_ids))])
+    def get_tags(self, title, abstract, text):
+        text = ' '.join([title, abstract, text])
+        text = self._sent_to_words(text)
 
-        # Add relation for new articles
-        dists, nn = knn.kneighbors(features, n_neighbors)
-        new = []
-        for i in tqdm.tqdm(range(len(dists))):
-            nn_ids = all_ids[nn[i][1:]]
-            new.extend([(ids[i], nn_ids[j], dists[i, j]) for j in range(len(nn_ids))])
+        # words -> words or bigrams
+        text = self.bigram_model[text]
 
-        return new, update
+        # Lemmatization
+        allowed_postags = ['ADJ', 'ADV', 'NOUN', 'NUM']
+        text = self.nlp(" ".join(text))
+        text = [token.lemma_ for token in text if token.pos_ in allowed_postags]
 
-    def _convert_bytes(self, num):
-        """
-        this function will convert bytes to MB.... GB... etc
-        """
-        for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
-            if num < 1024.0:
-                return "%3.1f %s" % (num, x)
-            num /= 1024.0
+        # Get most frequent
+        tags = dict(Counter(text).most_common(100))
+        return tags
 
-    def retrain(self, logger, train_size=1000):
-        articles = Article.objects.filter(has_txt=True)
+    @staticmethod
+    def get_dist(source_tags, target_tags, source_norm, target_norm):
+        result_mae = 0
 
-        max_articles = articles.count()
-        if train_size <= 0 or train_size >= max_articles:
-            train_size = max_articles
+        for key in source_tags:
+            if key in target_tags:
+                a = float(source_tags[key]) / float(source_norm)
+                b = float(target_tags[key]) / float(target_norm)
+                result_mae += max(a - b, b - a)
+            else:
+                result_mae += float(source_tags[key]) / float(source_norm)
 
-        logger.info('Take %d articles' % train_size)
-        articles = articles.order_by('date').values('title', 'abstract')[:train_size]
-        articles = pd.DataFrame(articles)
+        remain = sum([float(target_tags[key]) for key in target_tags if key not in source_tags])
+        result_mae += remain / float(target_norm)
+        return result_mae
 
-        logger.info('Training Title TD-IDF')
-        model_title = TfidfVectorizer(decode_error='replace', max_features=20,
-                                      ngram_range=(1, 2), stop_words='english', strip_accents='unicode')
-        features_title = model_title.fit_transform(articles.abstract.values).toarray()
+    @staticmethod
+    def add_user_tags(user_tags, user_n_articles, article_tags, article_tags_norm):
+        article_tags = article_tags.copy()
+        for k in article_tags:
+            article_tags[k] = float(article_tags[k]) / article_tags_norm
 
-        logger.info('Training Abstract TD-IDF')
-        model_abstract = TfidfVectorizer(decode_error='replace', max_features=50,
-                                         ngram_range=(1, 2), stop_words='english', strip_accents='unicode')
-        features_abstract = model_abstract.fit_transform(articles.abstract.values).toarray()
+        if len(user_tags) == 0:
+            return article_tags
 
-        logger.info('Training Standart Scaler')
-        features = np.hstack([
-            features_title,
-            features_abstract
-        ])
-        ss = StandardScaler().fit(features)
+        learning_rate = 1. / min(20, user_n_articles + 1)
+        result = {}
+        for k in user_tags:
+            result[k] = (1-learning_rate) * float(user_tags[k])
+        for k in article_tags:
+            if k in result:
+                result[k] += learning_rate * float(article_tags[k])
+            else:
+                result[k] = learning_rate * float(article_tags[k])
 
-        logger.info('Saving models')
-        pickle.dump((model_title, model_abstract, ss), open(self.models_path, 'wb+'))
-        logger.info('Models saved. Total size = %s' % self._convert_bytes(os.path.getsize(self.models_path)))
+        items = sorted(result.items(), key=lambda x: x[1], reverse=True)
+        result = dict(items[:500])
+
+        norm = sum(result.values())
+        for k in result:
+            result[k] /= norm
+
+        return result

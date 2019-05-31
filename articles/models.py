@@ -19,11 +19,9 @@ class Article(models.Model):
     category = models.CharField(max_length=100)
 
     users = models.ManyToManyField(User, 'articles', through='ArticleUser')
-    related = models.ManyToManyField('self', 'related_articles', through='ArticleArticleRelation',
-                                     symmetrical=False)
 
-    has_pdf = models.BooleanField(default=False)
-    has_txt = models.BooleanField(default=False)
+    has_pdf = models.NullBooleanField(default=False)
+    has_txt = models.NullBooleanField(default=False)
     has_inner_vector = models.BooleanField(default=False)
     has_neighbors = models.BooleanField(default=False)
     has_category_bar = models.BooleanField(default=False)
@@ -128,11 +126,11 @@ class ArticleUser(models.Model):
         unique_together = (('article', 'user'),)
 
 
-class ArticleArticleRelation(models.Model):
-    left = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='from_article')
-    right = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='to_article')
+class UserTags(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    distance = models.FloatField()
+    tags = HStoreField(default=dict)
+    n_articles = models.IntegerField(default=0)
 
 
 class ArticleText(models.Model):
@@ -142,49 +140,25 @@ class ArticleText(models.Model):
         primary_key=True,
     )
 
-    text = models.CharField(max_length=100000)
-
     pdf_location = models.CharField(max_length=100)
     txt_location = models.CharField(max_length=100)
 
+    text = models.CharField(max_length=100000)
+    tags = HStoreField(default=dict)            # key -- tag, value -- freq (BoW)
+    tags_norm = models.IntegerField(default=0)
 
-class ArticleVector(models.Model):
-    article_origin = models.OneToOneField(
-        Article,
-        on_delete=models.CASCADE,
-        primary_key=True,
-    )
-
-    inner_vector = models.BinaryField(max_length=100000)
+    relations = HStoreField(default=dict)       # key -- article pk, value -- distance
 
 
 class NGramsMonth(models.Model):
-    length = models.IntegerField()
-    label = models.CharField(max_length=6)
-    label_code = models.IntegerField()
+    label = models.CharField(max_length=6)  # bbb YY
+    label_code = models.IntegerField()      # YYYYMM
+    type = models.IntegerField()            # 0 - title, 1 - abstract, 2 - text
 
-    related = models.ManyToManyField('NGramsSentence', through='SentenceVSMonth')
-
-    class Meta:
-        unique_together = (('length', 'label_code'),)
-
-
-class NGramsSentence(models.Model):
-    sentence = models.CharField(max_length=250, primary_key=True)
-
-    corpora = models.ManyToManyField(NGramsMonth, through='SentenceVSMonth')
-
-
-class SentenceVSMonth(models.Model):
-    from_corpora = models.ForeignKey(NGramsMonth, on_delete=models.CASCADE)
-    from_item = models.ForeignKey(NGramsSentence, on_delete=models.CASCADE)
-
-    freq_title = models.IntegerField(default=0)
-    freq_abstract = models.IntegerField(default=0)
-    freq_text = models.IntegerField(default=0)
+    sentences = HStoreField(default=dict)   # key -- sentence, value -- frequency (as string)
 
     class Meta:
-        unique_together = (('from_corpora', 'from_item'),)
+        unique_together = (('type', 'label_code'),)
 
 
 class Categories(models.Model):

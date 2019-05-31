@@ -21,3 +21,5 @@ django-filter
 django-npm
 PyGithub
 aiohttp
+gensim
+spacy

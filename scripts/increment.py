@@ -48,7 +48,7 @@ def parse_args():
     parser.add_argument('-category_bar', action='store_true', help='Do we need to count articles in category bar?')
     parser.add_argument('-ngrams', action='store_true', help='Do we need to update Ngrams Trend lines?')
 
-    parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=50)
+    parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=200)
     parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=50)
     parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=6)
     parser.add_argument('--verbose', type=bool, help='Do we need to print all?', default=True)

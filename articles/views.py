@@ -16,8 +16,7 @@ from el_pagination.views import AjaxListView
 from articles.forms import AddBlogPostForm
 from articles.models import Article, Author, ArticleUser, \
     CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost, GitHubRepository
-from articles.models import UserTags, \
-    NGramsMonth
+from articles.models import UserTags, NGramsMonth
 from search.forms import SearchForm
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
 from utils.recommendation import RelationModel

@@ -4,7 +4,7 @@ import numpy as np
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q, When, Case
+from django.db.models import Count, Q, When, Case, IntegerField
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
@@ -20,6 +20,9 @@ from articles.forms import AddBlogPostForm
 from articles.models import Article, Author, ArticleUser, UserTags, \
     CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost, GitHubRepository, NGramsMonth
 from core.views import AjaxableResponseMixin
+from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation, \
+    CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost, GitHubRepository
+# from core.views import AjaxableResponseMixin
 from search.forms import SearchForm
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
 from utils.recommendation import RelationModel
@@ -220,7 +223,10 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJ
 
         if current_tab == 'popular':
             # todo fix
-            return Article.objects.annotate(n_likes=Count('article_user__like_dislike')).order_by('-n_likes')
+            return Article.objects.annotate(n_likes=Count(Case(
+                            When(article_user__like_dislike=True, then=1),
+                            output_field=IntegerField(),
+                        ))).order_by('-n_likes')
 
         if current_tab == 'recommended':
             articles_positive = ArticleUser.objects.filter(
@@ -397,7 +403,7 @@ class ArticleDetailsView(AjaxListView, ArticlesMixin, LoginRequiredMixin, FormVi
         return HttpResponseRedirect(self.request.path_info)
 
 
-class BlogPostCreate(AjaxableResponseMixin, CreateView):
+class BlogPostCreate(CreateView):
     model = BlogPost
     fields = ['title', 'url']
 

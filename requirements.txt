@@ -23,3 +23,6 @@ PyGithub
 aiohttp
 gensim
 spacy
+djangorestframework-jwt
+django-cors-headers
+django-rest-auth

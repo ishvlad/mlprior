@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+import datetime
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -35,6 +37,10 @@ STATICFILES_FINDERS = [
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '4)re*)pg$qi*i$uo2hv3_03^pr4eswx&+&f&k2z5d*f#7+xry8'
+
+
+
+
 
 # Application definition
 
@@ -60,7 +66,10 @@ INSTALLED_APPS = [
     'log',
 
     'rest_framework',  # django rest framework
+    'rest_framework.authtoken',
+    'rest_auth',
     'djng',  # django-angular
+    'corsheaders',
 
     'django.contrib.sites',  # new
     # 3rd party
@@ -73,15 +82,17 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'log.middleware.AutomatedLoggingMiddleware',
-    'djng.middleware.AngularUrlMiddleware'
+    'djng.middleware.AngularUrlMiddleware',
+    # 'core.middleware.corsMiddleware'
 ]
 
 ROOT_URLCONF = 'mlprior.urls'
@@ -247,3 +258,51 @@ LOGGING = {
 }
 
 FORM_RENDERER = 'djng.forms.renderers.DjangoAngularTemplates'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 3,
+    # 'DEFAULT_PERMISSION_CLASSES': (
+    #     'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    # ),
+    # 'DEFAULT_AUTHENTICATION_CLASSES': (
+    #     'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+    #     'rest_framework.authentication.SessionAuthentication',
+    #     'rest_framework.authentication.BasicAuthentication',
+    # ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+            'core.backends.JWTAuthentication',
+    ),
+    'EXCEPTION_HANDLER': 'core.exceptions.core_exception_handler',
+    'NON_FIELD_ERRORS_KEY': 'error',
+}
+
+# JWT_AUTH = {
+#     'JWT_ALLOW_REFRESH': True,
+#     'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3600),
+# }
+
+CORS_ORIGIN_ALLOW_ALL = True
+#
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:3000',
+    'http://localhost:8000',
+    'http://localhost:4200',
+    'http://127.0.0.1:4200',
+]
+
+
+REST_AUTH_SERIALIZERS = {
+    'LOGIN_SERIALIZER'
+}
+
+
+#
+# CORS_ALLOW_CREDENTIALS = True
+#
+# CORS_ORIGIN_REGEX_WHITELIST = (
+#     'localhost:3030',
+#     'localhost:4200',
+#     '127.0.0.1:4200',
+# )

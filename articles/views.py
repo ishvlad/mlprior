@@ -1,6 +1,5 @@
 import datetime
 import json
-import numpy as np
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -8,24 +7,21 @@ from django.db.models import Count, Q, When, Case, IntegerField
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
-from django.views import View
 from django.views.generic import CreateView
 from django.views.generic import FormView
 from django.views.generic import ListView
-from django.views.generic import TemplateView
 from django_ajax.mixin import AJAXMixin
 from el_pagination.views import AjaxListView
 
 from articles.forms import AddBlogPostForm
-from articles.models import Article, Author, ArticleUser, UserTags, \
-    CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost, GitHubRepository, NGramsMonth
-from core.views import AjaxableResponseMixin
-from articles.models import Article, Author, ArticleUser, NGramsSentence, SentenceVSMonth, ArticleArticleRelation, \
+from articles.models import Article, Author, ArticleUser, \
     CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost, GitHubRepository
-# from core.views import AjaxableResponseMixin
+from articles.models import UserTags, \
+    NGramsMonth
 from search.forms import SearchForm
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
 from utils.recommendation import RelationModel
+
 
 @login_required(login_url='/accounts/login')
 def home(request):

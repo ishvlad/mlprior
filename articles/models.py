@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.contrib.postgres.fields import HStoreField, ArrayField
+from django.contrib.postgres.fields import HStoreField
 from django.db import models
 
 from core.search import ArticleIndex
@@ -19,11 +19,9 @@ class Article(models.Model):
     category = models.CharField(max_length=100)
 
     users = models.ManyToManyField(User, 'articles', through='ArticleUser')
-    related = models.ManyToManyField('self', 'related_articles', through='ArticleArticleRelation',
-                                     symmetrical=False)
 
-    has_pdf = models.BooleanField(default=False)
-    has_txt = models.BooleanField(default=False)
+    has_pdf = models.NullBooleanField(default=False)
+    has_txt = models.NullBooleanField(default=False)
     has_inner_vector = models.BooleanField(default=False)
     has_neighbors = models.BooleanField(default=False)
     has_category_bar = models.BooleanField(default=False)
@@ -128,11 +126,11 @@ class ArticleUser(models.Model):
         unique_together = (('article', 'user'),)
 
 
-class ArticleArticleRelation(models.Model):
-    left = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='from_article')
-    right = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='to_article')
+class UserTags(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    distance = models.FloatField()
+    tags = HStoreField(default=dict)
+    n_articles = models.IntegerField(default=0)
 
 
 class ArticleText(models.Model):
@@ -142,20 +140,14 @@ class ArticleText(models.Model):
         primary_key=True,
     )
 
-    text = models.CharField(max_length=100000)
-
     pdf_location = models.CharField(max_length=100)
     txt_location = models.CharField(max_length=100)
 
+    text = models.CharField(max_length=100000)
+    tags = HStoreField(default=dict)            # key -- tag, value -- freq (BoW)
+    tags_norm = models.IntegerField(default=0)
 
-class ArticleVector(models.Model):
-    article_origin = models.OneToOneField(
-        Article,
-        on_delete=models.CASCADE,
-        primary_key=True,
-    )
-
-    inner_vector = ArrayField(models.FloatField(), size=70)
+    relations = HStoreField(default=dict)       # key -- article pk, value -- distance
 
 
 class NGramsMonth(models.Model):

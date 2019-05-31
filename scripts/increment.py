@@ -16,14 +16,12 @@ import django
 
 django.setup()
 
-from articles.models import Article, ArticleVector, ArticleArticleRelation, \
-                            CategoriesVSDate, Categories, CategoriesDate, \
-                            NGramsMonth, ArticleText
+from articles.models import Article, CategoriesVSDate, Categories, \
+                            CategoriesDate, NGramsMonth, ArticleText
 from collections import Counter
 from services.arxiv import ArXivArticle, ArXivAPI
 from django.db.models import F, Q
 from nltk import ngrams
-from sklearn.neighbors import NearestNeighbors
 from utils.db_manager import DBManager
 from urllib.request import urlopen
 from utils.constants import GLOBAL__CATEGORIES
@@ -61,10 +59,13 @@ def parse_args():
 
 def overall_stats():
     articles = Article.objects
+
+    txt_batch = articles.filter(has_txt=True).count(), articles.filter(has_txt=None).count()
+    txt_batch = txt_batch[0]+txt_batch[1], txt_batch[0], txt_batch[1]
     logger.info('DATABASE stats:')
     logger.info('\tNumber of articles:                          %d' % articles.count())
     logger.info('\tNumber of articles with pdf:                 %d' % articles.filter(has_pdf=True).count())
-    logger.info('\tNumber of articles with txt:                 %d' % articles.filter(has_txt=True).count())
+    logger.info('\tNumber of articles with txt:                 %d (%d OK, %d null)' % txt_batch)
     logger.info('\tNumber of articles with inner vector:        %d' % articles.filter(has_inner_vector=True).count())
     logger.info('\tNumber of articles with neighbors:           %d' % articles.filter(has_neighbors=True).count())
     logger.info('\tNumber of articles with counted category:    %d' % articles.filter(has_category_bar=True).count())
@@ -165,6 +166,7 @@ def download_pdf(args, path_pdf='data/pdfs'):
 
     pbar = tqdm.tqdm(total=max_articles)
     ok_list = []
+    # null_list = []
     for pk, idx, url in articles.values_list('pk', 'arxiv_id', 'url'):
         if len(ok_list) >= max_articles:
             break
@@ -186,11 +188,15 @@ def download_pdf(args, path_pdf='data/pdfs'):
             pbar.update(1)
         except Exception as e:
             logger.info(str(idx) + ' (' + str(url) + '): Cannot download PDF. Exception: ' + str(e))
+            # null_list.append(pk)
 
     pbar.close()
     logger.info('FINISH downloading PDFs from arXiv. Now update flags of %d articles' % len(ok_list))
     if len(ok_list) != 0:
         Article.objects.filter(pk__in=ok_list).update(has_pdf=True)
+    # if len(null_list) != 0:
+    #     Article.objects.filter(pk__in=null_list).update(has_pdf=None)
+
 
 @log.logging.timeit(logger, 'PDF 2 TXT Time', level=logging.INFO)
 def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
@@ -205,9 +211,10 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
         return
 
     pbar = tqdm.tqdm(total=max_articles)
-    ok_list = []
+    ok_list, null_list = [], []
     idx_list = []
     new_items = []
+
     for pk, idx in articles.values_list('pk', 'arxiv_id'):
         if len(ok_list) >= max_articles:
             break
@@ -242,6 +249,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
         except Exception as e:
             logger.info(idx + '. Decode problem. No .txt file. NEXT: ' + str(e))
             text = 'NO TEXT'
+            null_list.append(pk)
 
         new_items.append(ArticleText(
             article_origin_id=pk,
@@ -249,6 +257,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
             txt_location=file_txt,
             text=text
         ))
+
         ok_list.append(pk)
         idx_list.append(idx)
         pbar.update(1)
@@ -258,6 +267,8 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
     if len(ok_list) != 0:
         db.bulk_create(new_items)
         Article.objects.filter(pk__in=ok_list).update(has_txt=True)
+    if len(null_list) != 0:
+        Article.objects.filter(pk__in=null_list).update(has_txt=None)
     for idx in idx_list:
         f = os.path.join(path_pdf, idx + '.pdf')
         if os.path.exists(f):
@@ -265,28 +276,9 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
             os.system(cmd)
 
 
-@log.logging.timeit(logger, 'Retraining model Time', level=logging.INFO)
-def retrain(args):
-    logger.info('START Retraining model')
-
-    articles = Article.objects.filter(has_txt=True)
-    max_articles = _get_max_articles(articles, args.max_articles)
-
-    model = RelationModel()
-    model.retrain(logger, train_size=max_articles)
-
-    logger.info('Training is finished. Set all flags to False')
-    ArticleVector.objects.all().delete()
-    Article.objects.update(has_inner_vector=False)
-    ArticleArticleRelation.objects.all().delete()
-    Article.objects.update(has_neighbors=False)
-    logger.info('FINISH Retraining model')
-
-
 @log.logging.timeit(logger, 'Calculate Inner Vector Time', level=logging.INFO)
 def calc_inner_vector(args):
     logger.info('START making relations')
-    db = DBManager()
     model = RelationModel()
 
     if model.trained is False:
@@ -300,29 +292,27 @@ def calc_inner_vector(args):
         logger.info('FINISH making relations')
         return
 
-    articles = articles.values('id', 'title', 'abstract')[:max_articles]
+    cols = ['id', 'title', 'abstract', 'articletext__text']
+    articles = articles.values(*cols)[:max_articles]
     articles = pd.DataFrame(articles)
-    features = model.get_features(
-        articles.title.values,
-        articles.abstract.values
-    )
 
-    logger.info('Saving features (len: %d)' % len(features))
-    items = []
-    for idx, feature in zip(articles.id.values, features):
-        items.append(ArticleVector(
-            article_origin_id=idx,
-            inner_vector=list(feature)
-        ))
-    db.bulk_create(items)
-    Article.objects.filter(pk__in=list(articles.id.values)).update(has_inner_vector=True)
+    for id, ttl, abs, txt in tqdm.tqdm(articles[cols].values, desc='Tags generation'):
+        tags = model.get_tags(ttl, abs, txt)
+        item = ArticleText.objects.filter(article_origin_id=id)
+        if len(item) != 1:
+            logging.warning('No ArticleText instance for id={} (but has_txt=True)'.format(id))
+        item = item[0]
+        item.tags = tags
+        item.tags_norm = sum(tags.values())
+        item.save()
+        Article.objects.filter(pk=id).update(has_inner_vector=True)
+
     logger.info('FINISH making relations')
 
 
 @log.logging.timeit(logger, 'Calculate nearest articles', level=logging.INFO)
-def calc_nearest_articles(args, n_nearest=20):
+def calc_nearest_articles(args):
     logger.info('START calculating nearest articles')
-    db = DBManager()
     model = RelationModel()
 
     if model.trained is False:
@@ -339,52 +329,40 @@ def calc_nearest_articles(args, n_nearest=20):
         logger.info('No articles for calculating (has_inner_vector=True & has_neighbors=False)')
         logger.info('FINISH calculating nearest articles')
         return
-    elif db_articles.count() < n_nearest + 1 and  max_articles < n_nearest + 1:
-        error_str = 'need batch_size > {}. Now batch_size = {}'.format(n_nearest, max_articles)
-        logger.info('For proper calculations we ' + error_str)
-        logger.info('FINISH calculating nearest articles')
-        return
 
     logger.info('READ {} new articles and {} old articles from db'.format(max_articles, db_articles.count()))
-    articles = new_articles.values('id', 'articlevector__inner_vector')[:max_articles]
+
+    cols = ['id', 'articletext__tags', 'articletext__tags_norm']
+    articles = new_articles.values(*cols)[:max_articles]
     articles = pd.DataFrame(articles)
-    ids = articles.id.values
-    features = np.vstack(articles.articlevector__inner_vector)
 
-    border = len(articles)
-
-    if db_articles.count() != 0:
-        df = pd.DataFrame(db_articles.values('id', 'articlevector__inner_vector'))
-        ids = np.concatenate((ids, df['id'].values))
-        features = np.concatenate((features, np.vstack(df.articlevector__inner_vector)))
-
-    logger.info('FIT knn on {} articles'.format(len(features)))
-    knn = NearestNeighbors()
-    knn.fit(features)
-    dists, nn = knn.kneighbors(features, n_nearest+1)
-
-    logger.info('Process {} articles'.format(len(features)))
-    count = -border
-    for dist, ns in tqdm.tqdm(zip(dists, nn), total=len(features)):
-        if sum(ns < border) == 0:
+    for id, source_tags, source_norm in tqdm.tqdm(articles[cols].values, desc='Calc distances'):
+        db_articles = Article.objects.filter(has_neighbors=True)
+        if db_articles.count() == 0:
+            Article.objects.filter(id=id).update(has_neighbors=True)
             continue
-        count += 1
-        ArticleArticleRelation.objects.filter(left_id=ids[ns[0]]).all().delete()
-        items = [ArticleArticleRelation(
-            left_id=ids[ns[0]],
-            right_id=ids[n],
-            distance=d
-        ) for d, n in zip(dist[1:], ns[1:])]
-        db.bulk_create(items)
-        Article.objects.filter(pk=ids[ns[0]]).update(has_neighbors=True)
-    logger.info('Created {} new articles and updated {} old articles'.format(border, count))
 
-    num_labeled = Article.objects.filter(has_neighbors=True).count()
-    num_items = ArticleArticleRelation.objects.count()
-    if num_items == num_labeled * n_nearest:
-        logger.info('OK. Total {} articles with {} nn rows in DB'.format(num_labeled, num_items))
-    else:
-        logger.warning('!!! Total {} articles with {} nn rows in DB'.format(num_labeled, num_items))
+        source_relations = {}
+        targets = db_articles.values('id', 'articletext__tags', 'articletext__tags_norm', 'articletext__relations')
+
+        for target in tqdm.tqdm(targets, desc='All articles in DB'):
+            if str(id) in target['articletext__relations']:
+                source_relations[str(target['id'])] = target['articletext__relations'][str(id)]
+                continue
+
+            dist = model.get_dist(source_tags, target['articletext__tags'],
+                                  source_norm, target['articletext__tags_norm'])
+
+            source_relations[str(target['id'])] = str(dist)
+            target['articletext__relations'][str(id)] = str(dist)
+
+            ArticleText.objects.filter(article_origin_id=target['id']).update(
+                relations=target['articletext__relations']
+            )
+
+        ArticleText.objects.filter(article_origin_id=id).update(relations=source_relations)
+        Article.objects.filter(id=id).update(has_neighbors=True)
+
     logger.info('FINISH calculating nearest articles')
 
 
@@ -462,7 +440,7 @@ def stacked_bar(args):
     for _, row in tqdm.tqdm(articles.iterrows(), total=len(articles)):
         # new category
         if Categories.objects.filter(category=row['category']).count() == 0:
-            logger.warning('Category does not exists: ' +  row['category'])
+            logger.warning('Category does not exists: ' + row['category'])
             logger.warning('!!! And append this category to utils.constants.GLOBAL__CATEGORIES')
 
             category = Categories(category=row['category'])
@@ -486,12 +464,6 @@ def stacked_bar(args):
 
 
 def get_grams_dict(sentences, max_ngram_len=5):
-    # stop_words = [
-    #     'a', 'the', 'in', 'of', 'in', 'this', 'and',
-    #     'to', 'we', 'for', 'is', 'that', 'on', 'with'
-    #     'are', 'by', 'as', 'an', 'from', 'our', 'be'
-    # ]
-
     p = re.compile('\w+[\-\w+]*', re.IGNORECASE)
     dic = {}
 
@@ -500,14 +472,6 @@ def get_grams_dict(sentences, max_ngram_len=5):
             grams = ngrams(p.findall(s.lower()), n)
 
             for key in set(grams):
-                # miss = False
-                # for sw in stop_words:
-                #     if sw in key:
-                #         miss = True
-                #         break
-                # if miss:
-                #     continue
-
                 key = ' '.join(key)
                 if len(key) < 250:
                     if key in dic:
@@ -585,7 +549,7 @@ def main(args):
         pdf2txt(args, path_pdf, path_txt)
 
     if args.retrain:
-        retrain(args)
+        raise NotImplementedError()
 
     if args.inner_vector or args.all or args.clean:
         calc_inner_vector(args)

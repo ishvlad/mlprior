@@ -343,20 +343,22 @@ def calc_nearest_articles(args):
             continue
 
         source_relations = {}
-        # targets = db_articles.values('id', 'articletext__tags', 'articletext__tags_norm', 'articletext__relations')
+        targets = db_articles.values('id', 'articletext__tags', 'articletext__tags_norm', 'articletext__relations')
 
-        for target in tqdm.tqdm(db_articles, desc='All articles in DB'):
-            articletext = target.articletext
-            if str(id) in articletext.relations:
-                source_relations[str(target.id)] = articletext.relations[str(id)]
+        for target in tqdm.tqdm(targets, desc='All articles in DB'):
+            if str(id) in target['articletext__relations']:
+                source_relations[str(target['id'])] = target['articletext__relations'][str(id)]
                 continue
 
-            dist = model.get_dist(source_tags, articletext.tags,
-                                  source_norm, articletext.tags_norm)
+            dist = model.get_dist(source_tags, target['articletext__tags'],
+                                  source_norm, target['articletext__tags_norm'])
 
-            source_relations[str(target.id)] = str(dist)
-            articletext.relations[str(id)] = str(dist)
-            articletext.save()
+            source_relations[str(target['id'])] = str(dist)
+            target['articletext__relations'][str(id)] = str(dist)
+
+            ArticleText.objects.filter(article_origin_id=target['id']).update(
+                relations=target['articletext__relations']
+            )
 
         ArticleText.objects.filter(article_origin_id=id).update(relations=source_relations)
         Article.objects.filter(id=id).update(has_neighbors=True)

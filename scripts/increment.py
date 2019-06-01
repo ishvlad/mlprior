@@ -49,7 +49,7 @@ def parse_args():
     parser.add_argument('-ngrams', action='store_true', help='Do we need to update Ngrams Trend lines?')
 
     parser.add_argument('--batch_size', type=int, help='Articles per iteration', default=200)
-    parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=50)
+    parser.add_argument('--max_articles', type=int, help='number of data loading workers', default=200)
     parser.add_argument('--sleep_time', type=int, help='How much time of sleep (in sec) between API calls', default=6)
     parser.add_argument('--verbose', type=bool, help='Do we need to print all?', default=True)
 
@@ -343,22 +343,20 @@ def calc_nearest_articles(args):
             continue
 
         source_relations = {}
-        targets = db_articles.values('id', 'articletext__tags', 'articletext__tags_norm', 'articletext__relations')
+        # targets = db_articles.values('id', 'articletext__tags', 'articletext__tags_norm', 'articletext__relations')
 
-        for target in tqdm.tqdm(targets, desc='All articles in DB'):
-            if str(id) in target['articletext__relations']:
-                source_relations[str(target['id'])] = target['articletext__relations'][str(id)]
+        for target in tqdm.tqdm(db_articles, desc='All articles in DB'):
+            articletext = target.articletext
+            if str(id) in articletext.relations:
+                source_relations[str(target.id)] = articletext.relations[str(id)]
                 continue
 
-            dist = model.get_dist(source_tags, target['articletext__tags'],
-                                  source_norm, target['articletext__tags_norm'])
+            dist = model.get_dist(source_tags, articletext.tags,
+                                  source_norm, articletext.tags_norm)
 
-            source_relations[str(target['id'])] = str(dist)
-            target['articletext__relations'][str(id)] = str(dist)
-
-            ArticleText.objects.filter(article_origin_id=target['id']).update(
-                relations=target['articletext__relations']
-            )
+            source_relations[str(target.id)] = str(dist)
+            articletext.relations[str(id)] = str(dist)
+            articletext.save()
 
         ArticleText.objects.filter(article_origin_id=id).update(relations=source_relations)
         Article.objects.filter(id=id).update(has_neighbors=True)

@@ -5,7 +5,7 @@ from articles.views import home
 
 from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView
 
-from articles.api import BlogPostAPI, ArticleList, BlogPostUserList, GitHubAPI, GitHubUserList, StatsAPI
+from articles.api import BlogPostAPI, ArticleList, BlogPostUserList, GitHubAPI, GitHubUserList, StatsAPI, TrendAPI
 from rest_framework import routers
 
 
@@ -22,7 +22,9 @@ router.register(r'githubs', GitHubAPI, base_name='githubs')
 
 apiurls = [
     path('api/', include(router.urls)),
-    path('api/stats', StatsAPI.as_view())
+    path('api/stats', StatsAPI.as_view()),
+
+    path('api/visualization/trends', TrendAPI.as_view())
 ]
 
 

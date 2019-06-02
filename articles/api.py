@@ -380,6 +380,8 @@ class TrendAPI(APIView):
                         buf[i] += int(store[kw])
 
                 count += 1
+            else:
+                buf[month % len(keywords)] += month
 
             buf_count += 1
             if buf_count == resolution:

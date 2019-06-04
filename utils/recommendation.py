@@ -87,6 +87,24 @@ class RelationModel:
         return result_mae
 
     @staticmethod
+    def update_dict(dictionary, new_key, new_value):
+        if len(dictionary) < 10:
+            dictionary[new_key] = new_value
+            return True, dictionary
+
+        max_value = max([float(v) for v in dictionary.values()])
+        if max_value <= float(new_value):
+            return False, dictionary
+
+        for k, v in dictionary.items():
+            if float(v) == max_value:
+                del dictionary[k]
+                dictionary[new_key] = new_value
+                return True, dictionary
+
+        raise Exception
+
+    @staticmethod
     def add_user_tags(user_tags, user_n_articles, article_tags, article_tags_norm):
         article_tags = article_tags.copy()
         for k in article_tags:

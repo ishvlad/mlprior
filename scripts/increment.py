@@ -153,7 +153,7 @@ def download_meta(args):
 
 
 @log.logging.timeit(logger, 'Download PDF Time', level=logging.INFO)
-def download_pdf(args, path_pdf='data/pdfs'):
+def download_pdf(args, path_pdf='data/pdfs', path_txt='data/txts'):
     logger.info('START downloading PDFs from arXiv')
 
     articles = Article.objects.filter(has_pdf=False)
@@ -163,6 +163,7 @@ def download_pdf(args, path_pdf='data/pdfs'):
         logger.info('FINISH downloading PDFs from arXiv')
         return
 
+
     pbar = tqdm.tqdm(total=max_articles)
     ok_list = []
     # null_list = []
@@ -171,10 +172,17 @@ def download_pdf(args, path_pdf='data/pdfs'):
             break
 
         file_pdf = os.path.join(path_pdf, str(idx) + '.pdf')
+        file_txt = os.path.join(path_txt, str(idx) + '.txt')
         url += '.pdf'
 
         if os.path.exists(file_pdf) and os.path.getsize(file_pdf) != 0:
             logger.info('PDF ' + idx + ' already exists. Just update flag')
+            ok_list.append(pk)
+            pbar.update(1)
+            continue
+
+        if os.path.exists(file_txt) and os.path.getsize(file_txt) != 0:
+            logger.info('PDF ' + idx + ' does not exist but TXT already exists. Just update flag')
             ok_list.append(pk)
             pbar.update(1)
             continue
@@ -301,7 +309,7 @@ def calc_inner_vector(args):
         if len(item) != 1:
             logging.warning('No ArticleText instance for id={} (but has_txt=True)'.format(id))
         item = item[0]
-        item.tags = tags
+        item.tags = dict([(t[0], str(t[1])) for t in tags.items()])
         item.tags_norm = sum(tags.values())
         item.save()
         Article.objects.filter(pk=id).update(has_inner_vector=True)
@@ -345,19 +353,19 @@ def calc_nearest_articles(args):
         targets = db_articles.values('id', 'articletext__tags', 'articletext__tags_norm', 'articletext__relations')
 
         for target in tqdm.tqdm(targets, desc='All articles in DB'):
-            if str(id) in target['articletext__relations']:
-                source_relations[str(target['id'])] = target['articletext__relations'][str(id)]
-                continue
-
             dist = model.get_dist(source_tags, target['articletext__tags'],
                                   source_norm, target['articletext__tags_norm'])
 
-            source_relations[str(target['id'])] = str(dist)
-            target['articletext__relations'][str(id)] = str(dist)
+            need_update, new_dict = model.update_dict(source_relations, str(target['id']), str(dist))
+            if need_update:
+                source_relations = new_dict
 
-            ArticleText.objects.filter(article_origin_id=target['id']).update(
-                relations=target['articletext__relations']
-            )
+            need_update, new_dict = model.update_dict(target['articletext__relations'], str(id), str(dist))
+            if need_update:
+                target['articletext__relations'] = new_dict
+                ArticleText.objects.filter(article_origin_id=target['id']).update(
+                    relations=target['articletext__relations']
+                )
 
         ArticleText.objects.filter(article_origin_id=id).update(relations=source_relations)
         Article.objects.filter(id=id).update(has_neighbors=True)

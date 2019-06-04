@@ -16,8 +16,7 @@ import django
 
 django.setup()
 
-from articles.models import Article, CategoriesVSDate, Categories, \
-                            CategoriesDate, NGramsMonth, ArticleText
+from articles.models import Article, Categories, NGramsMonth, ArticleText
 from collections import Counter
 from services.arxiv import ArXivArticle, ArXivAPI
 from django.db.models import F, Q
@@ -399,64 +398,27 @@ def stacked_bar(args):
     articles = pd.DataFrame(articles)
     articles['date'] = pd.to_datetime(articles['date'])
 
-    min_date_code_in_db = 198001
-    today = datetime.datetime.now()
-    today = today.month + today.year * 100
-
-    # if very first run
-    if CategoriesDate.objects.count() == 0:
-        logging.info('Very first run')
-        date_code = min_date_code_in_db
-        new_dates = []
-        while date_code < today:
-            date = datetime.date(year=date_code // 100, month=date_code % 100, day=1)
-            new_dates.append(CategoriesDate(
-                date_code=date_code,
-                date=date.strftime('%b %y')
-            ))
-            if date_code % 100 == 12:
-                date_code = date_code - 11 + 100
-            else:
-                date_code += 1
-        db.bulk_create(new_dates)
-
-    # if first run in the month
-    if CategoriesDate.objects.filter(date_code=today).count() == 0:
-        logging.info('First run in the month')
-        new_date = datetime.date(year=today // 100, month=today % 100, day=1)
-        new_date = CategoriesDate(
-            date_code=today,
-            date=new_date.strftime('%b %y')
-        )
-        new_date.save()
-
-        db.bulk_create([CategoriesVSDate(
-            from_category=c,
-            from_month=new_date,
-            count=0
-        ) for c in Categories.objects.all()])
-
     logging.info('Update bar counts')
     for _, row in tqdm.tqdm(articles.iterrows(), total=len(articles)):
+        date_code = str(row['date'].month + row['date'].year * 100)
+
         # new category
-        if Categories.objects.filter(category=row['category']).count() == 0:
+        db_item = Categories.objects.filter(category=row['category'])
+        if db_item.count() == 0:
             logger.warning('Category does not exists: ' + row['category'])
             logger.warning('!!! And append this category to utils.constants.GLOBAL__CATEGORIES')
 
-            category = Categories(category=row['category'])
-            category.save()
-
-            db.bulk_create([CategoriesVSDate(
-                from_category=category,
-                from_month=d,
-                count=0
-            ) for d in CategoriesDate.objects.all()])
-
-        date_code = row['date'].month + row['date'].year * 100
-        CategoriesVSDate.objects.filter(
-            from_category__category=row['category'],
-            from_month__date_code=date_code
-        ).update(count=F('count') + 1)
+            Categories(
+                category=row['category'],
+                months={date_code: '1'}
+            ).save()
+        else:
+            db_item = db_item[0]
+            if date_code in db_item.months:
+                db_item.months[date_code] = str(int(db_item.months[date_code]) + 1)
+            else:
+                db_item.months[date_code] = '1'
+            db_item.save()
 
         Article.objects.filter(id=row['id']).update(has_category_bar=True)
 

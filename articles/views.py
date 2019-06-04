@@ -14,8 +14,7 @@ from django_ajax.mixin import AJAXMixin
 from el_pagination.views import AjaxListView
 
 from articles.forms import AddBlogPostForm
-from articles.models import Article, Author, ArticleUser, \
-    CategoriesVSDate, CategoriesDate, BlogPostUser, BlogPost, GitHubRepository
+from articles.models import Article, Author, ArticleUser, BlogPostUser, BlogPost, GitHubRepository
 from articles.models import UserTags, NGramsMonth
 from search.forms import SearchForm
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
@@ -92,9 +91,9 @@ def trend_view(request, keywords_raw=None):
     if request.method == 'POST':
         keywords_raw = request.POST.get('keywords_raw')
     elif keywords_raw is None:
-        keywords_raw = "Machine Learning, Neural Networks, Computer Vision, Deep Learning"
+        keywords_raw = "cs.AI, cs.CV, cs.DS, cs.SI"
 
-    keywords = [kw.strip().lower() for kw in keywords_raw.split(',')]
+    keywords = [kw.strip() for kw in keywords_raw.split(',')]
     colors = GLOBAL__COLORS.get_colors_code(len(keywords))
 
     items = NGramsMonth.objects.filter(type=1, sentences__has_any_keys=keywords).order_by('label_code')

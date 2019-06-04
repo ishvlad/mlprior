@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from articles.models import Article, BlogPost, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author, \
-    NGramsMonth
+    NGramsMonth, Categories
 from articles.serializers import ArticleDetailedSerializer, BlogPostSerializer, BlogPostUserSerializer, ArticleUserSerializer, \
     GitHubSerializer, ArticlesShortSerializer
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
@@ -327,26 +327,9 @@ class TrendAPI(APIView):
         permissions.IsAuthenticatedOrReadOnly
     ]
 
-    @staticmethod
-    def date_name(resolusion, month, year):
-        month -= 1
-
-        if resolusion == 1:
-            part = year + month / 12
-            return datetime.date(year, month+1, 1).strftime('%b %y'), part
-        if resolusion == 3:
-            part = year + int(month/3) / 4
-            return 'Q' + str(int(month/3)+1) + ' ' + str(year), part
-        if resolusion == 6:
-            part = year + int(month / 6) / 2
-            return 'H' + str(int(month/6)+1) + ' ' + str(year), part
-        if resolusion == 12:
-            return str(year), year
-
     def get(self, request):
         # read params
         keywords_raw = request.query_params.get('keywords', None)
-        resolution = request.query_params.get('res', 12)
 
         if keywords_raw is None:
             keywords_raw = 'Machine Learning, Neural Networks, Computer Vision, Deep Learning'
@@ -355,84 +338,53 @@ class TrendAPI(APIView):
         try:
             keywords_names = [kw.strip() for kw in keywords_raw.split(',')]
             keywords = [kw.lower() for kw in keywords_names]
-            resolution = int(resolution)
         except Exception:
             return Response(status=400)
 
-        if resolution != 1 and resolution != 3 and resolution != 6 and resolution != 12:
-            return Response(status=400)
-
-        # get ordered list of db rows with selected keywords
-        db = NGramsMonth.objects.filter(type=1, sentences__has_any_keys=keywords).order_by('label_code')
-
-        now = datetime.datetime.now()
-        year, month = 2000, 1
-
-        count, result = 0, []
-        buf_count, buf = 0, [0] * len(keywords)
-        # for each month from Jan 2000
-        while not ((year == now.year and month > now.month) or year > now.year):
-            # if month in DB is exactly what we want
-            if db.count() != count and db[count].label_code == year * 100 + month:
-                store = db[count].sentences
-                for i, kw in enumerate(keywords):
-                    if kw in store:
-                        buf[i] += int(store[kw])
-
-                count += 1
-            else:
-                buf[month % len(keywords)] += month
-
-            buf_count += 1
-            if buf_count == resolution:
-                date, date_code = TrendAPI.date_name(resolution, month, year)
-                item = {
-                    'date': date,
-                    'date_code': date_code
-                }
-                for i, kw in enumerate(keywords):
-                    item[kw] = buf[i]
-
-                buf_count, buf = 0, [0] * len(keywords)
-                result.append(item)
-
-            if month == 12:
-                year += 1
-                month = 1
-            else:
-                month += 1
-
-        if buf_count != 0:
-            if month == 1:
-                year -= 1
-                month = 12
-            else:
-                month -= 1
-
-            date, date_code = TrendAPI.date_name(resolution, month, year)
-            item = {
-                'date': date,
-                'date_code': date_code
-            }
-            for i, kw in enumerate(keywords):
-                item[kw] = buf[i]
-
-            result.append(item)
-
-        resolution_name = {
-            1: 'Month',
-            3: 'Quater',
-            6: 'Half',
-            12: 'Year'
-        }
-
-        series_options = [
-            {'valueField': k, 'name': k_n} for k, k_n in zip(keywords, keywords_names)
-        ]
+        data = []
+        for i, k in enumerate(keywords):
+            db = NGramsMonth.objects.filter(type=1, sentences__has_key=k)
+            for item in db:
+                label_code = item.label_code
+                data.append({
+                    'date': str(label_code // 100) + '/' + str(label_code % 100) + '/1',
+                    'key': keywords_names[i],
+                    'value': int(item.sentences[k])
+                })
 
         return Response({
-            'seriesOptions': series_options,
-            'resolution': resolution,
-            'resolution_name': resolution_name[resolution],
-            'data':  result
+            'data':  data
+        })
+
+
+class CategoriesAPI(APIView):
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly
+    ]
+
+    def get(self, request):
+        # read params
+        categories_raw = request.query_params.get('categories', None)
+
+        if categories_raw is None:
+            categories_raw = "cs.AI, cs.CV, cs.DS, cs.SI"
+
+        # check params
+        try:
+            categories = [cat.strip() for cat in categories_raw.split(',')]
+        except Exception:
+            return Response(status=400)
+
+        data = []
+        db = Categories.objects.filter(pk__in=categories)
+        for item in db.values_list('category', 'category_full', 'months'):
+            for date_code in item[2]:
+                data.append({
+                     'date': date_code[:4] + '/' + date_code[4:] + '/1',
+                     'key': item[0] + ': ' + item[1],
+                     'value': int(item[2][date_code])
+                })
+
+        return Response({
+            'data': data
         })

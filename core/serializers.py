@@ -13,13 +13,13 @@ class UserSerializer(serializers.ModelSerializer):
     # benefit, so lets just stick with the defaults.
     password = serializers.CharField(
         max_length=128,
-        min_length=8,
+        min_length=6,
         write_only=True
     )
 
     class Meta:
         model = User
-        fields = ('email', 'password', 'token',)
+        fields = ('email', 'password', 'token')
 
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password
@@ -65,7 +65,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
     # characters, and can not be read by the client.
     password = serializers.CharField(
         max_length=128,
-        min_length=8,
+        min_length=6,
         write_only=True
     )
 

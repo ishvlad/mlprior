@@ -52,7 +52,10 @@ psql postgres
 CREATE ROLE mlprioradmin WITH LOGIN PASSWORD '1qwe324r6y8ytr';
 ALTER ROLE mlprioradmin CREATEDB; 
 CREATE DATABASE mlpriordb;
+
 ```
+
+yc managed-postgresql database update  mlpriordb --cluster-name mlprior-cluster --extensions hstore=11
 
 
 

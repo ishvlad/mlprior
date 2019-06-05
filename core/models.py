@@ -122,6 +122,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         """
         return self._generate_jwt_token()
 
+    @property
+    def expires_in(self):
+        """
+        Time in seconds
+        :return:
+        """
+        return 60 * 24 * 60 * 60
+
     def get_full_name(self):
         """
         This method is required by Django for things like handling emails.

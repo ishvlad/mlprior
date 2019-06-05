@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import json
 import logging
 import numpy as np
 import os
@@ -16,7 +17,8 @@ import django
 
 django.setup()
 
-from articles.models import Article, Categories, NGramsMonth, ArticleText
+from articles.api import TrendAPI, CategoriesAPI
+from articles.models import Article, Categories, NGramsMonth, ArticleText, DefaultStore
 from collections import Counter
 from services.arxiv import ArXivArticle, ArXivAPI
 from django.db.models import F, Q
@@ -38,6 +40,7 @@ def parse_args():
     parser.add_argument('-all', action='store_true', help='meta, pdf, txt, inner_vector, knn, ngrams')
     parser.add_argument('-retrain', action='store_true', help='Do we need to retrain recommendation model?')
     parser.add_argument('-update_categories', action='store_true', help='Move categories description from GLOBAL to DB')
+    parser.add_argument('-update_default', action='store_true', help='Update default dics for visualization')
 
     parser.add_argument('-download_meta', action='store_true', help='Do we need to download articles from arXiv?')
     parser.add_argument('-download_pdf', action='store_true', help='Do we need to download pdf?')
@@ -497,6 +500,32 @@ def trend_ngrams(args, max_n_for_grams=3):
         Article.objects.filter(pk__in=pks).update(has_ngram_stat=True)
 
 
+@log.logging.timeit(logger, 'Default update Time', level=logging.INFO)
+def update_default(args):
+    logger.info('Updating Trend default data')
+    response = TrendAPI().get(None, 'Supervised, Unsupervised, Reinforcement')
+
+    if response.status_code != 200:
+        logger.warning('ERROR while receiving trends data. Skip')
+    else:
+        item, _ = DefaultStore.objects.get_or_create(key='trends')
+        item.value = json.dumps(response.data)
+        item.save()
+        logger.info('OK Updating Trend default data')
+
+    logger.info('Updating Categories default data')
+    response = CategoriesAPI().get(None, 'cs.AI, cs.CV, cs.DS, cs.SI')
+
+    if response.status_code != 200:
+        logger.warning('ERROR while receiving categories data. Skip')
+    else:
+        item, _ = DefaultStore.objects.get_or_create(key='categories')
+        item.value = json.dumps(response.data)
+        item.save()
+        logger.info('OK Updating Categories default data')
+
+
+
 @log.logging.timeit(logger, 'Total Time', level=logging.INFO)
 def main(args):
     path, path_pdf, path_txt = 'data', 'data/pdfs', 'data/txts'
@@ -532,6 +561,9 @@ def main(args):
 
     if args.ngrams or args.all or args.clean:
         trend_ngrams(args)
+
+    if args.update_default or args.all or args.clean:
+        update_default(args)
 
     logger.info('#'*50)
     overall_stats()

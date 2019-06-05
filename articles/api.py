@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Case, IntegerField, Count, When
@@ -10,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from articles.models import Article, BlogPost, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author, \
-    NGramsMonth, Categories
+    NGramsMonth, Categories, DefaultStore
 from articles.serializers import ArticleDetailedSerializer, BlogPostSerializer, BlogPostUserSerializer, ArticleUserSerializer, \
     GitHubSerializer, ArticlesShortSerializer
 from core.models import Feedback
@@ -332,12 +333,14 @@ class TrendAPI(APIView):
         permissions.IsAuthenticatedOrReadOnly
     ]
 
-    def get(self, request):
+    def get(self, request, keywords_raw=None):
         # read params
-        keywords_raw = request.query_params.get('keywords', None)
+        if keywords_raw is None:
+            keywords_raw = request.query_params.get('keywords', None)
 
         if keywords_raw is None:
-            keywords_raw = 'Machine Learning, Neural Networks, Computer Vision, Deep Learning'
+            data = DefaultStore.objects.get(key='trends').value
+            return Response(json.loads(data))
 
         # check params
         try:
@@ -367,12 +370,14 @@ class CategoriesAPI(APIView):
         permissions.IsAuthenticatedOrReadOnly
     ]
 
-    def get(self, request):
+    def get(self, request, categories_raw=None):
         # read params
-        categories_raw = request.query_params.get('categories', None)
+        if categories_raw is None:
+            categories_raw = request.query_params.get('categories', None)
 
         if categories_raw is None:
-            categories_raw = "cs.AI, cs.CV, cs.DS, cs.SI"
+            data = DefaultStore.objects.get(key='categories').value
+            return Response(json.loads(data))
 
         # check params
         try:

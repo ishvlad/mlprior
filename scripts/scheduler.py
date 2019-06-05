@@ -73,6 +73,8 @@ def main(args):
             coin.append('download_pdf')
         if 'download_meta' not in queue:
             coin.append('download_meta')
+        if 'update_default' not in queue:
+            coin.append('update_default')
 
         if len(coin) != 0:
             task = numpy.random.choice(coin)

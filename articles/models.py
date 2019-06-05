@@ -176,4 +176,4 @@ class Categories(models.Model):
 
 class DefaultStore(models.Model):
     key = models.CharField(primary_key=True, max_length=1000)
-    value = models.CharField(default='', max_length=100000)
+    value = models.CharField(default='', max_length=500000)

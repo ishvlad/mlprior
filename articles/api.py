@@ -65,10 +65,10 @@ class ArticleList(viewsets.GenericViewSet):
 
         if 'saved' in request.path:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__in_lib=True)
-        elif 'liked' in request.path:
-            queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=True)
         elif 'disliked' in request.path:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=False)
+        elif 'liked' in request.path:
+            queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=True)
         elif 'recommended' in request.path:
             queryset = Article.objects.all()
         elif 'recent' in request.path:

@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 # from .forms import CustomUserCreationForm, CustomUserChangeForm
-from .models import User
+from .models import Feedback
 
 
 # class CustomUserAdmin(UserAdmin):
@@ -13,4 +13,4 @@ from .models import User
 #     model = User
 #     list_display = ['email', 'username',]
 #
-# admin.site.register(User, CustomUserAdmin)
+admin.site.register(Feedback)

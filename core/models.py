@@ -160,3 +160,26 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         return token.decode('utf-8')
 
+
+class Feedback(models.Model):
+    type = models.IntegerField(default=0)
+
+    name = models.CharField(max_length=1000)
+    email = models.CharField(max_length=1000)
+    message = models.CharField(max_length=10000)
+
+    date = models.DateTimeField(default=datetime.now)
+
+    def __str__(self):
+        result = '[' + str(self.date) + '] '
+        if self.type == 1:
+            result += 'Feedback'
+        elif self.type == 2:
+            result += 'Feature request'
+        else:
+            result += 'Unknown type'
+        result += ' from ' + self.name
+        return result
+
+    class Meta:
+        ordering = ['-date']

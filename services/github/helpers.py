@@ -24,7 +24,7 @@ def send_github_url_to_server(url, arxiv_id):
     print(API_HOST)
     res = requests.post(API_HOST + 'api/githubs/', data={
             'url': url,
-            'artcile_id': arxiv_id
+            'arxiv_id': arxiv_id
         })
 
     print(res.text)

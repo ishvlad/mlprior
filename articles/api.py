@@ -224,6 +224,12 @@ class GitHubAPI(viewsets.ViewSet):
         serializer = GitHubSerializer(repo, many=False)
         return Response(serializer.data)
 
+    def list(self, request):
+        article_id = self.request.query_params.get('article_id')
+
+
+        Response({})
+
     def update(self, request, pk=None):
         print(request.user.id, pk, request.data)
 

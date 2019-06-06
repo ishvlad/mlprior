@@ -260,7 +260,8 @@ class GitHubAPI(viewsets.ViewSet):
                 article_id = Article.objects.get(arxiv_id=request.data['arxiv_id']).id
             except Exception as e:
                 return Response({
-                    'created': False
+                    'created': False,
+                    'reason': e
                 })
         else:
             article_id = request.data['article_id']
@@ -269,7 +270,8 @@ class GitHubAPI(viewsets.ViewSet):
 
         if is_exists:
             return Response({
-                'created': False
+                'created': False,
+                'reason': 'ALREADY_EXISTS'
             })
 
         g = GitHubRepo(url)

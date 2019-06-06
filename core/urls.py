@@ -8,6 +8,7 @@ from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetri
 from articles.api import BlogPostAPI, ArticleList, BlogPostUserList, GitHubAPI, GitHubUserList, StatsAPI, \
     TrendAPI, CategoriesAPI, FeedbackAPI
 from rest_framework import routers
+from rest_framework.documentation import include_docs_urls
 
 
 router = routers.DefaultRouter()
@@ -39,6 +40,8 @@ apiurls = [
 urlpatterns = [
     path('', LandingView.as_view(), name='landing'),
     path('home/', home, name='home'),
+    path('docs/', include_docs_urls(title='ML p(r)ior API'))
+
     # path('feedback/', FeedbackView.as_view(), name='feedback'),
 
     # path('accounts/', include('allauth.urls')),

@@ -1,5 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
-from .models import ArticleUser, BlogPostUser
+from .models import ArticleUser, BlogPostUser, GithubRepoUser
 
 
 def is_article_in_lib(article_id, user):
@@ -53,6 +53,20 @@ def is_blogpost_like(blogpost_id, user):
     if not is_exists:
         return False
 
-    blogpost_user = BlogPostUser.objects.filter(blog_post_id=blogpost_id, user=user)
+    blogpost_user = BlogPostUser.objects.get(blog_post_id=blogpost_id, user=user)
 
     return blogpost_user.is_like
+
+
+def is_github_like(github_id, user):
+    if not user.is_authenticated:
+        return False
+
+    is_exists = GithubRepoUser.objects.filter(github_repo_id=github_id, user=user).count()
+
+    if not is_exists:
+        return False
+
+    github_user = GithubRepoUser.objects.get(github_repo_id=github_id, user=user)
+
+    return github_user.is_like

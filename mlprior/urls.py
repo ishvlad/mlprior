@@ -28,6 +28,6 @@ urlpatterns = [
     path('', include('core.urls')),
     path('articles/', include('articles.urls')),
     path('', include('search.urls')),
-    path('', include('log.urls')),
+    # path('', include('log.urls')),
     # path('rest-auth/', include('rest_auth.urls'))
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

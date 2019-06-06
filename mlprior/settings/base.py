@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     'core',
     'articles',
     'search',
-    'log',
+    # 'log',
 
     'rest_framework',  # django rest framework
     'rest_framework.authtoken',
@@ -90,7 +90,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'log.middleware.AutomatedLoggingMiddleware',
+    # 'log.middleware.AutomatedLoggingMiddleware',
     'djng.middleware.AngularUrlMiddleware',
     # 'core.middleware.corsMiddleware'
 ]
@@ -234,28 +234,28 @@ ACCOUNT_FORMS = {
 
 AUTH_USER_MODEL = 'core.User'
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'db': {
-            'level': 'INFO',
-            'class': 'log.handlers.DatabaseHandler',
-        }
-    },
-    'loggers': {
-        'automated_logging': {
-            'level': 'INFO',
-            'handlers': ['db'],
-            'propagate': True,
-        },
-        'django': {
-            'level': 'INFO',
-            'handlers': ['db'],
-            'propagate': True,
-        },
-    },
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'db': {
+#             'level': 'INFO',
+#             'class': 'log.handlers.DatabaseHandler',
+#         }
+#     },
+#     'loggers': {
+#         'automated_logging': {
+#             'level': 'INFO',
+#             'handlers': ['db'],
+#             'propagate': True,
+#         },
+#         'django': {
+#             'level': 'INFO',
+#             'handlers': ['db'],
+#             'propagate': True,
+#         },
+#     },
+# }
 
 FORM_RENDERER = 'djng.forms.renderers.DjangoAngularTemplates'
 

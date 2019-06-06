@@ -4,7 +4,7 @@ from core.serializers import UserSerializer
 from .models import BlogPost, Article, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author
 from rest_framework.fields import CurrentUserDefault, HStoreField
 from rest_framework.pagination import PageNumberPagination
-from .services import is_article_in_lib, like_dislike, get_note, is_blogpost_like
+from .services import is_article_in_lib, like_dislike, get_note, is_blogpost_like, is_github_like
 
 
 class BlogPostSerializer(serializers.ModelSerializer):
@@ -25,10 +25,17 @@ class GitHubSerializer(serializers.ModelSerializer):
     users = UserSerializer(many=True, read_only=True)
     who_added = UserSerializer(many=False, read_only=True)
     languages = serializers.HStoreField()
+    is_like = serializers.SerializerMethodField()
 
     class Meta:
         model = GitHubRepository
-        fields = ['id', 'title', 'url', 'users', 'rating', 'framework', 'languages', 'who_added', 'n_stars', 'language']
+        fields = ['id', 'title', 'url', 'users',
+                  'rating', 'framework', 'languages',
+                  'who_added', 'n_stars', 'language', 'is_like']
+
+    def get_is_like(self, obj):
+        user = self.context.get('request').user
+        return is_github_like(obj.id, user)
 
 
 class ArticleUserSerializer(serializers.ModelSerializer):

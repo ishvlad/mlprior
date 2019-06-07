@@ -48,7 +48,7 @@ def main(args):
         total_count = articles.count()
 
         has_pdf = articles.filter(has_pdf=True).count()
-        has_txt = articles.filter(Q(has_txt=True) & Q(has_txt=None)).count()
+        has_txt = articles.filter(Q(has_txt=True) | Q(has_txt=None)).count()
         has_inner_vector = articles.filter(has_inner_vector=True).count()
         has_nn = articles.filter(has_neighbors=True).count()
         has_categories = articles.filter(has_category_bar=True).count()

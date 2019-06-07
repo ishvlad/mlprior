@@ -12,7 +12,7 @@ DATABASES = {
         'NAME': 'mlpriordb',
         'USER': 'mlprioradmin',
         'PASSWORD': '1qwe324r6y8ytr',
-        'HOST': 'rc1b-v95u4mewc2sxgoo8.mdb.yandexcloud.net',
+        'HOST': 'rc1b-wfrxb8mx74s5tr3q.mdb.yandexcloud.net',
         'PORT': '6432',
     }
 }

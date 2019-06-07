@@ -509,9 +509,10 @@ def update_default(args):
         logger.warning('ERROR while receiving trends data. Skip')
     else:
         item, _ = DefaultStore.objects.get_or_create(key='trends')
-        item.value = json.dumps(response.data)
+        data = json.dumps(response.data)
+        item.value = data
         item.save()
-        logger.info('OK Updating Trend default data')
+        logger.info('OK Updating Trend default data (len = %d)' % len(data))
 
     logger.info('Updating Categories default data')
     response = CategoriesAPI().get(None, 'cs.AI, cs.CV, cs.DS, cs.SI')
@@ -520,9 +521,10 @@ def update_default(args):
         logger.warning('ERROR while receiving categories data. Skip')
     else:
         item, _ = DefaultStore.objects.get_or_create(key='categories')
-        item.value = json.dumps(response.data)
+        data = json.dumps(response.data)
+        item.value = data
         item.save()
-        logger.info('OK Updating Categories default data')
+        logger.info('OK Updating Categories default data (len = %d)' % len(data))
 
 
 

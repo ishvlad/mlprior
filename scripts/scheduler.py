@@ -5,6 +5,8 @@ import numpy
 import os
 import sys
 
+from django.db.models import Q
+
 from uuid import uuid4
 
 
@@ -46,7 +48,7 @@ def main(args):
         total_count = articles.count()
 
         has_pdf = articles.filter(has_pdf=True).count()
-        has_txt = articles.filter(has_txt=True).count()
+        has_txt = articles.filter(Q(has_txt=True) & Q(has_txt=None)).count()
         has_inner_vector = articles.filter(has_inner_vector=True).count()
         has_nn = articles.filter(has_neighbors=True).count()
         has_categories = articles.filter(has_category_bar=True).count()
@@ -78,7 +80,8 @@ def main(args):
 
         if len(coin) != 0:
             task = numpy.random.choice(coin)
-            if task == 'pdf2txt' or task == 'download_meta':
+            if task == 'pdf2txt' or task == 'download_meta' or task == 'inner_vector' or task == 'category_bar' \
+                    or task == 'ngrams':
                 max_articles *= 5
             queue[task] = key
             with open(queue_path, 'w+') as outfile:

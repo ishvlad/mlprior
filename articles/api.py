@@ -1,5 +1,6 @@
 import datetime
 import json
+import re
 
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Case, IntegerField, Count, When
@@ -99,6 +100,8 @@ class ArticleList(viewsets.GenericViewSet):
             article_user.in_lib = request.data['in_lib']
         if 'like_dislike' in request.data.keys():
             article_user.like_dislike = request.data['like_dislike']
+        if 'note' in request.data.keys():
+            article_user.note = request.data['note']
         article_user.save()
 
         return Response()
@@ -213,11 +216,12 @@ class BlogPostAPI(viewsets.GenericViewSet):
         })
 
 
-
 class GitHubAPI(viewsets.ViewSet):
     permission_classes = [
         permissions.AllowAny
     ]
+    serializer_class = GitHubSerializer
+    queryset = GitHubRepository.objects.all()
 
     def retrieve(self, request, pk):
         repo = GitHubRepository.objects.get(id=pk)
@@ -226,7 +230,6 @@ class GitHubAPI(viewsets.ViewSet):
 
     def list(self, request):
         article_id = self.request.query_params.get('article_id')
-
 
         Response({})
 
@@ -253,8 +256,19 @@ class GitHubAPI(viewsets.ViewSet):
         return Response()
 
     def create(self, request):
-        print('API call')
+        error = None
         url = request.data['url']
+        request.data['title']
+
+        urls = re.search('(http)?[s]?(://)?github\.com/[a-z0-9]+/[0-9]+', url)
+        print(urls)
+
+        if 'github.com' not in url:
+            error = 'This is not a GitHub repository'
+        # elif
+
+
+
         if 'arxiv_id' in request.data.keys():
             try:
                 article_id = Article.objects.get(arxiv_id=request.data['arxiv_id']).id

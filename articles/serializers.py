@@ -73,7 +73,8 @@ class ArticlesShortSerializer(serializers.ModelSerializer):
             'category',
             'in_lib',
             'like_dislike',
-            'note'
+            'note',
+            'has_neighbors'
         ]
 
     def get_in_lib(self, obj):

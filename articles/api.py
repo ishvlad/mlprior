@@ -285,6 +285,7 @@ class GitHubAPI(viewsets.ViewSet):
 
     def create(self, request):
         error = None
+        print(request.data)
         url = request.data['url']
 
         urls = re.search('(http)?[s]?(://)?github\.com/[a-z0-9]+/[0-9]+', url)
@@ -294,20 +295,21 @@ class GitHubAPI(viewsets.ViewSet):
             error = 'This is not a GitHub repository'
         # elif
 
-
-
         if 'arxiv_id' in request.data.keys():
             try:
                 article_id = Article.objects.get(arxiv_id=request.data['arxiv_id']).id
             except Exception as e:
+                print(e)
                 return Response({
                     'created': False,
-                    'reason': e
+                    'reason': str(e)
                 })
         else:
             article_id = request.data['article_id']
 
         is_exists = GitHubRepository.objects.filter(url=url, article_id=article_id).count() > 0
+
+        print(is_exists)
 
         if is_exists:
             return Response({

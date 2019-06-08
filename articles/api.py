@@ -12,11 +12,12 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from articles.models import Article, BlogPost, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author, \
-    NGramsMonth, Categories, DefaultStore
+    NGramsMonth, Categories, DefaultStore, UserTags
 from articles.serializers import ArticleDetailedSerializer, BlogPostSerializer, BlogPostUserSerializer, ArticleUserSerializer, \
     GitHubSerializer, ArticlesShortSerializer
 from core.models import Feedback
 from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
+from utils.recommendation import RelationModel
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -95,11 +96,38 @@ class ArticleList(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     def update(self, request, pk=None):
+        article = get_object_or_404(Article, id=pk)
         article_user, is_created = ArticleUser.objects.get_or_create(user=request.user, article_id=pk)
+        user_tags, _ = UserTags.objects.get_or_create(user=request.user)
+
         if 'in_lib' in request.data.keys():
             article_user.in_lib = request.data['in_lib']
+
+            if article_user.in_lib and article.has_inner_vector:
+                user_tags.tags = RelationModel.add_user_tags(
+                    user_tags.tags, user_tags.n_articles,
+                    article.articletext.tags, article.articletext.tags_norm  # todo CHECKME
+                )
+                user_tags.n_articles += 1
+                user_tags.save()
+            else:
+                # todo remove tags, Vladyan!
+                pass
         if 'like_dislike' in request.data.keys():
             article_user.like_dislike = request.data['like_dislike']
+
+            if article_user.like_dislike and article.has_inner_vector:
+                user_tags, _ = UserTags.objects.get_or_create(user=request.user)
+                user_tags.tags = RelationModel.add_user_tags(
+                    user_tags.tags, user_tags.n_articles,
+                    article.articletext.tags, article.articletext.tags_norm
+                )
+                user_tags.n_articles += 1
+                user_tags.save()
+            else:
+                # todo remove tags, Vladyan!
+                pass
+
         if 'note' in request.data.keys():
             article_user.note = request.data['note']
         article_user.save()
@@ -258,7 +286,6 @@ class GitHubAPI(viewsets.ViewSet):
     def create(self, request):
         error = None
         url = request.data['url']
-        request.data['title']
 
         urls = re.search('(http)?[s]?(://)?github\.com/[a-z0-9]+/[0-9]+', url)
         print(urls)

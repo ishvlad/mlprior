@@ -470,7 +470,7 @@ class FeedbackAPI(APIView):
                     'message': {'type': 'string', 'max_length': '10000', 'desc': 'message'},
                     'type': {'type': 'integer', 'valid values': {
                         0: 'other',
-                        1: 'from feedback form',
+                        1: 'from subscribe form',
                         2: 'from feature request form'
                     }}
                 },

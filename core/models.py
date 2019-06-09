@@ -173,7 +173,7 @@ class Feedback(models.Model):
     def __str__(self):
         result = '[' + str(self.date) + '] '
         if self.type == 1:
-            result += 'Feedback'
+            result += 'Subscription'
         elif self.type == 2:
             result += 'Feature request'
         else:

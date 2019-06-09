@@ -3,7 +3,7 @@ import json
 import re
 
 from django.contrib.auth.models import AnonymousUser
-from django.db.models import Case, IntegerField, Count, When
+from django.db.models import Case, IntegerField, Count, When, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, generics, permissions
 from rest_framework import permissions
@@ -57,6 +57,59 @@ class StatsAPI(APIView):
         return Response(data)
 
 
+def get_recommended_articles(request):
+    articles_positive = ArticleUser.objects.filter(
+        Q(like_dislike=True) | Q(in_lib=True),
+        user=request.user, article__has_neighbors=True
+    )
+
+    # no saved or liked articles
+    if articles_positive.count() == 0:
+        return Article.objects.none()
+
+    # get IDs from seen articles
+    viewed_articles_id = ArticleUser.objects.filter(
+        Q(like_dislike=True) | Q(like_dislike=False) | Q(in_lib=True),
+        user=request.user
+    ).values_list('id', flat=True)
+
+    # get relations from 100 last liked articles
+    relations = articles_positive.order_by('-id')[:100].values('article__articletext__relations')
+
+    # get 1k nearest articles from each relation
+    result = {}
+    n_result = 10
+    for relation in relations:
+        relation = relation['article__articletext__relations']
+        relation = sorted(relation.items(), key=lambda x: x[1])
+
+        # collect in 'result' all relations with min distance
+        count = 0
+        for k, v in relation:
+            if int(k) not in viewed_articles_id:
+                if k not in result:
+                    result[k] = v
+                elif v < result[k]:
+                    result[k] = v
+
+                count += 1
+                if count > n_result:
+                    break
+
+    # (very rare case) -- user disliked all articles in DB except of one (which is saved or liked)
+    if len(result) == 0:
+        return Article.objects.none()
+
+    # get nearest 'n_result' articles from 'result'
+    result = sorted(result.items(), key=lambda x: x[1])[:n_result]
+
+    # get sorted ids, create order for Django and order resulting articles
+    ids = [int(x[0]) for x in result]
+    preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
+    queryset = Article.objects.filter(pk__in=ids).order_by(preserved)
+    return queryset
+
+
 class ArticleList(viewsets.GenericViewSet):
     queryset = Article.objects.all()
     serializer_class = ArticlesShortSerializer
@@ -68,13 +121,13 @@ class ArticleList(viewsets.GenericViewSet):
     def list(self, request):
 
         if 'saved' in request.path:
-            queryset = Article.objects.filter(article_user__user=self.request.user, article_user__in_lib=True)
+            queryset = Article.objects.filter(article_user__user=request.user, article_user__in_lib=True)
         elif 'disliked' in request.path:
-            queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=False)
+            queryset = Article.objects.filter(article_user__user=request.user, article_user__like_dislike=False)
         elif 'liked' in request.path:
-            queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=True)
+            queryset = Article.objects.filter(article_user__user=request.user, article_user__like_dislike=True)
         elif 'recommended' in request.path:
-            queryset = Article.objects.all()
+            queryset = get_recommended_articles(request)
         elif 'recent' in request.path:
             queryset = Article.objects.order_by('-date')
         elif 'popular' in request.path:
@@ -82,7 +135,6 @@ class ArticleList(viewsets.GenericViewSet):
                             When(article_user__like_dislike=True, then=1),
                             output_field=IntegerField(),
                         ))).order_by('-n_likes')
-            print(queryset)
         else:
             raise Exception('Unknown API link')
 

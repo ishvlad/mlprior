@@ -166,7 +166,7 @@ class Feedback(models.Model):
 
     name = models.CharField(max_length=1000)
     email = models.CharField(max_length=1000)
-    message = models.CharField(max_length=10000)
+    message = models.TextField(max_length=10000)
 
     date = models.DateTimeField(default=datetime.now)
 

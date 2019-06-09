@@ -309,12 +309,10 @@ class GitHubAPI(viewsets.ViewSet):
 
         is_exists = GitHubRepository.objects.filter(url=url, article_id=article_id).count() > 0
 
-        print(is_exists)
-
         if is_exists:
             return Response({
                 'created': False,
-                'reason': 'ALREADY_EXISTS'
+                'reason': 'The proposed GitHub repository is already attached :-)'
             })
 
         g = GitHubRepo(url)
@@ -453,15 +451,15 @@ class CategoriesAPI(APIView):
 
 class FeedbackAPI(APIView):
     permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly
+        permissions.AllowAny
     ]
 
-    def get(self, request):
+    def post(self, request):
         # read params
-        type = request.query_params.get('type', 0)
-        name = request.query_params.get('name', None)
-        email = request.query_params.get('email', None)
-        message = request.query_params.get('message', None)
+        type = request.data.get('type', 0)
+        name = request.data.get('name', None)
+        email = request.data.get('email', None)
+        message = request.data.get('message', None)
 
         if name is None or email is None or message is None or int(type) < 0 or int(type) > 2:
             return Response(status=400, data={

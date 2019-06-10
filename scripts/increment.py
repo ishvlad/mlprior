@@ -527,7 +527,6 @@ def update_default(args):
         logger.info('OK Updating Categories default data (len = %d)' % len(data))
 
 
-
 @log.logging.timeit(logger, 'Total Time', level=logging.INFO)
 def main(args):
     path, path_pdf, path_txt = 'data', 'data/pdfs', 'data/txts'

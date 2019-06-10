@@ -244,7 +244,6 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
 
                 # GIT
                 git = find_github_repo_in_text(arts[0]['text'])
-                print(git)
                 if git is not None:
                     logger.info('Find gitHub link of ' + idx + '. Result: ' + send_github_url_to_server(git, idx))
                 continue

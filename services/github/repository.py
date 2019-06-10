@@ -20,7 +20,7 @@ class GitHubRepo(object):
 
     @staticmethod
     def get_name(url):
-        return url.replace('https://github.com/', '')
+        return url.replace('https://github.com/', '').replace('http://github.com/', '').replace('github.com/', '')
 
     def __init__(self, url):
         name = self.get_name(url)

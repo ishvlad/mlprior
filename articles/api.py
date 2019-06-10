@@ -340,7 +340,7 @@ class GitHubAPI(viewsets.ViewSet):
         print(request.data)
         url = request.data['url']
 
-        urls = re.search('(http)?[s]?(://)?github\.com/[a-z0-9]+/[0-9]+', url)
+        urls = re.search(r'(http)?[s]?(://)?github\.com/[a-z0-9]+/[0-9]+', url)
         print(urls)
 
         if 'github.com' not in url:

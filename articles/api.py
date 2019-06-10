@@ -57,6 +57,21 @@ class StatsAPI(APIView):
         return Response(data)
 
 
+def get_related_articles(article: Article):
+    if not article.has_neighbors:
+        return Article.objects.none()
+
+    # sort nn by distance
+    neighbors = article.articletext.relations
+    neighbors_sorted = sorted(neighbors.items(), key=lambda x: float(x[1]))
+
+    # get sorted ids, create order for Django and order resulting articles
+    ids = [int(x[0]) for x in neighbors_sorted]
+    preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
+    queryset = Article.objects.filter(pk__in=ids).order_by(preserved)
+    return queryset
+
+
 def get_recommended_articles(request):
     articles_positive = ArticleUser.objects.filter(
         Q(like_dislike=True) | Q(in_lib=True),
@@ -68,39 +83,32 @@ def get_recommended_articles(request):
         return Article.objects.none()
 
     # get IDs from seen articles
-    viewed_articles_id = ArticleUser.objects.filter(
+    viewed_articles_id = list(ArticleUser.objects.filter(
         Q(like_dislike=True) | Q(like_dislike=False) | Q(in_lib=True),
         user=request.user
-    ).values_list('id', flat=True)
+    ).values_list('id', flat=True))
 
-    # get relations from 100 last liked articles
-    relations = articles_positive.order_by('-id')[:100].values('article__articletext__relations')
+    # get relations from 50 last liked articles
+    relations = articles_positive.order_by('-id')[:50].values('article__articletext__relations')
 
-    # get 1k nearest articles from each relation
+    # get nearest articles from each relation
     result = {}
-    n_result = 10
     for relation in relations:
         relation = relation['article__articletext__relations']
         relation = sorted(relation.items(), key=lambda x: x[1])
 
         # collect in 'result' all relations with min distance
-        count = 0
         for k, v in relation:
             if int(k) not in viewed_articles_id:
-                if k not in result:
+                if k not in result or v < result[k]:
                     result[k] = v
-                elif v < result[k]:
-                    result[k] = v
-
-                count += 1
-                if count > n_result:
-                    break
 
     # (very rare case) -- user disliked all articles in DB except of one (which is saved or liked)
     if len(result) == 0:
         return Article.objects.none()
 
     # get nearest 'n_result' articles from 'result'
+    n_result = 1000
     result = sorted(result.items(), key=lambda x: x[1])[:n_result]
 
     # get sorted ids, create order for Django and order resulting articles

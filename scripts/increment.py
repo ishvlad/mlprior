@@ -23,6 +23,7 @@ from collections import Counter
 from services.arxiv import ArXivArticle, ArXivAPI
 from django.db.models import F, Q
 from nltk import ngrams
+from services.github.helpers import send_github_url_to_server, find_github_repo_in_text
 from utils.db_manager import DBManager
 from urllib.request import urlopen
 from utils.constants import GLOBAL__CATEGORIES
@@ -159,7 +160,7 @@ def download_meta(args):
 def download_pdf(args, path_pdf='data/pdfs', path_txt='data/txts'):
     logger.info('START downloading PDFs from arXiv')
 
-    articles = Article.objects.filter(has_pdf=False)
+    articles = Article.objects.filter(has_pdf=False).order_by('-date')
     max_articles = _get_max_articles(articles, args.max_articles)
 
     if max_articles == 0:
@@ -213,7 +214,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
     logger.info('START generating TXTs from PDFs')
     db = DBManager()
 
-    articles = Article.objects.filter(Q(has_pdf=True) & Q(has_txt=False))
+    articles = Article.objects.filter(Q(has_pdf=True) & Q(has_txt=False)).order_by('-date')
     max_articles = _get_max_articles(articles, args.max_articles)
 
     if max_articles == 0:
@@ -240,6 +241,12 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
                 ok_list.append(pk)
                 idx_list.append(idx)
                 pbar.update(1)
+
+                # GIT
+                git = find_github_repo_in_text(arts[0]['text'])
+                print(git)
+                if git is not None:
+                    logger.info('Find gitHub link of ' + idx + '. Result: ' + send_github_url_to_server(git, idx))
                 continue
             else:
                 logger.info('TXT ' + idx + ' already exists, but text not appears in DB. Save text')
@@ -256,6 +263,11 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
                 if '\x00' in text:
                     text = text.replace('\x00', ' ')
                 text = text.encode('utf-8', 'replace').decode('utf-8')
+
+                # GIT
+                git = find_github_repo_in_text(text)
+                if git is not None:
+                    logger.info('Find gitHub link of ' + idx + '. Result: ' + send_github_url_to_server(git, idx))
         except Exception as e:
             logger.info(idx + '. Decode problem. No .txt file. NEXT: ' + str(e))
             text = 'NO TEXT'
@@ -295,7 +307,7 @@ def calc_inner_vector(args):
         logger.info("Relation model not trained. Let's train first (-retrain).")
         return
 
-    articles = Article.objects.filter(Q(has_txt=True) & Q(has_inner_vector=False))
+    articles = Article.objects.filter(Q(has_txt=True) & Q(has_inner_vector=False)).order_by('-date')
     max_articles = _get_max_articles(articles, args.max_articles)
 
     if max_articles == 0:
@@ -331,7 +343,7 @@ def calc_nearest_articles(args):
         return
 
     db_articles = Article.objects.filter(has_neighbors=True)
-    new_articles = Article.objects.filter(Q(has_inner_vector=True) & Q(has_neighbors=False))
+    new_articles = Article.objects.filter(Q(has_inner_vector=True) & Q(has_neighbors=False)).order_by('-date')
 
     max_articles = _get_max_articles(new_articles, args.max_articles)
 
@@ -397,7 +409,7 @@ def stacked_bar(args):
     logger.info('START Stacked bar')
     db = DBManager()
 
-    articles = Article.objects.filter(has_category_bar=False)
+    articles = Article.objects.filter(has_category_bar=False).order_by('-date')
     max_articles = _get_max_articles(articles, args.max_articles)
 
     if max_articles == 0:
@@ -460,7 +472,7 @@ def trend_ngrams(args, max_n_for_grams=3):
     logger.info('START Ngram Trend Line')
     db = DBManager()
 
-    articles = Article.objects.filter(Q(has_txt=True) & Q(has_ngram_stat=False))
+    articles = Article.objects.filter(Q(has_txt=True) & Q(has_ngram_stat=False)).order_by('-date')
     max_articles = _get_max_articles(articles, args.max_articles)
 
     if max_articles == 0:

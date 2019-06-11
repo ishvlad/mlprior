@@ -48,7 +48,8 @@ def main(args):
         total_count = articles.count()
 
         has_pdf = articles.filter(has_pdf=True).count()
-        has_txt = articles.filter(Q(has_txt=True) | Q(has_txt=None)).count()
+        process_txt = articles.filter(Q(has_txt=True) | Q(has_txt=None)).count()
+        has_txt = articles.filter(has_txt=True).count()
         has_inner_vector = articles.filter(has_inner_vector=True).count()
         has_nn = articles.filter(has_neighbors=True).count()
         has_categories = articles.filter(has_category_bar=True).count()
@@ -69,7 +70,7 @@ def main(args):
             coin.append('knn')
         if 'inner_vector' not in queue and (has_txt - has_inner_vector > border):
             coin.append('inner_vector')
-        if 'pdf2txt' not in queue and (has_pdf - has_txt > border):
+        if 'pdf2txt' not in queue and (has_pdf - process_txt > border):
             coin.append('pdf2txt')
         if 'download_pdf' not in queue and (total_count - has_pdf > border):
             coin.append('download_pdf')

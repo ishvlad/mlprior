@@ -88,7 +88,7 @@ class RelationModel:
 
     @staticmethod
     def update_dict(dictionary, new_key, new_value):
-        if len(dictionary) < 10:
+        if len(dictionary) < 100:
             dictionary[new_key] = new_value
             return True, dictionary
 

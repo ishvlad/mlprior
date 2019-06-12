@@ -16,7 +16,7 @@ def send_github_url_to_server(url, arxiv_id):
             'arxiv_id': arxiv_id
         })
 
-    return res.text
+    return res
 
 
 def find_github_repo_in_text(text):

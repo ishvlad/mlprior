@@ -380,8 +380,6 @@ class GitHubAPI(viewsets.ViewSet):
             title=g.name,
             url=request.data['url'],
             n_stars=g.n_stars,
-            language=g.language,
-            languages=g.languages,
             framework=g.framework,
             article_id=article_id,
             description=g.description
@@ -391,6 +389,15 @@ class GitHubAPI(viewsets.ViewSet):
             new_git.update({
                 'who_added': request.user
             })
+
+        languages = g.languages
+        if languages:
+            new_git.update({
+                'languages': languages,
+                'language': g.language,
+            })
+
+        print(new_git)
 
         repo = GitHubRepository.objects.create(
             **new_git

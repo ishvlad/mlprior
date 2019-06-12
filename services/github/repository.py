@@ -48,6 +48,9 @@ class GitHubRepo(object):
         git_languages = self.repo.get_languages()
         languages = {}
 
+        if sum(git_languages.values()) == 0:
+            return languages
+
         factor = 1.0 / sum(git_languages.values())
         for k in git_languages:
 
@@ -99,7 +102,7 @@ class GitHubRepo(object):
             else:
                 try:
                     current_file_code = str(base64.b64decode(file_content.content))
-                except GithubException as e:
+                except (GithubException, TypeError) as e:
                     #  too big file
                     continue
 

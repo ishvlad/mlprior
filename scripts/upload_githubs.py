@@ -11,7 +11,7 @@ with open('./scripts/links-between-papers-and-code.json', 'r') as f:
 futures = []
 
 for i in range(len(data)):
-    print('Add GitHub for', data[i]['paper_arxiv_id'])
+    print('Add GitHub for', data[i]['paper_arxiv_id'], 'url:', data[i]['repo_url'])
     if data[i]['paper_arxiv_id'] is None:
         print('Skipping None')
         continue

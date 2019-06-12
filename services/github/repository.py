@@ -37,7 +37,7 @@ class GitHubRepo(object):
 
     @property
     def description(self):
-        return self.repo.description
+        return self.repo.description or ''
 
     @property
     def topics(self):

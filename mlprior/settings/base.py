@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'rest_auth',
     'djng',  # django-angular
     'corsheaders',
+    'taggit',
 
     'django.contrib.sites',  # new
     # 3rd party

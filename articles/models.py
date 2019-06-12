@@ -4,6 +4,7 @@ from django.db import models
 
 from core.search import ArticleIndex
 from core.models import User as UserModel
+from taggit.managers import TaggableManager
 
 User = settings.AUTH_USER_MODEL
 
@@ -67,8 +68,11 @@ class BlogPost(models.Model):
 class GitHubRepository(models.Model):
     url = models.URLField(verbose_name='URL')
     title = models.CharField(verbose_name='title', max_length=300)
-    rating = models.PositiveIntegerField(verbose_name='rating', default=0)
+    description = models.TextField(verbose_name='description', default='')
 
+    topics = TaggableManager()
+
+    rating = models.PositiveIntegerField(verbose_name='rating', default=0)
     n_stars = models.PositiveIntegerField(verbose_name='stars', default=0)
     language = models.CharField(verbose_name='language', max_length=100, default='')
     framework = models.CharField(verbose_name='language', max_length=100, default='')
@@ -76,8 +80,9 @@ class GitHubRepository(models.Model):
 
     article = models.ForeignKey(Article, on_delete='CASCADE', related_name='github_repos')
     users = models.ManyToManyField(User, 'github_repos', through='GithubRepoUser')
-    who_added = models.ForeignKey(User, related_name='added_github_repo',
-                                  on_delete=models.CASCADE, default=1)
+    who_added = models.ForeignKey(User, related_name='added_github_repo', on_delete=models.CASCADE, default=1)
+
+    is_official = models.BooleanField(verbose_name='is_official', default=False)
 
 
 class Author(models.Model):

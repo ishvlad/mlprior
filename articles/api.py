@@ -1,22 +1,20 @@
-import datetime
 import json
-import re
 
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Case, IntegerField, Count, When, Q
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, generics, permissions
 from rest_framework import permissions
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from rest_framework import viewsets, generics
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from articles.models import Article, BlogPost, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author, \
     NGramsMonth, Categories, DefaultStore, UserTags
-from articles.serializers import ArticleDetailedSerializer, BlogPostSerializer, BlogPostUserSerializer, ArticleUserSerializer, \
+from articles.serializers import ArticleDetailedSerializer, BlogPostSerializer, ArticleUserSerializer, \
     GitHubSerializer, ArticlesShortSerializer
 from core.models import Feedback
-from utils.constants import GLOBAL__COLORS, VISUALIZATION__INITIAL_NUM_BARS, GLOBAL__CATEGORIES
+from services.github.repository import GitHubRepo
 from utils.recommendation import RelationModel
 
 
@@ -26,7 +24,17 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 
-from services.github.repository import GitHubRepo
+def _error(error):
+    return Response({
+        'success': False,
+        'error': error
+    })
+
+
+def _success():
+    return Response({
+        'success': True
+    })
 
 
 class StatsAPI(APIView):
@@ -127,7 +135,6 @@ class ArticleList(viewsets.GenericViewSet):
     ]
 
     def list(self, request):
-
         if 'saved' in request.path:
             queryset = Article.objects.filter(article_user__user=request.user, article_user__in_lib=True)
         elif 'disliked' in request.path:
@@ -143,10 +150,15 @@ class ArticleList(viewsets.GenericViewSet):
                             When(article_user__like_dislike=True, then=1),
                             output_field=IntegerField(),
                         ))).order_by('-n_likes')
+        elif 'related' in request.path:
+            article_id = request.query_params.get('id')
+            print(article_id, 'article____id')
+            article = Article.objects.get(id=article_id)
+            queryset = get_related_articles(article)
         else:
             raise Exception('Unknown API link')
 
-        page = self.request.query_params.get('page')
+        page = request.query_params.get('page')
         if page is not None:
             paginate_queryset = self.paginate_queryset(queryset)
             serializer = self.serializer_class(paginate_queryset, many=True, context={'request': request})
@@ -278,17 +290,14 @@ class BlogPostAPI(viewsets.GenericViewSet):
         blogpostuser.save()
         blog_post.save()
 
-        return Response()
+        return _success()
 
     def create(self, request):
         print('create', request.user, request.data)
         is_exists = BlogPost.objects.filter(url=request.data['url'], article_id=request.data['article_id']).count() > 0
-        print(is_exists)
 
         if is_exists:
-            return Response({
-                'created': False
-            })
+            _error('Blog Post is already attached')
 
         blogpost = BlogPost.objects.create(
             title=request.data['title'],
@@ -299,9 +308,7 @@ class BlogPostAPI(viewsets.GenericViewSet):
 
         blogpost.save()
 
-        return Response({
-            'created': True
-        })
+        return _success()
 
 
 class GitHubAPI(viewsets.ViewSet):
@@ -311,15 +318,15 @@ class GitHubAPI(viewsets.ViewSet):
     serializer_class = GitHubSerializer
     queryset = GitHubRepository.objects.all()
 
-    def retrieve(self, request, pk):
-        repo = GitHubRepository.objects.get(id=pk)
-        serializer = GitHubSerializer(repo, many=False)
-        return Response(serializer.data)
+    # def retrieve(self, request, pk):
+    #     repo = GitHubRepository.objects.get(id=pk)
+    #     serializer = GitHubSerializer(repo, many=False)
+    #     return Response(serializer.data)
 
-    def list(self, request):
-        article_id = self.request.query_params.get('article_id')
-
-        Response({})
+    # def list(self, request):
+    #     article_id = self.request.query_params.get('article_id')
+    #
+    #     Response({})
 
     def update(self, request, pk=None):
         print(request.user.id, pk, request.data)
@@ -341,39 +348,31 @@ class GitHubAPI(viewsets.ViewSet):
         githubuser.save()
         github.save()
 
-        return Response()
+        return _success()
 
     def create(self, request):
         error = None
         print(request.data)
         url = request.data['url']
 
-        urls = re.search(r'(http)?[s]?(://)?github\.com/[a-z0-9]+/[0-9]+', url)
-        print(urls)
-
-        if 'github.com' not in url:
-            error = 'This is not a GitHub repository'
-        # elif
-
         if 'arxiv_id' in request.data.keys():
-            try:
-                article_id = Article.objects.get(arxiv_id=request.data['arxiv_id']).id
-            except Exception as e:
-                print(e)
-                return Response({
-                    'created': False,
-                    'reason': str(e)
-                })
+            arxiv_id = request.data['arxiv_id']
+            article_exists = Article.objects.filter(arxiv_id=arxiv_id).count() > 0
+
+            if not article_exists:
+                return _error("Article with ArXiv ID %s doesn't exists" % arxiv_id)
+
+            article_id = Article.objects.get(arxiv_id=arxiv_id).id
+
         else:
             article_id = request.data['article_id']
+            is_exists = GitHubRepository.objects.filter(url=url, article_id=article_id).count() > 0
 
-        is_exists = GitHubRepository.objects.filter(url=url, article_id=article_id).count() > 0
+            if is_exists:
+                return _error('The proposed GitHub repository is already attached :-)')
 
-        if is_exists:
-            return Response({
-                'created': False,
-                'reason': 'The proposed GitHub repository is already attached :-)'
-            })
+        if not GitHubRepo.is_github_repo(url):
+            return _error('This is not a GitHub repository')
 
         g = GitHubRepo(url)
 
@@ -384,7 +383,8 @@ class GitHubAPI(viewsets.ViewSet):
             language=g.language,
             languages=g.languages,
             framework=g.framework,
-            article_id=article_id
+            article_id=article_id,
+            description=g.description
         )
 
         if type(request.user) != AnonymousUser:
@@ -396,11 +396,15 @@ class GitHubAPI(viewsets.ViewSet):
             **new_git
         )
 
+        topics = g.topics
+        if len(topics):
+            repo.topics.add(*topics)
+
+        print(topics)
+
         repo.save()
 
-        return Response({
-            'created': True
-        })
+        return _success()
 
 
 class BlogPostUserList(viewsets.ViewSet):
@@ -543,4 +547,4 @@ class FeedbackAPI(APIView):
         item = Feedback(type=type, name=name, email=email, message=message)
         item.save()
 
-        return Response({})
+        return _success()

@@ -1,22 +1,27 @@
 
 
-from github import Github
-from github.GithubException import GithubException
 import base64
 import re
-import asyncio
 
-from services.github.helpers import send_github_url_to_server
+from github import Github
+from github.GithubException import GithubException
 
-NAME_PYTORCH = 'PyTorch'
-NAME_TENSORFLOW = 'TensorFlow'
-NAME_THEANO = 'Theano'
+AVAILABLE_FRAMEWORKS = [
+    'torch', 'tensorflow', 'theano', 'keras', 'caffe', 'chainer', 'cntk', 'mxnet'
+]
+
 
 N_FREQUENCY_OF_LIB_IN_CODE = 5
 
 
 class GitHubRepo(object):
     api = Github("c0c86fd1d0073aa9e528e66d0ca32992ed50d8e4")
+
+    @staticmethod
+    def is_github_repo(url):
+        expr = r'(http)?[s]?(://)?github\.com/[a-zA-Z0-9\_\-]+/[a-zA-Z0-9\_\-]+'
+        res = re.search(expr, url)
+        return res is not None
 
     @staticmethod
     def get_name(url):
@@ -29,6 +34,14 @@ class GitHubRepo(object):
     @property
     def name(self):
         return self.repo.name
+
+    @property
+    def description(self):
+        return self.repo.description
+
+    @property
+    def topics(self):
+        return self.repo.get_topics()
 
     @property
     def languages(self):
@@ -75,11 +88,7 @@ class GitHubRepo(object):
     def framework(self):
         # code = self.all_code
 
-        n_in_code = dict(
-            torch=0,
-            tensorflow=0,
-            theano=0
-        )
+        n_in_code = dict()
 
         contents = self.repo.get_contents("")
         while len(contents) > 1:
@@ -93,21 +102,20 @@ class GitHubRepo(object):
                 except GithubException as e:
                     #  too big file
                     continue
-                n_in_code['torch'] += current_file_code.count('torch')
-                n_in_code['tensorflow'] += current_file_code.count('tensorflow')
-                n_in_code['theano'] += current_file_code.count('theano')
 
-                print(n_in_code)
+                for lib in AVAILABLE_FRAMEWORKS:
+                    if lib not in n_in_code.keys():
+                        n_in_code[lib] = 0
+                    n_in_code[lib] += current_file_code.count(lib)
 
-                if n_in_code['torch'] > N_FREQUENCY_OF_LIB_IN_CODE:
-                    return NAME_PYTORCH
-                if n_in_code['tensorflow'] > N_FREQUENCY_OF_LIB_IN_CODE:
-                    return NAME_TENSORFLOW
-                if n_in_code['theano'] > N_FREQUENCY_OF_LIB_IN_CODE:
-                    return NAME_THEANO
+                for lib, freq in n_in_code.items():
+                    if freq > N_FREQUENCY_OF_LIB_IN_CODE:
+                        if lib == 'torch' and self.is_python():
+                            # difference between pytorch and lua torch
+                            return 'pytorch'
+                        return lib
 
         return ''
-
 
     @property
     def arxiv_links(self):
@@ -119,8 +127,6 @@ class GitHubRepo(object):
         print(urls.group())
         return urls
 
-
-
 if __name__ == '__main__':
     # or using an access token
 
@@ -130,18 +136,23 @@ if __name__ == '__main__':
         'https://github.com/jadore801120/attention-is-all-you-need-pytorch',
         'https://github.com/connor11528/angular-drf-todolist',
         'https://github.com/Theano/Theano',
-        'https://github.com/carpedm20/DCGAN-tensorflow'
+        'https://github.com/carpedm20/DCGAN-tensorflow',
+        'https://github.com/junyanz/CycleGAN',
+        'https://github.com/phillipi/pix2pix',
+        'https://github.com/davidstutz/caffe-tools'
     ]:
         print(url)
 
-        futures.append(send_github_url_to_server(url, 101))
 
-        # g = GitHubRepo(url)
+        g = GitHubRepo(url)
         # print(g.arxiv_links)
-        # print(g.framework)
+        print(g.framework)
+        print(g.licence)
+        print(g.topics)
+        print(g.description)
         # print(g.repo.get_stats_code_frequency())
-
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.wait(futures))
+    #
+    # loop = asyncio.get_event_loop()
+    # loop.run_until_complete(asyncio.wait(futures))
 
 

@@ -15,5 +15,7 @@ for i in range(len(data)):
     if data[i]['paper_arxiv_id'] is None:
         print('Skipping None')
         continue
-    futures.append(send_github_url_to_server(data[i]['repo_url'], data[i]['paper_arxiv_id']))
+    res = send_github_url_to_server(data[i]['repo_url'], data[i]['paper_arxiv_id'])
+
+    print(res)
 

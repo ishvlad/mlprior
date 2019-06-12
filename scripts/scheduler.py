@@ -85,7 +85,10 @@ def main(args):
                     or task == 'ngrams':
                 max_articles *= 5
             if task == 'update_default' and numpy.random.rand() > 0.1:
-                return
+                if len(coin) == 1:
+                    return
+                else:
+                    task = numpy.random.choice(coin[:-1])
             queue[task] = key
             with open(queue_path, 'w+') as outfile:
                 json.dump(queue, outfile)

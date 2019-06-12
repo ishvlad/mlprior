@@ -106,13 +106,14 @@ def download_meta(args):
 
         random_search = np.random.rand() < proba_for_random
         if random_search:
-            start_random = np.random.randint(start, max(2 * Article.objects.count(), start + args.batch_size))
+            start_random = np.random.randint(2 * Article.objects.count())
         else:
             start_random = start
 
         entries = arxiv_api.search(
             categories=['cat:' + c for c in GLOBAL__CATEGORIES if c.startswith('cs.')],
-            start=start_random, max_result=args.batch_size
+            start=start_random, max_result=args.batch_size,
+            is_random=random_search
         )
         logger.info('... received %d articles from arXiv start from %d index' % (len(entries), start_random))
 

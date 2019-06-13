@@ -244,11 +244,15 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
                 git = find_github_repo_in_text(arts[0]['text'])
                 if git is not None:
                     res = send_github_url_to_server(git, idx)
-                    if res.status_code == 500:
-                        logger.info('Find gitHub link of ' + idx + '. Result: 500 -- ' + str(res.text))
+                    logger.info('Find gitHub link of ' + idx + ': ' + str(git) +
+                                '. Result: ' + str(res.status_code) + ': ' + str(res.text))
+
+                    if res.status_code == 500 or res.status_code == 504:
                         continue
                     else:
                         logger.info('Find gitHub link of ' + idx + '. Result: ' + str(res.text))
+                else:
+                    logger.info('NO GIT on ' + str(idx))
 
                 ok_list.append(pk)
                 idx_list.append(idx)
@@ -286,12 +290,15 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
         git = find_github_repo_in_text(text)
         if git is not None:
             res = send_github_url_to_server(git, idx)
+            logger.info('Find gitHub link of ' + idx + ': ' + str(git) +
+                        '. Result: ' + str(res.status_code) + ': ' + str(res.text))
 
-            if res.status_code == 500:
-                logger.info('Find gitHub link of ' + idx + '. Result: 500 -- ' + str(res.text))
+            if res.status_code == 500 or res.status_code == 504:
                 continue
             else:
                 logger.info('Find gitHub link of ' + idx + '. Result: ' + str(res.text))
+        else:
+            logger.info('NO GIT on ' + str(idx))
 
         ok_list.append(pk)
         idx_list.append(idx)

@@ -168,7 +168,6 @@ def download_pdf(args, path_pdf='data/pdfs', path_txt='data/txts'):
         logger.info('FINISH downloading PDFs from arXiv')
         return
 
-
     pbar = tqdm.tqdm(total=max_articles)
     ok_list = []
     # null_list = []
@@ -249,6 +248,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
 
                     if res.status_code == 500 or res.status_code == 504:
                         logger.info('NO save ' + str(idx) + ' because of GIT. Try again latetr')
+                        pbar.update(1)
                         continue
                 else:
                     logger.info('NO GIT on ' + str(idx))
@@ -256,6 +256,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
                 ok_list.append(pk)
                 idx_list.append(idx)
                 pbar.update(1)
+                continue
 
             else:
                 logger.info('TXT ' + idx + ' already exists, but text not appears in DB. Save text')
@@ -294,6 +295,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
 
             if res.status_code == 500 or res.status_code == 504:
                 logger.info('NO save ' + str(idx) + ' because of GIT. Try again later')
+                pbar.update(1)
                 continue
         else:
             logger.info('NO GIT on ' + str(idx))

@@ -514,17 +514,17 @@ def trend_ngrams(args, max_n_for_grams=3):
 
 @log.logging.timeit(logger, 'Default update Time', level=logging.INFO)
 def update_default(args):
-    logger.info('Updating Trend default data')
-    response = TrendAPI().get(None, 'Supervised, Unsupervised, Reinforcement')
-
-    if response.status_code != 200:
-        logger.warning('ERROR while receiving trends data. Skip')
-    else:
-        item, _ = DefaultStore.objects.get_or_create(key='trends')
-        data = json.dumps(response.data)
-        item.value = data
-        item.save()
-        logger.info('OK Updating Trend default data (len = %d)' % len(data))
+    # logger.info('Updating Trend default data')
+    # response = TrendAPI().get(None, 'Supervised, Unsupervised, Reinforcement')
+    #
+    # if response.status_code != 200:
+    #     logger.warning('ERROR while receiving trends data. Skip')
+    # else:
+    #     item, _ = DefaultStore.objects.get_or_create(key='trends')
+    #     data = json.dumps(response.data)
+    #     item.value = data
+    #     item.save()
+    #     logger.info('OK Updating Trend default data (len = %d)' % len(data))
 
     logger.info('Updating Categories default data')
     response = CategoriesAPI().get(None, 'cs.AI, cs.CV, cs.DS, cs.SI')

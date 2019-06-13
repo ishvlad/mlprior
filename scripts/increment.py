@@ -248,9 +248,8 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
                                 '. Result: ' + str(res.status_code) + ': ' + str(res.text))
 
                     if res.status_code == 500 or res.status_code == 504:
+                        logger.info('NO save ' + str(idx) + ' because of GIT. Try again latetr')
                         continue
-                    else:
-                        logger.info('Find gitHub link of ' + idx + '. Result: ' + str(res.text))
                 else:
                     logger.info('NO GIT on ' + str(idx))
 
@@ -294,9 +293,8 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
                         '. Result: ' + str(res.status_code) + ': ' + str(res.text))
 
             if res.status_code == 500 or res.status_code == 504:
+                logger.info('NO save ' + str(idx) + ' because of GIT. Try again later')
                 continue
-            else:
-                logger.info('Find gitHub link of ' + idx + '. Result: ' + str(res.text))
         else:
             logger.info('NO GIT on ' + str(idx))
 

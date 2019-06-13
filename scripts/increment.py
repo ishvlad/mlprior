@@ -239,15 +239,21 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
 
             if len(arts) != 0 and arts[0]['text'] is not None:
                 logger.info('TXT ' + idx + ' already exists. Just update flag')
-                ok_list.append(pk)
-                idx_list.append(idx)
-                pbar.update(1)
 
                 # GIT
                 git = find_github_repo_in_text(arts[0]['text'])
                 if git is not None:
-                    logger.info('Find gitHub link of ' + idx + '. Result: ' + send_github_url_to_server(git, idx))
-                continue
+                    res = send_github_url_to_server(git, idx)
+                    if res.status_code == 500:
+                        logger.info('Find gitHub link of ' + idx + '. Result: 500 -- ' + str(res.text))
+                        continue
+                    else:
+                        logger.info('Find gitHub link of ' + idx + '. Result: ' + str(res.text))
+
+                ok_list.append(pk)
+                idx_list.append(idx)
+                pbar.update(1)
+
             else:
                 logger.info('TXT ' + idx + ' already exists, but text not appears in DB. Save text')
         else:
@@ -264,10 +270,6 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
                     text = text.replace('\x00', ' ')
                 text = text.encode('utf-8', 'replace').decode('utf-8')
 
-                # GIT
-                git = find_github_repo_in_text(text)
-                if git is not None:
-                    logger.info('Find gitHub link of ' + idx + '. Result: ' + send_github_url_to_server(git, idx))
         except Exception as e:
             logger.info(idx + '. Decode problem. No .txt file. NEXT: ' + str(e))
             text = 'NO TEXT'
@@ -279,6 +281,17 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
             txt_location=file_txt,
             text=text
         ))
+
+        # GIT
+        git = find_github_repo_in_text(text)
+        if git is not None:
+            res = send_github_url_to_server(git, idx)
+
+            if res.status_code == 500:
+                logger.info('Find gitHub link of ' + idx + '. Result: 500 -- ' + str(res.text))
+                continue
+            else:
+                logger.info('Find gitHub link of ' + idx + '. Result: ' + str(res.text))
 
         ok_list.append(pk)
         idx_list.append(idx)

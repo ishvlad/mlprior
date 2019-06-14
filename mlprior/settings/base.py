@@ -27,8 +27,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticroot')
 
 
 STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'npm.finders.NpmFinder'
+    'django.contrib.staticfiles.finders.FileSystemFinder'
 ]
 
 
@@ -40,13 +39,9 @@ SECRET_KEY = '4)re*)pg$qi*i$uo2hv3_03^pr4eswx&+&f&k2z5d*f#7+xry8'
 
 
 
-
-
 # Application definition
 
 INSTALLED_APPS = [
-    'dal',
-    'dal_select2',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,7 +51,6 @@ INSTALLED_APPS = [
     'django_elasticsearch_dsl',
     'social_django',
     'el_pagination',
-    'django_ajax',
     'django.contrib.postgres',
     # 'automated_logging',
 
@@ -67,8 +61,8 @@ INSTALLED_APPS = [
 
     'rest_framework',  # django rest framework
     'rest_framework.authtoken',
-    'rest_auth',
-    'djng',  # django-angular
+    # 'rest_auth',
+    # 'djng',  # django-angular
     'corsheaders',
     'taggit',
 
@@ -91,9 +85,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'log.middleware.AutomatedLoggingMiddleware',
-    'djng.middleware.AngularUrlMiddleware',
-    # 'core.middleware.corsMiddleware'
 ]
 
 ROOT_URLCONF = 'mlprior.urls'
@@ -258,8 +249,6 @@ AUTH_USER_MODEL = 'core.User'
 #     },
 # }
 
-FORM_RENDERER = 'djng.forms.renderers.DjangoAngularTemplates'
-
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
@@ -284,19 +273,20 @@ REST_FRAMEWORK = {
 #     'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3600),
 # }
 
-CORS_ORIGIN_ALLOW_ALL = True
+# CORS_ORIGIN_ALLOW_ALL = True
 #
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
     'http://localhost:8000',
     'http://localhost:4200',
     'http://127.0.0.1:4200',
+    'http://mlprior.com'
 ]
-
-
-REST_AUTH_SERIALIZERS = {
-    'LOGIN_SERIALIZER'
-}
+#
+#
+# REST_AUTH_SERIALIZERS = {
+#     'LOGIN_SERIALIZER'
+# }
 
 
 #

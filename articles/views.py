@@ -10,7 +10,6 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic import CreateView
 from django.views.generic import FormView
 from django.views.generic import ListView
-from django_ajax.mixin import AJAXMixin
 from el_pagination.views import AjaxListView
 
 from articles.forms import AddBlogPostForm
@@ -57,7 +56,8 @@ def category_view(request, categories=None):
         categories = [c for c in GLOBAL__CATEGORIES.keys() if c.startswith('cs.')][:4]
 
     colors = GLOBAL__COLORS.get_colors_code(len(categories))
-    dates = list(CategoriesDate.objects.filter(date_code__gte=200000).order_by('date_code').values_list('date', flat=True))
+    dates = list(
+        CategoriesDate.objects.filter(date_code__gte=200000).order_by('date_code').values_list('date', flat=True))
 
     def insert(arr):
         if int(arr[1]) > 50:
@@ -70,12 +70,13 @@ def category_view(request, categories=None):
 
     datasets = []
     for cat in categories:
-        counts = CategoriesVSDate.objects.filter(from_category=cat, from_month__date_code__gte=200000).order_by('from_month__date_code')
+        counts = CategoriesVSDate.objects.filter(from_category=cat, from_month__date_code__gte=200000).order_by(
+            'from_month__date_code')
         datasets.append(list(counts.values_list('count', flat=True)))
 
     for i in range(len(datasets)):
         if len(datasets[i]) == 0:
-            datasets[i] = [0]*len(dates)
+            datasets[i] = [0] * len(dates)
 
     return JsonResponse({
         'colors': colors,
@@ -87,7 +88,6 @@ def category_view(request, categories=None):
 
 @login_required(login_url='/accounts/login')
 def trend_view(request, keywords_raw=None):
-
     if request.method == 'POST':
         keywords_raw = request.POST.get('keywords_raw')
     elif keywords_raw is None:
@@ -188,7 +188,7 @@ class ArticlesMixin(object):
         return list(sorted(list(set(cats))))  # OMG LOL KEK
 
 
-class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJAXMixin):
+class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin):
     login_url = '/accounts/login'
     template_name = 'articles/articles_list.html'
     page_template = 'articles/articles_list_page.html'
@@ -218,9 +218,9 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin, AJ
         if current_tab == 'popular':
             # todo fix
             return Article.objects.annotate(n_likes=Count(Case(
-                            When(article_user__like_dislike=True, then=1),
-                            output_field=IntegerField(),
-                        ))).order_by('-n_likes')
+                When(article_user__like_dislike=True, then=1),
+                output_field=IntegerField(),
+            ))).order_by('-n_likes')
 
         if current_tab == 'recommended':
             articles_positive = ArticleUser.objects.filter(

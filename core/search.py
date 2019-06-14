@@ -1,7 +1,7 @@
-from elasticsearch_dsl.connections import connections
-from elasticsearch_dsl import DocType, Text, Date, Search
-from elasticsearch.helpers import bulk
 from elasticsearch import Elasticsearch
+from elasticsearch.helpers import bulk
+from elasticsearch_dsl import DocType, Text, Search
+from elasticsearch_dsl.connections import connections
 
 from articles import models as articles_models
 

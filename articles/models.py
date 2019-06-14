@@ -1,10 +1,9 @@
 from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
 from django.db import models
+from taggit.managers import TaggableManager
 
 from core.search import ArticleIndex
-from core.models import User as UserModel
-from taggit.managers import TaggableManager
 
 User = settings.AUTH_USER_MODEL
 
@@ -149,18 +148,18 @@ class ArticleText(models.Model):
     txt_location = models.CharField(max_length=100)
 
     text = models.CharField(max_length=100000)
-    tags = HStoreField(default=dict)            # key -- tag, value -- freq (BoW)
+    tags = HStoreField(default=dict)  # key -- tag, value -- freq (BoW)
     tags_norm = models.IntegerField(default=0)
 
-    relations = HStoreField(default=dict)       # key -- article pk, value -- distance
+    relations = HStoreField(default=dict)  # key -- article pk, value -- distance
 
 
 class NGramsMonth(models.Model):
     label = models.CharField(max_length=6)  # bbb YY
-    label_code = models.IntegerField()      # YYYYMM
-    type = models.IntegerField()            # 0 - title, 1 - abstract, 2 - text
+    label_code = models.IntegerField()  # YYYYMM
+    type = models.IntegerField()  # 0 - title, 1 - abstract, 2 - text
 
-    sentences = HStoreField(default=dict)   # key -- sentence, value -- frequency (as string)
+    sentences = HStoreField(default=dict)  # key -- sentence, value -- frequency (as string)
 
     class Meta:
         unique_together = (('type', 'label_code'),)
@@ -171,6 +170,7 @@ class Categories(models.Model):
     category_full = models.CharField(max_length=1000)
 
     months = HStoreField(default=dict)
+
 
 # class Authorship(models.Model):
 #     author = models.ForeignKey(Author, on_delete=models.CASCADE)

@@ -1,15 +1,13 @@
 from django.urls import path, include
-
-from articles.views import home
-# from core.forms import UserLoginForm
-
-from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView
-
-from articles.api import BlogPostAPI, ArticleList, BlogPostUserList, GitHubAPI, GitHubUserList, StatsAPI, \
-    TrendAPI, CategoriesAPI, FeedbackAPI
 from rest_framework import routers
 from rest_framework.documentation import include_docs_urls
 
+from articles.api import BlogPostAPI, ArticleList, BlogPostUserList, GitHubAPI, GitHubUserList, StatsAPI, \
+    TrendAPI, CategoriesAPI, FeedbackAPI
+from articles.views import home
+from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView
+
+# from core.forms import UserLoginForm
 
 router = routers.DefaultRouter()
 router.register(r'blogposts', BlogPostAPI, base_name='blogposts')
@@ -37,14 +35,13 @@ apiurls = [
     path('api/visualization/categories', CategoriesAPI.as_view())
 ]
 
-
 urlpatterns = [
-    path('', LandingView.as_view(), name='landing'),
-    path('home/', home, name='home'),
-    path('docs/', include_docs_urls(title='ML p(r)ior API'))
+                  path('', LandingView.as_view(), name='landing'),
+                  path('home/', home, name='home'),
+                  path('docs/', include_docs_urls(title='ML p(r)ior API'))
 
-    # path('feedback/', FeedbackView.as_view(), name='feedback'),
+                  # path('feedback/', FeedbackView.as_view(), name='feedback'),
 
-    # path('accounts/', include('allauth.urls')),
-    # path('auth/', include('social_django.urls', namespace='social'))
-] + apiurls
+                  # path('accounts/', include('allauth.urls')),
+                  # path('auth/', include('social_django.urls', namespace='social'))
+              ] + apiurls

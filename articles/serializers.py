@@ -2,8 +2,6 @@ from rest_framework import serializers
 
 from core.serializers import UserSerializer
 from .models import BlogPost, Article, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author
-from rest_framework.fields import CurrentUserDefault, HStoreField
-from rest_framework.pagination import PageNumberPagination
 from .services import is_article_in_lib, like_dislike, get_note, is_blogpost_like, is_github_like
 
 
@@ -118,10 +116,3 @@ class GitHubUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = GithubRepoUser
         fields = '__all__'
-
-
-
-
-
-
-

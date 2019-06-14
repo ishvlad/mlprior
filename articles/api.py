@@ -3,6 +3,7 @@ import json
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Case, IntegerField, Count, When, Q
 from django.shortcuts import get_object_or_404
+from github import UnknownObjectException
 from rest_framework import permissions
 from rest_framework import viewsets, generics
 from rest_framework.pagination import PageNumberPagination
@@ -147,9 +148,9 @@ class ArticleList(viewsets.GenericViewSet):
             queryset = Article.objects.order_by('-date')
         elif 'popular' in request.path:
             queryset = Article.objects.annotate(n_likes=Count(Case(
-                            When(article_user__like_dislike=True, then=1),
-                            output_field=IntegerField(),
-                        ))).order_by('-n_likes')
+                When(article_user__like_dislike=True, then=1),
+                output_field=IntegerField(),
+            ))).order_by('-n_likes')
         elif 'related' in request.path:
             article_id = request.query_params.get('id')
             print(article_id, 'article____id')
@@ -374,7 +375,10 @@ class GitHubAPI(viewsets.ViewSet):
         if not GitHubRepo.is_github_repo(url):
             return _error('This is not a GitHub repository')
 
-        g = GitHubRepo(url)
+        try:
+            g = GitHubRepo(url)
+        except UnknownObjectException as e:
+            return _error("The repository doesn't exist")
 
         new_git = dict(
             title=g.name,
@@ -481,7 +485,7 @@ class TrendAPI(APIView):
                 })
 
         return Response({
-            'data':  data
+            'data': data
         })
 
 
@@ -510,9 +514,9 @@ class CategoriesAPI(APIView):
         for item in db.values_list('category', 'category_full', 'months'):
             for date_code in item[2]:
                 data.append({
-                     'date': date_code[:4] + '/' + date_code[4:] + '/1',
-                     'key': item[0] + ': ' + item[1],
-                     'value': int(item[2][date_code])
+                    'date': date_code[:4] + '/' + date_code[4:] + '/1',
+                    'key': item[0] + ': ' + item[1],
+                    'value': int(item[2][date_code])
                 })
 
         return Response({
@@ -537,7 +541,8 @@ class FeedbackAPI(APIView):
                 "info": "ERROR",
                 "Parameter docstring": {
                     'name': {'type': 'string', 'max_length': '1000', 'desc': 'Person name'},
-                    'email': {'type': 'string', 'max_length': '1000', 'desc': 'Person email (without checking from API side)'},
+                    'email': {'type': 'string', 'max_length': '1000',
+                              'desc': 'Person email (without checking from API side)'},
                     'message': {'type': 'string', 'max_length': '10000', 'desc': 'message'},
                     'type': {'type': 'integer', 'valid values': {
                         0: 'other',

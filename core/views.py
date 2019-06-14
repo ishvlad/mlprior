@@ -1,21 +1,13 @@
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from django.http import JsonResponse
-from django.shortcuts import render
-
 # Create your views here.
 from django.views.generic import TemplateView
-from el_pagination.decorators import page_template
-# from core.forms import FeedbackForm
-from django.views.generic.edit import FormView
-from .renderers import UserJSONRenderer
-from rest_framework.generics import RetrieveUpdateAPIView
-
 from rest_framework import status
+from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+# from core.forms import FeedbackForm
+from .renderers import UserJSONRenderer
 from .serializers import LoginSerializer, RegistrationSerializer, UserSerializer
 
 

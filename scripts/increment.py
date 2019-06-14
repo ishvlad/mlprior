@@ -233,39 +233,38 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
         file_pdf = os.path.join(path_pdf, idx + '.pdf')
         file_txt = os.path.join(path_txt, idx + '.txt')
 
-        if os.path.exists(file_txt) and os.path.getsize(file_txt) != 0:
-            arts = ArticleText.objects.filter(article_origin=pk).values('text')
+        arts = ArticleText.objects.filter(article_origin=pk).values('text')
+        if len(arts) != 0 and arts[0]['text'] is not None:
+            logger.info('TXT ' + idx + ' already exists. Just update flag')
 
-            if len(arts) != 0 and arts[0]['text'] is not None:
-                logger.info('TXT ' + idx + ' already exists. Just update flag')
+            # GIT
+            git = find_github_repo_in_text(arts[0]['text'])
+            if git is not None:
+                res = send_github_url_to_server(git, idx)
+                logger.info('Find gitHub link of ' + idx + ': ' + str(git) +
+                            '. Result: ' + str(res.status_code) + ': ' + str(res.text))
 
-                # GIT
-                git = find_github_repo_in_text(arts[0]['text'])
-                if git is not None:
-                    res = send_github_url_to_server(git, idx)
-                    logger.info('Find gitHub link of ' + idx + ': ' + str(git) +
-                                '. Result: ' + str(res.status_code) + ': ' + str(res.text))
-
-                    if res.status_code == 500 or res.status_code == 504:
-                        logger.info('NO save ' + str(idx) + ' because of GIT. Try again latetr')
-                        pbar.update(1)
-                        continue
-                else:
-                    logger.info('NO GIT on ' + str(idx))
-
-                ok_list.append(pk)
-                idx_list.append(idx)
-                pbar.update(1)
-                continue
-
+                if res.status_code == 500 or res.status_code == 504:
+                    logger.info('NO save ' + str(idx) + ' because of GIT. Try again latetr')
+                    pbar.update(1)
+                    continue
             else:
-                logger.info('TXT ' + idx + ' already exists, but text not appears in DB. Save text')
+                logger.info('NO GIT on ' + str(idx))
+
+            ok_list.append(pk)
+            idx_list.append(idx)
+            pbar.update(1)
+            continue
+
+        elif os.path.exists(file_txt) and os.path.getsize(file_txt) != 0:
+            logger.info('TXT ' + idx + ' already exists, but text not appears in DB. Save text')
         else:
             cmd = "pdftotext %s %s " % (file_pdf, file_txt)
             os.system(cmd)
 
             if not os.path.isfile(file_txt) or os.path.getsize(file_txt) == 0:
                 logger.info(idx + '. pdf2txt: Failed to generate TXT (No .txt file)). NEXT')
+
 
         try:
             with open(file_txt, 'r', encoding='unicode_escape') as f:

@@ -251,6 +251,9 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
             else:
                 logger.info('NO GIT on ' + str(idx))
 
+            if arts[0]['text'] == 'NO TEXT':
+                null_list.append(pk)
+
             ok_list.append(pk)
             idx_list.append(idx)
             pbar.update(1)

@@ -22,3 +22,4 @@ spacy
 coreapi
 django-taggit
 django-cors-headers
+Celery

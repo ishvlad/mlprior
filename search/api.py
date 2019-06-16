@@ -18,9 +18,10 @@ class SearchAPI(viewsets.GenericViewSet):
 
     def get_queryset(self):
         q = self.request.GET.get('q')
-        print('Query', q)
+        # print('Query', q)
         articles = ArticleDocument.search().query('multi_match', query=q, fields=['title', 'abstract'])
-        queryset = articles[:articles.count()].to_queryset()
+        # print('articles', articles, articles.count())
+        queryset = articles[:200].to_queryset()
         return queryset
 
     def list(self, request):

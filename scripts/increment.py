@@ -268,7 +268,6 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
             if not os.path.isfile(file_txt) or os.path.getsize(file_txt) == 0:
                 logger.info(idx + '. pdf2txt: Failed to generate TXT (No .txt file)). NEXT')
 
-
         try:
             with open(file_txt, 'r', encoding='unicode_escape') as f:
                 text = ' '.join(f.readlines())[:100000]

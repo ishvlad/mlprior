@@ -135,29 +135,34 @@ class ArticleList(viewsets.GenericViewSet):
         permissions.IsAuthenticatedOrReadOnly
     ]
 
-    def list(self, request):
-        if 'saved' in request.path:
-            queryset = Article.objects.filter(article_user__user=request.user, article_user__in_lib=True)
-        elif 'disliked' in request.path:
-            queryset = Article.objects.filter(article_user__user=request.user, article_user__like_dislike=False)
-        elif 'liked' in request.path:
-            queryset = Article.objects.filter(article_user__user=request.user, article_user__like_dislike=True)
-        elif 'recommended' in request.path:
-            queryset = get_recommended_articles(request)
-        elif 'recent' in request.path:
-            queryset = Article.objects.order_by('-date')
-        elif 'popular' in request.path:
+    def get_queryset(self):
+        if 'saved' in self.request.path:
+            queryset = Article.objects.filter(article_user__user=self.request.user, article_user__in_lib=True)
+        elif 'disliked' in self.request.path:
+            queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=False)
+        elif 'liked' in self.request.path:
+            queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=True)
+        elif 'recommended' in self.request.path:
+            queryset = get_recommended_articles(self.request)
+        elif 'recent' in self.request.path:
+            queryset = Article.objects.order_by('-date', 'title')
+        elif 'popular' in self.request.path:
             queryset = Article.objects.annotate(n_likes=Count(Case(
                 When(article_user__like_dislike=True, then=1),
                 output_field=IntegerField(),
-            ))).order_by('-n_likes')
-        elif 'related' in request.path:
-            article_id = request.query_params.get('id')
+            ))).order_by('-n_likes', 'title')
+        elif 'related' in self.request.path:
+            article_id = self.request.query_params.get('id')
             print(article_id, 'article____id')
             article = Article.objects.get(id=article_id)
             queryset = get_related_articles(article)
         else:
             raise Exception('Unknown API link')
+
+        return queryset
+
+    def list(self, request):
+        queryset = self.get_queryset()
 
         page = request.query_params.get('page')
         if page is not None:

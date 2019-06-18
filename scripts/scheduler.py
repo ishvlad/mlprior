@@ -70,8 +70,8 @@ def main(args):
             coin.append('knn')
         if 'inner_vector' not in queue and (has_txt - has_inner_vector > border):
             coin.append('inner_vector')
-        # if 'pdf2txt' not in queue and (has_pdf - process_txt > border):
-        #     coin.append('pdf2txt')
+        if 'pdf2txt' not in queue and (has_pdf - process_txt > border):
+            coin.append('pdf2txt')
         if 'download_pdf' not in queue and (total_count - has_pdf > border):
             coin.append('download_pdf')
         if 'download_meta' not in queue:

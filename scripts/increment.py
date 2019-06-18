@@ -238,18 +238,18 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
             logger.info('TXT ' + idx + ' already exists. Just update flag')
 
             # GIT
-            git = find_github_repo_in_text(arts[0]['text'])
-            if git is not None:
-                res = send_github_url_to_server(git, idx)
-                logger.info('Find gitHub link of ' + idx + ': ' + str(git) +
-                            '. Result: ' + str(res.status_code) + ': ' + str(res.text))
-
-                if res.status_code == 500 or res.status_code == 504:
-                    logger.info('NO save ' + str(idx) + ' because of GIT. Try again latetr')
-                    pbar.update(1)
-                    continue
-            else:
-                logger.info('NO GIT on ' + str(idx))
+            # git = find_github_repo_in_text(arts[0]['text'])
+            # if git is not None:
+            #     res = send_github_url_to_server(git, idx)
+            #     logger.info('Find gitHub link of ' + idx + ': ' + str(git) +
+            #                 '. Result: ' + str(res.status_code) + ': ' + str(res.text))
+            #
+            #     if res.status_code == 500 or res.status_code == 504:
+            #         logger.info('NO save ' + str(idx) + ' because of GIT. Try again latetr')
+            #         pbar.update(1)
+            #         continue
+            # else:
+            #     logger.info('NO GIT on ' + str(idx))
 
             if arts[0]['text'] == 'NO TEXT':
                 null_list.append(pk)
@@ -288,18 +288,18 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
         ))
 
         # GIT
-        git = find_github_repo_in_text(text)
-        if git is not None:
-            res = send_github_url_to_server(git, idx)
-            logger.info('Find gitHub link of ' + idx + ': ' + str(git) +
-                        '. Result: ' + str(res.status_code) + ': ' + str(res.text))
-
-            if res.status_code == 500 or res.status_code == 504:
-                logger.info('NO save ' + str(idx) + ' because of GIT. Try again later')
-                pbar.update(1)
-                continue
-        else:
-            logger.info('NO GIT on ' + str(idx))
+        # git = find_github_repo_in_text(text)
+        # if git is not None:
+        #     res = send_github_url_to_server(git, idx)
+        #     logger.info('Find gitHub link of ' + idx + ': ' + str(git) +
+        #                 '. Result: ' + str(res.status_code) + ': ' + str(res.text))
+        #
+        #     if res.status_code == 500 or res.status_code == 504:
+        #         logger.info('NO save ' + str(idx) + ' because of GIT. Try again later')
+        #         pbar.update(1)
+        #         continue
+        # else:
+        #     logger.info('NO GIT on ' + str(idx))
 
         ok_list.append(pk)
         idx_list.append(idx)

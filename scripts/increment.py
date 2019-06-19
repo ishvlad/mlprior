@@ -386,20 +386,22 @@ def calc_nearest_articles(args):
             continue
 
         source_relations = {}
-        # targets = db_articles.values('id', 'articletext__tags', 'articletext__tags_norm', 'articletext__relations')
+        targets = db_articles.values('id', 'articletext__tags', 'articletext__tags_norm', 'articletext__relations')
 
-        for target in tqdm.tqdm(db_articles, desc='All articles in DB'):
-            dist = model.get_dist(source_tags, target.articletext.tags,
-                                  source_norm, target.articletext.tags_norm)
+        for target in tqdm.tqdm(targets, desc='All articles in DB'):
+            dist = model.get_dist(source_tags, target['articletext__tags'],
+                                  source_norm, target['articletext__tags_norm'])
 
-            need_update, new_dict = model.update_dict(source_relations, str(target.id), str(dist))
+            need_update, new_dict = model.update_dict(source_relations, str(target['id']), str(dist))
             if need_update:
                 source_relations = new_dict
 
-            need_update, new_dict = model.update_dict(target.articletext.relations, str(id), str(dist))
+            need_update, new_dict = model.update_dict(target['articletext__relations'], str(id), str(dist))
             if need_update:
-                target.articletext.relations = new_dict
-                target.articletext.save()
+                target['articletext__relations'] = new_dict
+                ArticleText.objects.filter(article_origin_id=target['id']).update(
+                    relations=target['articletext__relations']
+                )
 
         ArticleText.objects.filter(article_origin_id=id).update(relations=source_relations)
         Article.objects.filter(id=id).update(has_neighbors=True)

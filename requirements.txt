@@ -23,3 +23,6 @@ coreapi
 django-taggit
 django-cors-headers
 Celery
+webpreview
+redis
+celery[redis]

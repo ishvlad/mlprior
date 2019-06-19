@@ -1,39 +1,77 @@
 from rest_framework import serializers
 
 from core.serializers import UserSerializer
-from .models import BlogPost, Article, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author
+from .models import BlogPost, Article, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author, GitHubInfo, \
+    BlogPostInfo
 from .services import is_article_in_lib, like_dislike, get_note, is_blogpost_like, is_github_like
+
+
+class BlogPostInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BlogPostInfo
+        fields = [
+            'title', 'description', 'image'
+        ]
 
 
 class BlogPostSerializer(serializers.ModelSerializer):
     users = UserSerializer(many=True, read_only=True)
     who_added = UserSerializer(many=False, read_only=True)
     is_like = serializers.SerializerMethodField()
+    info = BlogPostInfoSerializer(many=False)
+    type = serializers.SerializerMethodField()
 
     class Meta:
         model = BlogPost
-        fields = ['id', 'title', 'url', 'users', 'rating', 'approved', 'who_added', 'is_like']
+        fields = [
+            'id', 'url', 'users', 'rating',
+            'approved', 'who_added', 'is_like',
+            'info', 'type'
+        ]
 
     def get_is_like(self, obj):
         user = self.context.get('request').user
         return is_blogpost_like(obj.id, user)
 
+    def get_type(self, obj):
+        return 'resource'
+
+
+class GitHubInfoSerializer(serializers.ModelSerializer):
+    topics = serializers.SerializerMethodField()
+    languages = serializers.HStoreField()
+
+    class Meta:
+        model = GitHubInfo
+        fields = [
+            'title', 'framework', 'languages',
+            'n_stars', 'language', 'topics', 'description'
+        ]
+
+    def get_topics(self, obj):
+        return obj.topics.names()
+
 
 class GitHubSerializer(serializers.ModelSerializer):
     users = UserSerializer(many=True, read_only=True)
     who_added = UserSerializer(many=False, read_only=True)
-    languages = serializers.HStoreField()
     is_like = serializers.SerializerMethodField()
+    info = GitHubInfoSerializer(many=False)
+    type = serializers.SerializerMethodField()
 
     class Meta:
         model = GitHubRepository
-        fields = ['id', 'title', 'url', 'users',
-                  'rating', 'framework', 'languages',
-                  'who_added', 'n_stars', 'language', 'is_like']
+        fields = [
+            'id', 'url', 'users', 'info',
+            'rating', 'who_added', 'is_like', 'type'
+        ]
 
     def get_is_like(self, obj):
         user = self.context.get('request').user
         return is_github_like(obj.id, user)
+
+    def get_type(self, obj):
+        return 'github'
 
 
 class ArticleUserSerializer(serializers.ModelSerializer):

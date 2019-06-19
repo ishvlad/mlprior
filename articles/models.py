@@ -46,7 +46,6 @@ class Article(models.Model):
 
 class BlogPost(models.Model):
     url = models.URLField(verbose_name='URL')
-    title = models.CharField(verbose_name='title', max_length=300)
     rating = models.PositiveIntegerField(verbose_name='rating', default=0)
     approved = models.BooleanField(verbose_name='approved', default=False)
 
@@ -61,26 +60,35 @@ class BlogPost(models.Model):
         ordering = ['-rating']
 
     def __str__(self):
-        return self.title
+        return self.url
+
+
+class BlogPostInfo(models.Model):
+    blog_post = models.OneToOneField(BlogPost, on_delete=models.CASCADE, related_name='info')
+
+    title = models.CharField(verbose_name='title', max_length=300, default=None, null=True)
+    description = models.TextField(verbose_name='description', default=None, null=True)
+    image = models.URLField(verbose_name='image_url', default=None, null=True)
 
 
 class GitHubRepository(models.Model):
     url = models.URLField(verbose_name='URL')
+    article = models.ForeignKey(Article, on_delete='CASCADE', related_name='github_repos')
+    users = models.ManyToManyField(User, 'github_repos', through='GithubRepoUser')
+    who_added = models.ForeignKey(User, related_name='added_github_repo', on_delete=models.CASCADE, default=1)
+    rating = models.PositiveIntegerField(verbose_name='rating', default=0)
+
+
+class GitHubInfo(models.Model):
+    repo = models.OneToOneField(GitHubRepository, on_delete=models.CASCADE, related_name='info')
     title = models.CharField(verbose_name='title', max_length=300)
     description = models.TextField(verbose_name='description', default='')
 
     topics = TaggableManager()
-
-    rating = models.PositiveIntegerField(verbose_name='rating', default=0)
     n_stars = models.PositiveIntegerField(verbose_name='stars', default=0)
     language = models.CharField(verbose_name='language', max_length=100, default='')
     framework = models.CharField(verbose_name='language', max_length=100, default='')
     languages = HStoreField(default=dict)
-
-    article = models.ForeignKey(Article, on_delete='CASCADE', related_name='github_repos')
-    users = models.ManyToManyField(User, 'github_repos', through='GithubRepoUser')
-    who_added = models.ForeignKey(User, related_name='added_github_repo', on_delete=models.CASCADE, default=1)
-
     is_official = models.BooleanField(verbose_name='is_official', default=False)
 
 
@@ -182,3 +190,6 @@ class Categories(models.Model):
 class DefaultStore(models.Model):
     key = models.CharField(primary_key=True, max_length=1000)
     value = models.CharField(default='', max_length=500000)
+
+
+

@@ -357,9 +357,26 @@ class GitHubAPI(viewsets.ViewSet):
         return _success()
 
     def create(self, request):
-        error = None
         print(request.data)
         url = request.data['url']
+
+        if not GitHubRepo.is_github_repo(url):
+            article_id = request.data['article_id']
+            is_exists = BlogPost.objects.filter(url=url, article_id=article_id).count() > 0
+            if is_exists:
+                return _error('The proposed GitHub repository is already attached :-)')
+
+            resource = BlogPost.objects.create(
+                url=url,
+                article_id=article_id,
+                who_added=request.user
+            )
+
+            resource.save()
+
+            print('pisya')
+
+            return _success()
 
         if 'arxiv_id' in request.data.keys():
             arxiv_id = request.data['arxiv_id']
@@ -377,21 +394,11 @@ class GitHubAPI(viewsets.ViewSet):
             if is_exists:
                 return _error('The proposed GitHub repository is already attached :-)')
 
-        if not GitHubRepo.is_github_repo(url):
-            return _error('This is not a GitHub repository')
 
-        try:
-            g = GitHubRepo(url)
-        except UnknownObjectException as e:
-            return _error("The repository doesn't exist")
 
         new_git = dict(
-            title=g.name,
-            url=request.data['url'],
-            n_stars=g.n_stars,
-            framework=g.framework,
-            article_id=article_id,
-            description=g.description
+            url=url,
+            article_id=article_id
         )
 
         if type(request.user) != AnonymousUser:
@@ -399,24 +406,11 @@ class GitHubAPI(viewsets.ViewSet):
                 'who_added': request.user
             })
 
-        languages = g.languages
-        if languages:
-            new_git.update({
-                'languages': languages,
-                'language': g.language,
-            })
-
-        print(new_git)
-
         repo = GitHubRepository.objects.create(
             **new_git
         )
 
-        topics = g.topics
-        if len(topics):
-            repo.topics.add(*topics)
-
-        print(topics)
+        print('PIZDA')
 
         repo.save()
 

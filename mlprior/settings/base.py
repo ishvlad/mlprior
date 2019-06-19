@@ -268,13 +268,6 @@ REST_FRAMEWORK = {
     'NON_FIELD_ERRORS_KEY': 'error',
 }
 
-# JWT_AUTH = {
-#     'JWT_ALLOW_REFRESH': True,
-#     'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3600),
-# }
-
-# CORS_ORIGIN_ALLOW_ALL = True
-#
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
     'http://localhost:8000',
@@ -282,18 +275,15 @@ CORS_ORIGIN_WHITELIST = [
     'http://127.0.0.1:4200',
     'http://mlprior.com'
 ]
-#
-#
-# REST_AUTH_SERIALIZERS = {
-#     'LOGIN_SERIALIZER'
-# }
 
 
-#
-# CORS_ALLOW_CREDENTIALS = True
-#
-# CORS_ORIGIN_REGEX_WHITELIST = (
-#     'localhost:3030',
-#     'localhost:4200',
-#     '127.0.0.1:4200',
-# )
+# REDIS related settings
+REDIS_HOST = 'localhost'
+REDIS_PORT = '6379'
+BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
+BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
+CELERY_RESULT_BACKEND = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
+
+
+# Add a one-minute timeout to all Celery tasks.
+CELERYD_TASK_SOFT_TIME_LIMIT = 60

@@ -27,10 +27,11 @@ class SearchAPI(viewsets.GenericViewSet):
     def list(self, request):
         queryset = self.get_queryset()
 
-        print(queryset)
-
         page = request.query_params.get('page')
         if page is not None:
             paginate_queryset = self.paginate_queryset(queryset)
             serializer = self.serializer_class(paginate_queryset, many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
+
+        serializer = ArticlesShortSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)

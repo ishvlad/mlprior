@@ -228,22 +228,39 @@ AUTH_USER_MODEL = 'core.User'
 
 # LOGGING = {
 #     'version': 1,
-#     'disable_existing_loggers': False,
+#     'disable_existing_loggers': True,
+#     'formatters': {
+#         'verbose': {
+#             'format': '%(asctime)s %(levelname)s [%(name)s:%(lineno)s] %(module)s %(process)d %(thread)d %(message)s'
+#         }
+#     },
 #     'handlers': {
-#         'db': {
-#             'level': 'INFO',
-#             'class': 'log.handlers.DatabaseHandler',
+#         # 'db': {
+#         #     'level': 'INFO',
+#         #     'class': 'log.handlers.DatabaseHandler',
+#         # },
+#         'gunicorn': {
+#             'level': 'DEBUG',
+#             'class': 'logging.handlers.RotatingFileHandler',
+#             'formatter': 'verbose',
+#             'filename': '/opt/djangoprojects/reports/bin/gunicorn.errors',
+#             'maxBytes': 1024 * 1024 * 100,  # 100 mb
 #         }
 #     },
 #     'loggers': {
-#         'automated_logging': {
-#             'level': 'INFO',
-#             'handlers': ['db'],
-#             'propagate': True,
-#         },
-#         'django': {
-#             'level': 'INFO',
-#             'handlers': ['db'],
+#         # 'automated_logging': {
+#         #     'level': 'INFO',
+#         #     'handlers': ['db'],
+#         #     'propagate': True,
+#         # },
+#         # 'django': {
+#         #     'level': 'INFO',
+#         #     'handlers': ['db'],
+#         #     'propagate': True,
+#         # },
+#         'gunicorn.errors': {
+#             'level': 'DEBUG',
+#             'handlers': ['gunicorn'],
 #             'propagate': True,
 #         },
 #     },

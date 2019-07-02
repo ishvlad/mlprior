@@ -78,6 +78,9 @@ class GitHubRepository(models.Model):
     who_added = models.ForeignKey(User, related_name='added_github_repo', on_delete=models.CASCADE, default=1)
     rating = models.PositiveIntegerField(verbose_name='rating', default=0)
 
+    def __str__(self):
+        return '%s | %s' % (self.article.title, self.url)
+
 
 class GitHubInfo(models.Model):
     repo = models.OneToOneField(GitHubRepository, on_delete=models.CASCADE, related_name='info')

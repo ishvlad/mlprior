@@ -1,14 +1,16 @@
 # Create your views here.
 from django.views.generic import TemplateView
 from rest_framework import status
-from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.generics import RetrieveUpdateAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 # from core.forms import FeedbackForm
-from .renderers import UserJSONRenderer
-from .serializers import LoginSerializer, RegistrationSerializer, UserSerializer
+from core.exceptions import ProfileDoesNotExist
+from core.models import Profile
+from .renderers import UserJSONRenderer, ProfileJSONRenderer
+from .serializers import LoginSerializer, RegistrationSerializer, UserSerializer, ProfileSerializer
 
 
 class RegistrationAPIView(APIView):
@@ -62,7 +64,16 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
-        serializer_data = request.data.get('user', {})
+        user_data = request.data.get('user', {})
+
+        serializer_data = {
+            'email': user_data.get('email', request.user.email),
+
+            'profile': {
+                'first_name': user_data.get('first_name', request.user.first_name),
+                'second_name': user_data.get('second_name', request.user.second_name),
+            }
+        }
 
         # Here is that serialize, validate, save pattern we talked about
         # before.
@@ -71,6 +82,28 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ProfileRetrieveAPIView(RetrieveAPIView):
+    permission_classes = (AllowAny,)
+    renderer_classes = (ProfileJSONRenderer,)
+    serializer_class = ProfileSerializer
+
+    def retrieve(self, request, email, *args, **kwargs):
+        # Try to retrieve the requested profile and throw an exception if the
+        # profile could not be found.
+        try:
+            # We use the `select_related` method to avoid making unnecessary
+            # database calls.
+            profile = Profile.objects.select_related('user').get(
+                user__email=email
+            )
+        except Profile.DoesNotExist:
+            raise ProfileDoesNotExist
+
+        serializer = self.serializer_class(profile)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

@@ -148,6 +148,32 @@ class User(AbstractBaseUser, PermissionsMixin):
         return token.decode('utf-8')
 
 
+class Profile(models.Model):
+    # There is an inherent relationship between the Profile and
+    # User models. By creating a one-to-one relationship between the two, we
+    # are formalizing this relationship. Every user will have one -- and only
+    # one -- related Profile model.
+    user = models.OneToOneField(
+        'core.User', on_delete=models.CASCADE, null=True
+    )
+
+    first_name = models.CharField(max_length=40)
+    last_name = models.CharField(max_length=40)
+
+    # In addition to the `bio` field, each user may have a profile image or
+    # avatar. This field is not required and it may be blank.
+    image = models.URLField(blank=True)
+
+    # A timestamp representing when this object was created.
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # A timestamp representing when this object was last updated.
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.user.email
+
+
 class Feedback(models.Model):
     type = models.IntegerField(default=0)
 

@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
-from .models import User
+from .models import User, Profile
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -40,6 +40,10 @@ class UserSerializer(serializers.ModelSerializer):
         # `validated_data` dictionary before iterating over it.
         password = validated_data.pop('password', None)
 
+        # Like passwords, we have to handle profiles separately. To do that,
+        # we remove the profile data from the `validated_data` dictionary.
+        profile_data = validated_data.pop('profile', {})
+
         for (key, value) in validated_data.items():
             # For the keys remaining in `validated_data`, we will set them on
             # the current `User` instance one at a time.
@@ -54,6 +58,14 @@ class UserSerializer(serializers.ModelSerializer):
         # the model. It's worth pointing out that `.set_password()` does not
         # save the model.
         instance.save()
+
+        for (key, value) in profile_data.items():
+            # We're doing the same thing as above, but this time we're making
+            # changes to the Profile model.
+            setattr(instance.profile, key, value)
+
+        # Save the profile just like we saved the user.
+        instance.profile.save()
 
         return instance
 
@@ -141,3 +153,10 @@ class LoginSerializer(serializers.Serializer):
             'email': user.email,
             'token': user.token
         }
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Profile
+        fields = ('first_name', 'second_name',)

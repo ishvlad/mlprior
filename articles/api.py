@@ -144,6 +144,10 @@ class ArticleList(viewsets.GenericViewSet):
             print(article_id, 'article____id')
             article = Article.objects.get(id=article_id)
             queryset = get_related_articles(article)
+        elif 'author' in self.request.path:
+            author_name = self.request.query_params.get('name')
+            author = Author.objects.get(name=author_name)
+            queryset = author.articles.order_by('-date')
         else:
             raise Exception('Unknown API link')
 

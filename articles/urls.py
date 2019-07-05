@@ -28,8 +28,6 @@ urlpatterns = [
 
     path('details/<int:pk>', views.ArticleDetailsView.as_view(), name='article_details'),
 
-    path('authors/<author_name>', login_required(views.ArticlesOfAuthor.as_view(), login_url='/accounts/login'),
-         name='author_articles'),
     path('api/v1/library/add/<article_id>', login_required(views.add_remove_from_library, login_url='/accounts/login'),
          name='lib_add'),
     path('api/v1/library/remove/<article_id>',

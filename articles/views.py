@@ -295,26 +295,6 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin):
         return context
 
 
-class ArticlesOfAuthor(ArticlesView):
-    template_name = 'articles/author_details.html'
-
-    def get_queryset(self):
-        author = Author.objects.get(name=self.kwargs['author_name'])
-
-        return author.articles.order_by('-date')
-
-    def get_context_data(self, **kwargs):
-        # Call the base implementation first to get a context
-        context = super().get_context_data(**kwargs)
-
-        author = Author.objects.get(name=self.kwargs['author_name'])
-        context['page_name'] = '%s' % author.name
-
-        n_articles = author.articles.count()
-        context['n_articles'] = n_articles
-
-        return context
-
 
 class ArticlesLibrary(ArticlesView, LoginRequiredMixin):
     login_url = '/accounts/login'

@@ -4,6 +4,17 @@ from rest_framework import serializers
 from .models import User, Profile
 
 
+class ProfileSerializer(serializers.ModelSerializer):
+    email = serializers.CharField(source='user.email')
+    first_name = serializers.CharField(allow_blank=True, required=False)
+    second_name = serializers.CharField(allow_blank=True, required=False)
+
+    class Meta:
+        model = Profile
+        fields = ('email', 'first_name', 'second_name')
+        read_only_fields = ('email',)
+
+
 class UserSerializer(serializers.ModelSerializer):
     """Handles serialization and deserialization of User objects."""
 
@@ -17,9 +28,14 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True
     )
 
+    profile = ProfileSerializer(write_only=True)
+
+    first_name = serializers.CharField(source='profile.first_name', read_only=True)
+    second_name = serializers.CharField(source='profile.second_name', read_only=True)
+
     class Meta:
         model = User
-        fields = ('email', 'password', 'token')
+        fields = ('email', 'password', 'token', 'profile', 'first_name', 'second_name')
 
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password
@@ -43,6 +59,8 @@ class UserSerializer(serializers.ModelSerializer):
         # Like passwords, we have to handle profiles separately. To do that,
         # we remove the profile data from the `validated_data` dictionary.
         profile_data = validated_data.pop('profile', {})
+
+        print('Profile data', profile_data)
 
         for (key, value) in validated_data.items():
             # For the keys remaining in `validated_data`, we will set them on
@@ -155,8 +173,3 @@ class LoginSerializer(serializers.Serializer):
         }
 
 
-class ProfileSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Profile
-        fields = ('first_name', 'second_name',)

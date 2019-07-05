@@ -1,6 +1,6 @@
 # Create your views here.
 from django.views.generic import TemplateView
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.generics import RetrieveUpdateAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -8,7 +8,8 @@ from rest_framework.views import APIView
 
 # from core.forms import FeedbackForm
 from core.exceptions import ProfileDoesNotExist
-from core.models import Profile
+from core.models import Profile, Feedback
+from utils.http import _success, _error
 from .renderers import UserJSONRenderer, ProfileJSONRenderer
 from .serializers import LoginSerializer, RegistrationSerializer, UserSerializer, ProfileSerializer
 
@@ -64,14 +65,15 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
+
         user_data = request.data.get('user', {})
 
         serializer_data = {
             'email': user_data.get('email', request.user.email),
 
             'profile': {
-                'first_name': user_data.get('first_name', request.user.first_name),
-                'second_name': user_data.get('second_name', request.user.second_name),
+                'first_name': user_data.get('first_name', request.user.profile.first_name),
+                'second_name': user_data.get('second_name', request.user.profile.second_name),
             }
         }
 
@@ -108,27 +110,43 @@ class ProfileRetrieveAPIView(RetrieveAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-#
-# class FeedbackView(FormView):
-#     template_name = 'core/feedback.html'
-#     # form_class = FeedbackForm
-#     success_url = '/home'
-#
-#     def get_context_data(self, **kwargs):
-#         # Call the base implementation first to get a context
-#         context = super().get_context_data(**kwargs)
-#
-#         context['page_id'] = 'feedback'
-#
-#         return context
-#
-#     def form_valid(self, form):
-#         # This method is called when valid form data has been POSTed.
-#         # It should return an HttpResponse.
-#         print(form)
-#         # form.send_email()
-#         return super().form_valid(form)
-
-
 class LandingView(TemplateView):
     template_name = 'landing.html'
+
+
+class FeedbackAPI(APIView):
+    permission_classes = [
+        permissions.AllowAny
+    ]
+
+    def post(self, request):
+        # read params
+        type = request.data.get('type', 0)
+        name = request.data.get('name', None)
+        email = request.data.get('email', None)
+        message = request.data.get('message', None)
+
+        if name is None or email is None or message is None or int(type) < 0 or int(type) > 2:
+            return Response(status=400, data={
+                "info": "ERROR",
+                "Parameter docstring": {
+                    'name': {'type': 'string', 'max_length': '1000', 'desc': 'Person name'},
+                    'email': {'type': 'string', 'max_length': '1000',
+                              'desc': 'Person email (without checking from API side)'},
+                    'message': {'type': 'string', 'max_length': '10000', 'desc': 'message'},
+                    'type': {'type': 'integer', 'valid values': {
+                        0: 'other',
+                        1: 'from subscribe form',
+                        2: 'from feature request form'
+                    }}
+                },
+                'example': "http://mlprior.com/api/feedback?type=0&name=user_name&email=user_email&message=Please continue"
+            })
+        else:
+            type = int(type)
+
+        # save to DB
+        item = Feedback(type=type, name=name, email=email, message=message)
+        item.save()
+
+        return _success()

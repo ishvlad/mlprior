@@ -3,9 +3,9 @@ from rest_framework import routers
 from rest_framework.documentation import include_docs_urls
 
 from articles.api import BlogPostAPI, ArticleList, BlogPostUserList, GitHubAPI, GitHubUserList, StatsAPI, \
-    TrendAPI, CategoriesAPI, FeedbackAPI
+    TrendAPI, CategoriesAPI
 from articles.views import home
-from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView
+from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView, FeedbackAPI
 
 # from core.forms import UserLoginForm
 
@@ -27,7 +27,7 @@ apiurls = [
     path('api/', include(router.urls)),
     path('api/stats', StatsAPI.as_view()),
     path('api/feedback', FeedbackAPI.as_view()),
-    path('user', UserRetrieveUpdateAPIView.as_view()),
+    path('api/user', UserRetrieveUpdateAPIView.as_view()),
     path('api/auth/signup', RegistrationAPIView.as_view()),
     path('api/auth/login', LoginAPIView.as_view()),
 
@@ -36,12 +36,7 @@ apiurls = [
 ]
 
 urlpatterns = [
-                  path('', LandingView.as_view(), name='landing'),
-                  path('home/', home, name='home'),
-                  path('docs/', include_docs_urls(title='ML p(r)ior API'))
-
-                  # path('feedback/', FeedbackView.as_view(), name='feedback'),
-
-                  # path('accounts/', include('allauth.urls')),
-                  # path('auth/', include('social_django.urls', namespace='social'))
-              ] + apiurls
+  path('', LandingView.as_view(), name='landing'),
+  path('home/', home, name='home'),
+  path('docs/', include_docs_urls(title='ML p(r)ior API'))
+] + apiurls

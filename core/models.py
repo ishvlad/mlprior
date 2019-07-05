@@ -158,11 +158,7 @@ class Profile(models.Model):
     )
 
     first_name = models.CharField(max_length=40)
-    last_name = models.CharField(max_length=40)
-
-    # In addition to the `bio` field, each user may have a profile image or
-    # avatar. This field is not required and it may be blank.
-    image = models.URLField(blank=True)
+    second_name = models.CharField(max_length=40)
 
     # A timestamp representing when this object was created.
     created_at = models.DateTimeField(auto_now_add=True)

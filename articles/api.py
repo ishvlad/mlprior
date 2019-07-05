@@ -17,25 +17,13 @@ from articles.serializers import ArticleDetailedSerializer, BlogPostSerializer, 
 from core.models import Feedback
 from services.github.repository import GitHubRepo
 from utils.recommendation import RelationModel
+from utils.http import _success, _error
 
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 20
     page_size_query_param = 'page_size'
     max_page_size = 100
-
-
-def _error(error):
-    return Response({
-        'success': False,
-        'error': error
-    })
-
-
-def _success():
-    return Response({
-        'success': True
-    })
 
 
 class StatsAPI(APIView):
@@ -523,39 +511,4 @@ class CategoriesAPI(APIView):
         })
 
 
-class FeedbackAPI(APIView):
-    permission_classes = [
-        permissions.AllowAny
-    ]
 
-    def post(self, request):
-        # read params
-        type = request.data.get('type', 0)
-        name = request.data.get('name', None)
-        email = request.data.get('email', None)
-        message = request.data.get('message', None)
-
-        if name is None or email is None or message is None or int(type) < 0 or int(type) > 2:
-            return Response(status=400, data={
-                "info": "ERROR",
-                "Parameter docstring": {
-                    'name': {'type': 'string', 'max_length': '1000', 'desc': 'Person name'},
-                    'email': {'type': 'string', 'max_length': '1000',
-                              'desc': 'Person email (without checking from API side)'},
-                    'message': {'type': 'string', 'max_length': '10000', 'desc': 'message'},
-                    'type': {'type': 'integer', 'valid values': {
-                        0: 'other',
-                        1: 'from subscribe form',
-                        2: 'from feature request form'
-                    }}
-                },
-                'example': "http://mlprior.com/api/feedback?type=0&name=user_name&email=user_email&message=Please continue"
-            })
-        else:
-            type = int(type)
-
-        # save to DB
-        item = Feedback(type=type, name=name, email=email, message=message)
-        item.save()
-
-        return _success()

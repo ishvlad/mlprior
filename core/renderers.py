@@ -3,7 +3,7 @@ import json
 from rest_framework.renderers import JSONRenderer
 
 
-class ConduitJSONRenderer(JSONRenderer):
+class BaseJSONRenderer(JSONRenderer):
     charset = 'utf-8'
     object_label = 'object'
 
@@ -17,14 +17,14 @@ class ConduitJSONRenderer(JSONRenderer):
         if errors is not None:
             # As mentioned above, we will let the default JSONRenderer handle
             # rendering errors.
-            return super(ConduitJSONRenderer, self).render(data)
+            return super(BaseJSONRenderer, self).render(data)
 
         return json.dumps({
             self.object_label: data
         })
 
 
-class UserJSONRenderer(ConduitJSONRenderer):
+class UserJSONRenderer(BaseJSONRenderer):
     object_label = 'user'
 
     def render(self, data, media_type=None, renderer_context=None):
@@ -57,5 +57,5 @@ class UserJSONRenderer(ConduitJSONRenderer):
         return super(UserJSONRenderer, self).render(data)
 
 
-class ProfileJSONRenderer(ConduitJSONRenderer):
+class ProfileJSONRenderer(BaseJSONRenderer):
     object_label = 'profile'

@@ -18,7 +18,7 @@ import django
 django.setup()
 
 from articles.api import TrendAPI, CategoriesAPI
-from articles.models import Article, Categories, NGramsMonth, ArticleText, DefaultStore
+from articles.models import Article, Categories, NGramsMonth, ArticleText, ArticleSentence, DefaultStore
 from collections import Counter
 from services.arxiv import ArXivArticle, ArXivAPI
 from django.db.models import F, Q
@@ -28,6 +28,7 @@ from utils.db_manager import DBManager
 from urllib.request import urlopen
 from utils.constants import GLOBAL__CATEGORIES
 from utils.recommendation import RelationModel
+from utils.summarization import SummarizationModel
 
 import log.logging
 
@@ -69,6 +70,7 @@ def overall_stats():
     logger.info('\tNumber of articles:                          %d' % articles.count())
     logger.info('\tNumber of articles with pdf:                 %d' % articles.filter(has_pdf=True).count())
     logger.info('\tNumber of articles with txt:                 %d (%d OK, %d null)' % txt_batch)
+    logger.info('\tNumber of articles with summary:             %d' % articles.filter(has_summary=True).count())
     logger.info('\tNumber of articles with inner vector:        %d' % articles.filter(has_inner_vector=True).count())
     logger.info('\tNumber of articles with neighbors:           %d' % articles.filter(has_neighbors=True).count())
     logger.info('\tNumber of articles with counted category:    %d' % articles.filter(has_category_bar=True).count())
@@ -323,6 +325,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
 def calc_inner_vector(args):
     logger.info('START making relations')
     model = RelationModel()
+    summ_model = SummarizationModel()
 
     if model.trained is False:
         logger.info("Relation model not trained. Let's train first (-retrain).")
@@ -348,10 +351,36 @@ def calc_inner_vector(args):
         item.tags = dict([(t[0], str(t[1])) for t in tags.items()])
         item.tags_norm = sum(tags.values())
         item.save()
-        Article.objects.filter(pk=id).update(has_inner_vector=True)
+
+        summary = summ_model.summarize(txt)
+        ArticleSentence.objects.bulk_create([ArticleSentence(
+            article_origin_id=id,
+            sentence=s[0],
+            importance=s[1],
+            chronology=s[2]
+        ) for s in summary])
+
+        Article.objects.filter(pk=id).update(has_inner_vector=True, has_summary=True)
 
     logger.info('FINISH making relations')
 
+from articles.models import Article, ArticleSentence
+from utils.summarization import SummarizationModel
+from django.db.models import Q
+import tqdm
+summ_model = SummarizationModel()
+
+for item in tqdm.tqdm(Article.objects.filter(Q(has_summary=False) & Q(has_txt=True))):
+    id, txt = item.id, item.articletext.text
+    summary = summ_model.summarize(txt)
+    ArticleSentence.objects.bulk_create([ArticleSentence(
+        article_origin_id=id,
+        sentence=s[0],
+        importance=s[1],
+        chronology=s[2]
+    ) for s in summary])
+    item.has_summary = True
+    item.save()
 
 @log.logging.timeit(logger, 'Calculate nearest articles', level=logging.INFO)
 def calc_nearest_articles(args):

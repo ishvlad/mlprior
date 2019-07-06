@@ -23,6 +23,7 @@ class Article(models.Model):
     has_pdf = models.NullBooleanField(default=False)
     has_txt = models.NullBooleanField(default=False)
     has_inner_vector = models.BooleanField(default=False)
+    has_summary = models.BooleanField(default=False)
     has_neighbors = models.BooleanField(default=False)
     has_category_bar = models.BooleanField(default=False)
     has_ngram_stat = models.BooleanField(default=False)
@@ -164,6 +165,14 @@ class ArticleText(models.Model):
 
     relations = HStoreField(default=dict)  # key -- article pk, value -- distance
 
+
+class ArticleSentence(models.Model):
+    article_origin = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+    sentence = models.CharField(max_length=10000)
+    n_likes = models.IntegerField(default=0)
+    importance = models.IntegerField(default=0)
+    chronology = models.IntegerField(default=0)
 
 class NGramsMonth(models.Model):
     label = models.CharField(max_length=6)  # bbb YY

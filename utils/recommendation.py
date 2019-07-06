@@ -5,7 +5,6 @@ import re
 import spacy
 import string
 
-from articles.models import UserTags
 from collections import Counter
 
 

@@ -22,6 +22,7 @@ urlpatterns = [
     path('recommended', login_required(views.ArticlesView.as_view(), login_url='/accounts/login'), name='articles'),
     path('recent', login_required(views.ArticlesView.as_view(), login_url='/accounts/login'), name='articles'),
     path('popular', login_required(views.ArticlesView.as_view(), login_url='/accounts/login'), name='articles'),
+    path('library', login_required(views.ArticlesLibrary.as_view(), login_url='/accounts/login'), name='library'),
     path('liked', login_required(views.LikedDisliked.as_view(), login_url='/accounts/login'), name='liked'),
     path('disliked', login_required(views.LikedDisliked.as_view(), login_url='/accounts/login'), name='disliked'),
 

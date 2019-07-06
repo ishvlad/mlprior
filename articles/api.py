@@ -3,6 +3,7 @@ import json
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Case, IntegerField, Count, When, Q
 from django.shortcuts import get_object_or_404
+from github import UnknownObjectException
 from rest_framework import permissions
 from rest_framework import viewsets, generics
 from rest_framework.pagination import PageNumberPagination
@@ -13,9 +14,10 @@ from articles.models import Article, BlogPost, BlogPostUser, ArticleUser, GitHub
     NGramsMonth, Categories, DefaultStore, UserTags
 from articles.serializers import ArticleDetailedSerializer, BlogPostSerializer, ArticleUserSerializer, \
     GitHubSerializer, ArticlesShortSerializer
+from core.models import Feedback
 from services.github.repository import GitHubRepo
-from utils.http import _success, _error
 from utils.recommendation import RelationModel
+from utils.http import _success, _error
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -131,7 +133,7 @@ class ArticleList(viewsets.GenericViewSet):
         elif 'recommended' in self.request.path:
             queryset = get_recommended_articles(self.request)
         elif 'recent' in self.request.path:
-            queryset = Article.objects.order_by('-date', 'id')
+            queryset = Article.objects.order_by('-date', 'title')
         elif 'popular' in self.request.path:
             queryset = Article.objects.annotate(n_likes=Count(Case(
                 When(article_user__like_dislike=True, then=1),

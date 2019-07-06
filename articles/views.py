@@ -295,6 +295,21 @@ class ArticlesView(ListView, AjaxListView, LoginRequiredMixin, ArticlesMixin):
         return context
 
 
+
+class ArticlesLibrary(ArticlesView, LoginRequiredMixin):
+    login_url = '/accounts/login'
+
+    def get_queryset(self):
+        return Article.objects.filter(article_user__user=self.request.user, article_user__in_lib=True)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_name'] = 'Library'
+        context['page_id'] = 'library'
+
+        return context
+
+
 class LikedDisliked(ArticlesView, LoginRequiredMixin):
     login_url = '/accounts/login'
 

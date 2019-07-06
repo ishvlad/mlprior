@@ -26,3 +26,4 @@ Celery
 webpreview
 redis
 celery[redis]
+mixpanel

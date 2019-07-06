@@ -20,6 +20,7 @@ class _color:
         else:
             return (all_colors * math.ceil(num/len(all_colors)))[:num]
 
+
 GLOBAL__CATEGORIES = {
     'astro-ph': "Astrophysics",
     'astro-ph.CO': "Cosmology and Nongalactic Astrophysics",

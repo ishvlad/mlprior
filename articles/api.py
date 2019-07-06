@@ -1,4 +1,5 @@
 import json
+import mixpanel
 
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Case, IntegerField, Count, When, Q
@@ -16,6 +17,7 @@ from articles.serializers import ArticleDetailedSerializer, BlogPostSerializer, 
     GitHubSerializer, ArticlesShortSerializer
 from core.models import Feedback
 from services.github.repository import GitHubRepo
+from utils.mixpanel_constants import MixPanel
 from utils.recommendation import RelationModel
 from utils.http import _success, _error
 
@@ -32,14 +34,24 @@ class StatsAPI(APIView):
     ]
 
     def get(self, request):
-
+        mp = mixpanel.Mixpanel(MixPanel.MIXPANEL_TOKEN)
         n_articles = Article.objects.count()
 
         if request.user.is_authenticated:
             articles_lib = Article.objects.filter(article_user__user=request.user, article_user__in_lib=True)
             n_articles_in_lib = articles_lib.count()
+            mp_user_id = request.user.id
+            mp.people_set(mp_user_id, {
+                '$ID': request.user.id,
+                '$Email': request.user.email
+            })
         else:
             n_articles_in_lib = 0
+            mp_user_id = -1
+            mp.people_set(mp_user_id, {
+                '$ID': -1,
+                '$Email': 'Anonym'
+            })
 
         n_blog_posts = BlogPost.objects.count()
         n_github_repos = GitHubRepository.objects.count()
@@ -50,6 +62,8 @@ class StatsAPI(APIView):
             'n_blog_posts': n_blog_posts,
             'n_githubs': n_github_repos,
         }
+
+        mp.track(mp_user_id, MixPanel.load_dashboard)
 
         return Response(data)
 
@@ -124,30 +138,46 @@ class ArticleList(viewsets.GenericViewSet):
     ]
 
     def get_queryset(self):
+        mp = mixpanel.Mixpanel(MixPanel.MIXPANEL_TOKEN)
+        if self.request.user.is_authenticated:
+            mp_user_id = self.request.user.id
+            mp.people_set(mp_user_id, {
+                '$ID': self.request.user.id,
+                '$Email': self.request.user.email
+            })
+        else:
+            mp_user_id = -1
+
         if 'saved' in self.request.path:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__in_lib=True)
+            mp.track(mp_user_id, MixPanel.load_articles_saved)
         elif 'disliked' in self.request.path:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=False)
+            mp.track(mp_user_id, MixPanel.load_articles_disliked)
         elif 'liked' in self.request.path:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=True)
+            mp.track(mp_user_id, MixPanel.load_articles_liked)
         elif 'recommended' in self.request.path:
             queryset = get_recommended_articles(self.request)
+            mp.track(mp_user_id, MixPanel.load_articles_recommended)
         elif 'recent' in self.request.path:
             queryset = Article.objects.order_by('-date', 'title')
+            mp.track(mp_user_id, MixPanel.load_articles_recent)
         elif 'popular' in self.request.path:
             queryset = Article.objects.annotate(n_likes=Count(Case(
                 When(article_user__like_dislike=True, then=1),
                 output_field=IntegerField(),
             ))).order_by('-n_likes', 'title')
+            mp.track(mp_user_id, MixPanel.load_articles_popular)
         elif 'related' in self.request.path:
             article_id = self.request.query_params.get('id')
-            print(article_id, 'article____id')
             article = Article.objects.get(id=article_id)
             queryset = get_related_articles(article)
         elif 'author' in self.request.path:
             author_name = self.request.query_params.get('name')
             author = Author.objects.get(name=author_name)
             queryset = author.articles.order_by('-date')
+            mp.track(mp_user_id, MixPanel.load_author_articles)
         else:
             raise Exception('Unknown API link')
 
@@ -207,7 +237,7 @@ class ArticleList(viewsets.GenericViewSet):
     def retrieve(self, request, pk=None):
         article = Article.objects.get(id=pk)
 
-        print(request.user)
+        mp = mixpanel.Mixpanel(MixPanel.MIXPANEL_TOKEN)
 
         if request.user.is_authenticated:
             article_user, is_created = ArticleUser.objects.get_or_create(user=request.user, article_id=pk)
@@ -217,10 +247,17 @@ class ArticleList(viewsets.GenericViewSet):
             like_dislike = article_user.like_dislike
             note = article_user.note
 
+            mp_user_id = request.user.id
+            mp.people_set(mp_user_id, {
+                '$ID': request.user.id,
+                '$Email': request.user.email
+            })
         else:
             in_lib = False
             like_dislike = None
             note = ''
+
+            mp_user_id = -1
 
         blogpost = BlogPost.objects.filter(article_id=pk)
         github_repo = GitHubRepository.objects.filter(article_id=pk)
@@ -241,6 +278,8 @@ class ArticleList(viewsets.GenericViewSet):
             'like_dislike': like_dislike,
             'authors': authors
         }, context={'request': request})
+
+        mp.track(mp_user_id, MixPanel.load_article_details)
         return Response(serializer.data)
 
 

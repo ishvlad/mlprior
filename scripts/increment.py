@@ -364,24 +364,6 @@ def calc_inner_vector(args):
 
     logger.info('FINISH making relations')
 
-from articles.models import Article, ArticleSentence
-from utils.summarization import SummarizationModel
-from django.db.models import Q
-import tqdm
-summ_model = SummarizationModel()
-
-for item in tqdm.tqdm(Article.objects.filter(Q(has_summary=False) & Q(has_txt=True))):
-    id, txt = item.id, item.articletext.text
-    summary = summ_model.summarize(txt)
-    ArticleSentence.objects.bulk_create([ArticleSentence(
-        article_origin_id=id,
-        sentence=s[0],
-        importance=s[1],
-        chronology=s[2]
-    ) for s in summary])
-    item.has_summary = True
-    item.save()
-
 @log.logging.timeit(logger, 'Calculate nearest articles', level=logging.INFO)
 def calc_nearest_articles(args):
     logger.info('START calculating nearest articles')

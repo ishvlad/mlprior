@@ -45,7 +45,7 @@ class SummarizationModel:
     def summarize(self, txt):
         sentences = self._preprocess(txt)
 
-        if len(sentences) == 0:
+        if len(sentences) <= 1:
             return []
 
         summary = summarize('\n'.join(sentences), ratio=self.num_sentences/len(sentences), split=True)

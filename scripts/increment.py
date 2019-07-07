@@ -393,16 +393,13 @@ def calc_nearest_articles(args):
     articles = new_articles.values(*cols)[:max_articles]
     articles = pd.DataFrame(articles)
 
+    db_articles = Article.objects.filter(has_neighbors=True)
+    targets = list(db_articles.values('id', 'articletext__tags', 'articletext__tags_norm', 'articletext__relations'))
+
     for id, source_tags, source_norm in tqdm.tqdm(articles[cols].values, desc='Calc distances'):
-        db_articles = Article.objects.filter(has_neighbors=True)
-        if db_articles.count() == 0:
-            Article.objects.filter(id=id).update(has_neighbors=True)
-            continue
-
         source_relations = {}
-        targets = db_articles.values('id', 'articletext__tags', 'articletext__tags_norm', 'articletext__relations')
 
-        for target in tqdm.tqdm(targets, desc='All articles in DB'):
+        for i, target in tqdm.tqdm(enumerate(targets), desc='All articles in DB'):
             dist = model.get_dist(source_tags, target['articletext__tags'],
                                   source_norm, target['articletext__tags_norm'])
 
@@ -413,12 +410,19 @@ def calc_nearest_articles(args):
             need_update, new_dict = model.update_dict(target['articletext__relations'], str(id), str(dist))
             if need_update:
                 target['articletext__relations'] = new_dict
+                targets[i]['articletext__relations'] = new_dict
                 ArticleText.objects.filter(article_origin_id=target['id']).update(
                     relations=target['articletext__relations']
                 )
 
         ArticleText.objects.filter(article_origin_id=id).update(relations=source_relations)
         Article.objects.filter(id=id).update(has_neighbors=True)
+        targets.append({
+            'id': id,
+            'articletext__tags': source_tags,
+            'articletext__tags_norm': source_norm,
+            'articletext__relations': source_relations
+        })
 
     logger.info('FINISH calculating nearest articles')
 

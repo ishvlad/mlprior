@@ -48,5 +48,5 @@ class SummarizationModel:
         summary = summarize('\n'.join(sentences), ratio=self.num_sentences/len(sentences), split=True)
 
         # tuples (chronology, sentence)
-        result = [list(enumerate(summary))]
+        result = list(enumerate(summary))
         return result

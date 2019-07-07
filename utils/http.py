@@ -1,4 +1,4 @@
-from requests import Response
+from rest_framework.response import Response
 
 
 def _error(error):

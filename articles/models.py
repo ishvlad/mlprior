@@ -50,7 +50,7 @@ class BlogPost(models.Model):
     rating = models.PositiveIntegerField(verbose_name='rating', default=0)
     approved = models.BooleanField(verbose_name='approved', default=False)
 
-    article = models.ForeignKey(Article, on_delete='CASCADE', related_name='blog_posts')
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='blog_posts')
     users = models.ManyToManyField(User, 'blog_posts', through='BlogPostUser')
     who_added = models.ForeignKey(User, related_name='added_blog_posts',
                                   on_delete=models.CASCADE)
@@ -74,7 +74,7 @@ class BlogPostInfo(models.Model):
 
 class GitHubRepository(models.Model):
     url = models.URLField(verbose_name='URL')
-    article = models.ForeignKey(Article, on_delete='CASCADE', related_name='github_repos')
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='github_repos')
     users = models.ManyToManyField(User, 'github_repos', through='GithubRepoUser')
     who_added = models.ForeignKey(User, related_name='added_github_repo', on_delete=models.CASCADE, default=1)
     rating = models.PositiveIntegerField(verbose_name='rating', default=0)
@@ -167,12 +167,21 @@ class ArticleText(models.Model):
 
 
 class ArticleSentence(models.Model):
-    article_origin = models.ForeignKey(Article, on_delete=models.CASCADE)
+    article_origin = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='summary_sentences')
 
     sentence = models.CharField(max_length=10000)
-    n_likes = models.IntegerField(default=0)
+    n_likes = models.PositiveIntegerField(default=0)
+    n_dislikes = models.PositiveIntegerField(default=0)
     importance = models.IntegerField(default=0)
     chronology = models.IntegerField(default=0)
+
+    class Meta:
+        verbose_name = 'Summary Sentence'
+        verbose_name_plural = 'Summary Sentences'
+
+    def __str__(self):
+        return '%s | %s' % (self.chronology, self.article_origin.title)
+
 
 class NGramsMonth(models.Model):
     label = models.CharField(max_length=6)  # bbb YY

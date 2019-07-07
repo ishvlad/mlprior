@@ -1,10 +1,9 @@
 import json
-import mixpanel
 
+import mixpanel
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Case, IntegerField, Count, When, Q
 from django.shortcuts import get_object_or_404
-from github import UnknownObjectException
 from rest_framework import permissions
 from rest_framework import viewsets, generics
 from rest_framework.pagination import PageNumberPagination
@@ -12,14 +11,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from articles.models import Article, BlogPost, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author, \
-    NGramsMonth, Categories, DefaultStore, UserTags
+    NGramsMonth, Categories, DefaultStore, UserTags, ArticleSentence
 from articles.serializers import ArticleDetailedSerializer, BlogPostSerializer, ArticleUserSerializer, \
-    GitHubSerializer, ArticlesShortSerializer
-from core.models import Feedback
+    GitHubSerializer, ArticlesShortSerializer, SummarySentenceSerializer
 from services.github.repository import GitHubRepo
+from utils.http import _success, _error
 from utils.mixpanel_constants import MixPanel
 from utils.recommendation import RelationModel
-from utils.http import _success, _error
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -145,7 +143,7 @@ class ArticleList(viewsets.GenericViewSet):
             queryset = get_recommended_articles(self.request)
             mp.track(mp_user_id, MixPanel.load_articles_recommended)
         elif 'recent' in self.request.path:
-            queryset = Article.objects.order_by('-date', 'title')
+            queryset = Article.objects.order_by('-date', 'id')
             mp.track(mp_user_id, MixPanel.load_articles_recent)
         elif 'popular' in self.request.path:
             queryset = Article.objects.annotate(n_likes=Count(Case(
@@ -238,6 +236,7 @@ class ArticleList(viewsets.GenericViewSet):
         blogpost = BlogPost.objects.filter(article_id=pk)
         github_repo = GitHubRepository.objects.filter(article_id=pk)
         authors = Author.objects.filter(articles__id=pk)
+        summary_sentences = article.summary_sentences.order_by('chronology')
 
         serializer = ArticleDetailedSerializer({
             'id': article.id,
@@ -252,11 +251,31 @@ class ArticleList(viewsets.GenericViewSet):
             'note': note,
             'in_lib': in_lib,
             'like_dislike': like_dislike,
-            'authors': authors
+            'authors': authors,
+            'summary': summary_sentences
         }, context={'request': request})
 
         mp.track(mp_user_id, MixPanel.load_article_details)
         return Response(serializer.data)
+
+
+class SummaryAPI(viewsets.GenericViewSet):
+    serializer_class = SummarySentenceSerializer()
+
+    def update(self, request, pk=None):
+        print(request.data, pk)
+
+        sentence = ArticleSentence.objects.get(id=pk)
+        is_like = request.data.get('is_like', False)
+
+        if is_like:
+            sentence.n_likes += 1
+        else:
+            sentence.n_dislikes += 1
+
+        sentence.save()
+
+        return _success()
 
 
 class BlogPostAPI(viewsets.GenericViewSet):

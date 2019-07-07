@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from core.serializers import UserSerializer
 from .models import BlogPost, Article, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author, GitHubInfo, \
-    BlogPostInfo
+    BlogPostInfo, ArticleSentence
 from .services import is_article_in_lib, like_dislike, get_note, is_blogpost_like, is_github_like
 
 
@@ -74,6 +74,12 @@ class GitHubSerializer(serializers.ModelSerializer):
         return 'github'
 
 
+class SummarySentenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArticleSentence
+        fields = ['sentence', 'id']
+
+
 class ArticleUserSerializer(serializers.ModelSerializer):
     # user = serializers.PrimaryKeyRelatedField()
 
@@ -133,6 +139,7 @@ class ArticleDetailedSerializer(serializers.ModelSerializer):
     in_lib = serializers.BooleanField()
     like_dislike = serializers.NullBooleanField()
     authors = AuthorSerializer(many=True, read_only=True)
+    summary = SummarySentenceSerializer(many=True)
 
     class Meta:
         model = Article
@@ -140,7 +147,7 @@ class ArticleDetailedSerializer(serializers.ModelSerializer):
             'id', 'title', 'abstract', 'url', 'authors',
             'blog_posts', 'githubs',
             'date', 'category', 'arxiv_id',
-            'note', 'in_lib', 'like_dislike'
+            'note', 'in_lib', 'like_dislike', 'summary'
         ]
 
 

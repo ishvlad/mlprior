@@ -3,7 +3,7 @@ from rest_framework import routers
 from rest_framework.documentation import include_docs_urls
 
 from articles.api import BlogPostAPI, ArticleList, BlogPostUserList, GitHubAPI, GitHubUserList, StatsAPI, \
-    TrendAPI, CategoriesAPI
+    TrendAPI, CategoriesAPI, SummaryAPI
 from articles.views import home
 from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView, FeedbackAPI
 
@@ -20,6 +20,7 @@ router.register(r'articles/disliked', ArticleList, base_name='articleslist')
 router.register(r'articles/details', ArticleList, base_name='articleslist')
 router.register(r'articles/related', ArticleList, base_name='articleslist')
 router.register(r'articles/author', ArticleList, base_name='articleslist')
+router.register(r'summary/feedback', SummaryAPI, base_name='summaryfeedback')
 router.register(r'blogpostuser', BlogPostUserList, base_name='blogpostuser')
 router.register(r'githubuser', GitHubUserList, base_name='githubuser')
 router.register(r'githubs', GitHubAPI, base_name='githubs')

@@ -1,6 +1,7 @@
 # import nltk
 # nltk.download('punkt')
 
+import string
 import numpy as np
 from nltk import tokenize
 from gensim.summarization import summarize
@@ -9,47 +10,43 @@ from gensim.summarization import summarize
 class SummarizationModel:
     def __init__(self):
         self.num_sentences = 5
-        self.min_sentence_length = 20
+        self.min_sentence_length = 40
+        self.min_percent = 0.7
 
     @staticmethod
-    def _preprocess(txt):
+    def _get_percent(sentence):
+        sentence = list(sentence.replace(' ', ''))
+        mask = np.in1d(sentence, list(string.ascii_letters))
+
+        return mask.sum() / len(sentence)
+
+    def _preprocess(self, txt):
         # replace empty lines with EOS
         txt = txt.replace('\n \n', '.')
 
         # replace line break with whitespace
         txt = txt.replace('\n', ' ')
 
-        return txt
-
-    def summarize(self, txt):
-        text = self._preprocess(txt)
-
         # text to sentences list
-        sentences = tokenize.sent_tokenize(text)
+        sentences = tokenize.sent_tokenize(txt)
 
         # delete short sentences
         lens = np.array([len(x) for x in sentences])
         sentences = np.array(sentences)[lens > self.min_sentence_length]
 
-        importance = {}
-        n = 1
-        # this loop need only for importance
-        while True:
-            summary = summarize('\n'.join(sentences), ratio=n/len(sentences), split=True)
+        # filter out all sentences with non-char elements (utf-8)
+        sentences = [s for s in sentences if sum(np.array(list(bytes(s, 'utf-8'))) > 128) == 0]
 
-            # less importance for bigger summary (only for new sentences)
-            for i, s in enumerate(summary):
-                if s not in importance:
-                    importance[s] = [n-1]
+        # filter out all sentences, where proportion of letters is less than self.min_percent
+        sentences = [s for s in sentences if SummarizationModel._get_percent(s) > self.min_percent]
 
-            # if done, append chronology
-            if len(summary) >= self.num_sentences:
-                for i, s in enumerate(summary):
-                    importance[s].append(i)
+        return sentences
 
-                break
-            n += 1
+    def summarize(self, txt):
+        sentences = self._preprocess(txt)
 
-        # tuples (sentence, importance, chronology)
-        result = [(k, v[0], v[1]) for k, v in importance.items()]
+        summary = summarize('\n'.join(sentences), ratio=self.num_sentences/len(sentences), split=True)
+
+        # tuples (chronology, sentence)
+        result = [list(enumerate(summary))]
         return result

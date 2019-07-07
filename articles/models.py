@@ -172,7 +172,6 @@ class ArticleSentence(models.Model):
     sentence = models.CharField(max_length=10000)
     n_likes = models.PositiveIntegerField(default=0)
     n_dislikes = models.PositiveIntegerField(default=0)
-    importance = models.IntegerField(default=0)
     chronology = models.IntegerField(default=0)
 
     class Meta:

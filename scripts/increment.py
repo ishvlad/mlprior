@@ -355,9 +355,8 @@ def calc_inner_vector(args):
         summary = summ_model.summarize(txt)
         ArticleSentence.objects.bulk_create([ArticleSentence(
             article_origin_id=id,
-            sentence=s[0],
-            importance=s[1],
-            chronology=s[2]
+            sentence=s[1][:10000],
+            chronology=s[0]
         ) for s in summary])
 
         Article.objects.filter(pk=id).update(has_inner_vector=True, has_summary=True)

@@ -353,13 +353,17 @@ def calc_inner_vector(args):
         item.save()
 
         summary = summ_model.summarize(txt)
-        ArticleSentence.objects.bulk_create([ArticleSentence(
-            article_origin_id=id,
-            sentence=s[1][:10000],
-            chronology=s[0]
-        ) for s in summary])
+        if len(summary) == 0:
+            has_summary = False
+        else:
+            ArticleSentence.objects.bulk_create([ArticleSentence(
+                article_origin_id=id,
+                sentence=s[1][:10000],
+                chronology=s[0]
+            ) for s in summary])
+            has_summary = True
 
-        Article.objects.filter(pk=id).update(has_inner_vector=True, has_summary=True)
+        Article.objects.filter(pk=id).update(has_inner_vector=True, has_summary=has_summary)
 
     logger.info('FINISH making relations')
 

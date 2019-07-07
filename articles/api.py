@@ -34,6 +34,7 @@ class StatsAPI(APIView):
     def get(self, request):
         mp = mixpanel.Mixpanel(MixPanel.MIXPANEL_TOKEN)
         mp_user_id = MixPanel.user_set(mp, request.user)
+        mp.track(mp_user_id, MixPanel.load_dashboard)
 
         n_articles = Article.objects.count()
 
@@ -53,7 +54,6 @@ class StatsAPI(APIView):
             'n_githubs': n_github_repos,
         }
 
-        mp.track(mp_user_id, MixPanel.load_dashboard)
         return Response(data)
 
 
@@ -220,6 +220,7 @@ class ArticleList(viewsets.GenericViewSet):
         article = Article.objects.get(id=pk)
         mp = mixpanel.Mixpanel(MixPanel.MIXPANEL_TOKEN)
         mp_user_id = MixPanel.user_set(mp, request.user)
+        mp.track(mp_user_id, MixPanel.load_article_details)
 
         if request.user.is_authenticated:
             article_user, is_created = ArticleUser.objects.get_or_create(user=request.user, article_id=pk)
@@ -255,7 +256,6 @@ class ArticleList(viewsets.GenericViewSet):
             'summary': summary_sentences
         }, context={'request': request})
 
-        mp.track(mp_user_id, MixPanel.load_article_details)
         return Response(serializer.data)
 
 

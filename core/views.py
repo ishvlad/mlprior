@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from core.exceptions import ProfileDoesNotExist
 from core.models import Profile, Feedback
 from utils.http import _success, _error
+from utils.mixpanel import MixPanel, MixPanel_actions
 from .renderers import UserJSONRenderer, ProfileJSONRenderer
 from .serializers import LoginSerializer, RegistrationSerializer, UserSerializer, ProfileSerializer
 
@@ -114,6 +115,39 @@ class LandingView(TemplateView):
     template_name = 'landing.html'
 
 
+class MixPanelAPI(APIView):
+    permission_classes = [
+        permissions.AllowAny
+    ]
+
+    def post(self, request):
+        mp = MixPanel(request.user)
+
+        action = request.data.get('action', None)
+        if action is None:
+            return Response(status=400, data={
+                "info": "ERROR",
+                "message": "Action could not be None"
+            })
+
+        valid_actions = [v for k, v in MixPanel_actions.__dict__.items() if not k.startswith('__')]
+        if action not in valid_actions:
+            return Response(status=400, data={
+                "info": "ERROR",
+                "message": "Action is not valid"
+            })
+
+        properties = request.data
+        del properties['action']
+
+        if len(properties) == 0:
+            mp.track(action)
+        else:
+            mp.track(action, properties)
+
+        return _success()
+
+
 class FeedbackAPI(APIView):
     permission_classes = [
         permissions.AllowAny
@@ -144,6 +178,9 @@ class FeedbackAPI(APIView):
             })
         else:
             type = int(type)
+
+        mp = MixPanel(request.user)
+        mp.track(MixPanel_actions.feedback, {'type': type})
 
         # save to DB
         item = Feedback(type=type, name=name, email=email, message=message)

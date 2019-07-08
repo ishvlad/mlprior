@@ -5,7 +5,8 @@ from rest_framework.documentation import include_docs_urls
 from articles.api import BlogPostAPI, ArticleList, BlogPostUserList, GitHubAPI, GitHubUserList, StatsAPI, \
     TrendAPI, CategoriesAPI, SummaryAPI
 from articles.views import home
-from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView, FeedbackAPI
+from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView, FeedbackAPI, \
+    MixPanelAPI
 
 # from core.forms import UserLoginForm
 
@@ -29,10 +30,10 @@ apiurls = [
     path('api/', include(router.urls)),
     path('api/stats', StatsAPI.as_view()),
     path('api/feedback', FeedbackAPI.as_view()),
+    path('api/mplog', MixPanelAPI.as_view()),
     path('api/user', UserRetrieveUpdateAPIView.as_view()),
     path('api/auth/signup', RegistrationAPIView.as_view()),
     path('api/auth/login', LoginAPIView.as_view()),
-
     path('api/visualization/trends', TrendAPI.as_view()),
     path('api/visualization/categories', CategoriesAPI.as_view())
 ]

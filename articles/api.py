@@ -1,6 +1,5 @@
 import json
 
-import mixpanel
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Case, IntegerField, Count, When, Q
 from django.shortcuts import get_object_or_404
@@ -16,7 +15,7 @@ from articles.serializers import ArticleDetailedSerializer, BlogPostSerializer, 
     GitHubSerializer, ArticlesShortSerializer, SummarySentenceSerializer
 from services.github.repository import GitHubRepo
 from utils.http import _success, _error
-from utils.mixpanel_constants import MixPanel
+from utils.mixpanel import MixPanel, MixPanel_actions
 from utils.recommendation import RelationModel
 
 
@@ -32,9 +31,8 @@ class StatsAPI(APIView):
     ]
 
     def get(self, request):
-        mp = mixpanel.Mixpanel(MixPanel.MIXPANEL_TOKEN)
-        mp_user_id = MixPanel.user_set(mp, request.user)
-        mp.track(mp_user_id, MixPanel.load_dashboard)
+        mp = MixPanel(request.user)
+        mp.track(MixPanel_actions.load_dashboard)
 
         n_articles = Article.objects.count()
 
@@ -127,30 +125,29 @@ class ArticleList(viewsets.GenericViewSet):
     ]
 
     def get_queryset(self):
-        mp = mixpanel.Mixpanel(MixPanel.MIXPANEL_TOKEN)
-        mp_user_id = MixPanel.user_set(mp, self.request.user)
+        mp = MixPanel(self.request.user)
+        mp.track(MixPanel_actions.load_dashboard)
 
         if 'saved' in self.request.path:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__in_lib=True)
-            mp.track(mp_user_id, MixPanel.load_articles_saved)
+            mp.track(MixPanel_actions.load_articles_library)
         elif 'disliked' in self.request.path:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=False)
-            mp.track(mp_user_id, MixPanel.load_articles_disliked)
         elif 'liked' in self.request.path:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=True)
-            mp.track(mp_user_id, MixPanel.load_articles_liked)
+            mp.track(MixPanel_actions.load_articles_liked)
         elif 'recommended' in self.request.path:
             queryset = get_recommended_articles(self.request)
-            mp.track(mp_user_id, MixPanel.load_articles_recommended)
+            mp.track(MixPanel_actions.load_articles_recommended)
         elif 'recent' in self.request.path:
             queryset = Article.objects.order_by('-date', 'id')
-            mp.track(mp_user_id, MixPanel.load_articles_recent)
+            mp.track(MixPanel_actions.load_articles_recent)
         elif 'popular' in self.request.path:
             queryset = Article.objects.annotate(n_likes=Count(Case(
                 When(article_user__like_dislike=True, then=1),
                 output_field=IntegerField(),
             ))).order_by('-n_likes', 'title')
-            mp.track(mp_user_id, MixPanel.load_articles_popular)
+            mp.track(MixPanel_actions.load_articles_popular)
         elif 'related' in self.request.path:
             article_id = self.request.query_params.get('id')
             article = Article.objects.get(id=article_id)
@@ -159,7 +156,7 @@ class ArticleList(viewsets.GenericViewSet):
             author_name = self.request.query_params.get('name')
             author = Author.objects.get(name=author_name)
             queryset = author.articles.order_by('-date')
-            mp.track(mp_user_id, MixPanel.load_author_articles)
+            mp.track(MixPanel_actions.load_articles_author)
         else:
             raise Exception('Unknown API link')
 
@@ -218,9 +215,8 @@ class ArticleList(viewsets.GenericViewSet):
 
     def retrieve(self, request, pk=None):
         article = Article.objects.get(id=pk)
-        mp = mixpanel.Mixpanel(MixPanel.MIXPANEL_TOKEN)
-        mp_user_id = MixPanel.user_set(mp, request.user)
-        mp.track(mp_user_id, MixPanel.load_article_details)
+        mp = MixPanel(request.user)
+        mp.track(MixPanel_actions.load_article_details)
 
         if request.user.is_authenticated:
             article_user, is_created = ArticleUser.objects.get_or_create(user=request.user, article_id=pk)

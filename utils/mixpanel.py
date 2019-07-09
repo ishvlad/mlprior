@@ -39,7 +39,7 @@ class MixPanel_actions:
     load_article_details = 'LOAD article.details'               # done
 
     action_article_pdf = 'OUT article.pdf'
-    action_article_summary = 'SHOW article.summary'
+    action_article_summary = 'SHOW article.summary'             # done
     action_article_blogpts = 'SHOW article.blogposts'
     action_article_related = 'SHOW article.related'
 

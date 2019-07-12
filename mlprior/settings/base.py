@@ -285,13 +285,6 @@ REST_FRAMEWORK = {
     'NON_FIELD_ERRORS_KEY': 'error',
 }
 
-CORS_ORIGIN_WHITELIST = [
-    'http://localhost:3000',
-    'http://localhost:8000',
-    'http://localhost:4200',
-    'http://127.0.0.1:4200',
-    'http://mlprior.com'
-]
 
 
 # REDIS related settings

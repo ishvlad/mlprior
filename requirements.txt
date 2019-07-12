@@ -27,3 +27,4 @@ webpreview
 redis
 celery[redis]
 mixpanel
+django-celery-beat

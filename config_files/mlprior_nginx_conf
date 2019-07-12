@@ -1,0 +1,59 @@
+server {
+        listen 80;
+        server_name www.mlprior.com;
+        return 301 $scheme://mlprior.com$request_uri;
+}
+
+server {
+  listen 80;
+  listen 443 ssl;
+  server_name mlprior.com;
+  charset utf-8;
+  client_max_body_size 32M;
+
+  root /var/www/html/dist/mlprior-frontend/;;
+  index index.html;
+
+#  error_page 404 /404.html;
+#  error_page 502 /service-unavailable.html;
+#  error_page 503 /service-unavailable.html;
+
+  location ~^/((?!static|media).)*\.(gif|jpg|jpeg|png|js|css|woff|woff2|eot|svg|ttf)$ {
+    gzip_static on;
+    expires 1y;
+    add_header Cache-Control public;
+    add_header ETag "";
+  }
+
+#  location /media  {
+#    alias /project-RW/media;
+#    gzip_static on;
+#    expires 1y;
+#    add_header Cache-Control public;
+#    add_header ETag "";
+#    access_log off;
+#  }
+
+  location /static {
+    alias /project/static;
+    gzip_static on;
+    expires 1y;
+    add_header Cache-Control public;
+    add_header ETag "";
+    access_log off;
+  }
+
+  location ~^/(admin|django-admin|api|ckeditor) {
+    include uwsgi_params;
+    uwsgi_pass django-project;
+    uwsgi_read_timeout 300;
+    proxy_set_header X-Forwarded-Protocol $scheme;
+  }
+
+  location / {
+    expires -1;
+    add_header Pragma "no-cache";
+    add_header Cache-Control "no-store, no-cache, must-revalidate, post-check=0, pre-check=0";
+    try_files $uri $uri/ /index.html =404;
+  }
+}

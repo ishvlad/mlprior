@@ -83,7 +83,7 @@ class SummarySentenceSerializer(serializers.ModelSerializer):
         fields = ['sentence', 'id', 'nLikes']
 
     def get_nLikes(self, object):
-        return np.random.randint(10, 100)
+        return np.abs(5 * np.random.standard_cauchy(size=1)).astype(int)[0]
 
 
 class ArticleUserSerializer(serializers.ModelSerializer):

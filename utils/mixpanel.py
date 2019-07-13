@@ -9,11 +9,11 @@ class MixPanel_actions:
     load_login = 'LOAD login'
     load_signup = 'LOAD signup'
 
-    login = 'LOGIN'
-    signup = 'SIGNUP'
-    logout = 'LOGOUT'
+    login = 'LOGIN'                                             # done
+    signup = 'SIGNUP'                                           # done
+    logout = 'LOGOUT'                                           # done
     feedback = 'FEEDBACK'                                       # done
-    search = 'SEARCH'
+    search = 'SEARCH'                                           # done
 
     ###############
     #  DASHBOARD  #
@@ -38,10 +38,10 @@ class MixPanel_actions:
 
     load_article_details = 'LOAD article.details'               # done
 
-    action_article_pdf = 'OUT article.pdf'
+    action_article_pdf = 'OUT article.pdf'                      # done
     action_article_summary = 'SHOW article.summary'             # done
     action_article_blogpts = 'SHOW article.blogposts'
-    action_article_related = 'SHOW article.related'
+    action_article_related = 'SHOW article.related'             # done
 
 
 class MixPanel:

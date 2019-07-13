@@ -4,6 +4,7 @@ from core.serializers import UserSerializer
 from .models import BlogPost, Article, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author, GitHubInfo, \
     BlogPostInfo, ArticleSentence
 from .services import is_article_in_lib, like_dislike, get_note, is_blogpost_like, is_github_like
+import numpy as np
 
 
 class BlogPostInfoSerializer(serializers.ModelSerializer):
@@ -75,9 +76,14 @@ class GitHubSerializer(serializers.ModelSerializer):
 
 
 class SummarySentenceSerializer(serializers.ModelSerializer):
+    nLikes = serializers.SerializerMethodField()
+
     class Meta:
         model = ArticleSentence
-        fields = ['sentence', 'id']
+        fields = ['sentence', 'id', 'nLikes']
+
+    def get_nLikes(self, object):
+        return np.random.randint(10, 100)
 
 
 class ArticleUserSerializer(serializers.ModelSerializer):

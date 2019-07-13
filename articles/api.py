@@ -233,7 +233,7 @@ class ArticleList(viewsets.GenericViewSet):
         blogpost = BlogPost.objects.filter(article_id=pk)
         github_repo = GitHubRepository.objects.filter(article_id=pk)
         authors = Author.objects.filter(articles__id=pk)
-        summary_sentences = article.summary_sentences.order_by('chronology')
+        summary_sentences = article.summary_sentences.order_by('?')
 
         serializer = ArticleDetailedSerializer({
             'id': article.id,

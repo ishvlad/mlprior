@@ -107,6 +107,7 @@ class ArticlesShortSerializer(serializers.ModelSerializer):
     like_dislike = serializers.SerializerMethodField()
     note = serializers.SerializerMethodField()
     authors = AuthorSerializer(many=True, read_only=True)
+    summary_sentences = SummarySentenceSerializer(many=True)
 
     class Meta:
         model = Article
@@ -122,7 +123,8 @@ class ArticlesShortSerializer(serializers.ModelSerializer):
             'in_lib',
             'like_dislike',
             'note',
-            'has_neighbors'
+            'has_neighbors',
+            'summary_sentences'
         ]
 
     def get_in_lib(self, obj):
@@ -145,7 +147,7 @@ class ArticleDetailedSerializer(serializers.ModelSerializer):
     in_lib = serializers.BooleanField()
     like_dislike = serializers.NullBooleanField()
     authors = AuthorSerializer(many=True, read_only=True)
-    summary = SummarySentenceSerializer(many=True)
+    summary_sentences = SummarySentenceSerializer(many=True)
 
     class Meta:
         model = Article
@@ -153,7 +155,7 @@ class ArticleDetailedSerializer(serializers.ModelSerializer):
             'id', 'title', 'abstract', 'url', 'authors',
             'blog_posts', 'githubs',
             'date', 'category', 'arxiv_id',
-            'note', 'in_lib', 'like_dislike', 'summary'
+            'note', 'in_lib', 'like_dislike', 'summary_sentences'
         ]
 
 

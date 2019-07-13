@@ -249,7 +249,7 @@ class ArticleList(viewsets.GenericViewSet):
             'in_lib': in_lib,
             'like_dislike': like_dislike,
             'authors': authors,
-            'summary': summary_sentences
+            'summary_sentences': summary_sentences
         }, context={'request': request})
 
         return Response(serializer.data)

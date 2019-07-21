@@ -126,44 +126,68 @@ class ArticleList(viewsets.GenericViewSet):
 
     def get_queryset(self):
         mp = MixPanel(self.request.user)
-        mp.track(MixPanel_actions.load_dashboard)
 
-        if 'saved' in self.request.path:
+        params = self.request.query_params
+
+        _type = params.get('type')
+
+        if 'saved' == _type:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__in_lib=True)
             mp.track(MixPanel_actions.load_articles_library)
-        elif 'disliked' in self.request.path:
+        elif 'disliked' == _type:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=False)
-        elif 'liked' in self.request.path:
+        elif 'liked' == _type:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=True)
             mp.track(MixPanel_actions.load_articles_liked)
-        elif 'recommended' in self.request.path:
+        elif 'recommended' == _type:
             queryset = get_recommended_articles(self.request)
             mp.track(MixPanel_actions.load_articles_recommended)
-        elif 'recent' in self.request.path:
+        elif 'recent' == _type:
             queryset = Article.objects.order_by('-date', 'id')
             mp.track(MixPanel_actions.load_articles_recent)
-        elif 'popular' in self.request.path:
+        elif 'popular' == _type:
             queryset = Article.objects.annotate(n_likes=Count(Case(
                 When(article_user__like_dislike=True, then=1),
                 output_field=IntegerField(),
             ))).order_by('-n_likes', 'title')
             mp.track(MixPanel_actions.load_articles_popular)
-        elif 'related' in self.request.path:
+        elif 'details' == _type:
             article_id = self.request.query_params.get('id')
             article = Article.objects.get(id=article_id)
             queryset = get_related_articles(article)
-        elif 'author' in self.request.path:
+        elif 'author' == _type:
             author_name = self.request.query_params.get('name')
             author = Author.objects.get(name=author_name)
             queryset = author.articles.order_by('-date')
+            print(queryset)
             mp.track(MixPanel_actions.load_articles_author)
         else:
             raise Exception('Unknown API link')
 
         return queryset
 
+    def filter_queryset(self, queryset):
+        start_year = self.request.query_params.get('startYear')
+        end_year = self.request.query_params.get('endYear')
+
+        start_date = '%s-01-01' % start_year
+        end_date = '%s-12-31' % end_year
+
+        queryset = queryset.filter(date__gte=start_date, date__lte=end_date)
+
+        categories = self.request.query_params.get('categories')
+        print('CATEGORIES:', categories)
+
+        if categories != '':
+            categories_list = categories.split(',')
+            queryset = queryset.filter(category__in=categories_list)
+
+        return queryset
+
     def list(self, request):
         queryset = self.get_queryset()
+
+        queryset = self.filter_queryset(queryset)
 
         page = request.query_params.get('page')
         if page is not None:
@@ -234,6 +258,7 @@ class ArticleList(viewsets.GenericViewSet):
         github_repo = GitHubRepository.objects.filter(article_id=pk)
         authors = Author.objects.filter(articles__id=pk)
         summary_sentences = article.summary_sentences.order_by('?')
+        has_neighbors = article.has_neighbors
 
         serializer = ArticleDetailedSerializer({
             'id': article.id,
@@ -249,7 +274,8 @@ class ArticleList(viewsets.GenericViewSet):
             'in_lib': in_lib,
             'like_dislike': like_dislike,
             'authors': authors,
-            'summary_sentences': summary_sentences
+            'summary_sentences': summary_sentences,
+            'has_neighbors': has_neighbors
         }, context={'request': request})
 
         return Response(serializer.data)

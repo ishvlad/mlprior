@@ -13,6 +13,7 @@ from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetri
 router = routers.DefaultRouter()
 router.register(r'blogposts', BlogPostAPI, base_name='blogposts')
 router.register(r'articles', ArticleList, base_name='articleslist')
+router.register(r'articles/details', ArticleList, base_name='articleslist')
 router.register(r'summary/feedback', SummaryAPI, base_name='summaryfeedback')
 router.register(r'blogpostuser', BlogPostUserList, base_name='blogpostuser')
 router.register(r'githubuser', GitHubUserList, base_name='githubuser')

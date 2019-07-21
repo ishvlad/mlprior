@@ -155,7 +155,7 @@ class ArticleDetailedSerializer(serializers.ModelSerializer):
             'id', 'title', 'abstract', 'url', 'authors',
             'blog_posts', 'githubs',
             'date', 'category', 'arxiv_id',
-            'note', 'in_lib', 'like_dislike', 'summary_sentences'
+            'note', 'in_lib', 'like_dislike', 'summary_sentences', 'has_neighbors'
         ]
 
 

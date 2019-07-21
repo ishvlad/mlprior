@@ -94,7 +94,14 @@ def _get_max_articles(articles, max_articles):
 @log.logging.timeit(logger, 'Download Meta Time', level=logging.INFO)
 def download_meta(args):
     logger.info('START downloading metas from arXiv')
-    arxiv_api = ArXivAPI(args.sleep_time)
+
+    categories = ['cat:' + c for c in GLOBAL__CATEGORIES if c.startswith('cs.') and np.random.rand() < 0.1]
+    if len(categories) == 0:
+        categories = ['cat:' + c for c in GLOBAL__CATEGORIES if c.startswith('cs.')]
+
+    logger.info('Selected categories (' + str(len(categories)) + '): ' + ', '.join(categories))
+
+    arxiv_api = ArXivAPI(args.sleep_time, categories)
     db = DBManager()
 
     proba_for_random = 0.2
@@ -113,7 +120,6 @@ def download_meta(args):
             start_random = start
 
         entries = arxiv_api.search(
-            categories=['cat:' + c for c in GLOBAL__CATEGORIES if c.startswith('cs.')],
             start=start_random, max_result=args.batch_size,
             is_random=random_search
         )

@@ -84,7 +84,7 @@ def main(args):
             if task == 'pdf2txt' or task == 'download_meta' or task == 'inner_vector' or task == 'category_bar' \
                     or task == 'ngrams':
                 max_articles *= 5
-            if task == 'update_default' and numpy.random.rand() > 0.1:
+            if task == 'update_default' and numpy.random.rand() > 0.05:
                 if len(coin) == 1:
                     return
                 else:

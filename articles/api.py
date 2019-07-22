@@ -173,17 +173,19 @@ class ArticleList(viewsets.GenericViewSet):
 
     def filter_queryset(self, queryset):
         start_year = self.request.query_params.get('startYear')
+        if start_year:
+            start_date = '%s-01-01' % start_year
+            queryset = queryset.filter(date__gte=start_date)
+
         end_year = self.request.query_params.get('endYear')
-
-        start_date = '%s-01-01' % start_year
-        end_date = '%s-12-31' % end_year
-
-        queryset = queryset.filter(date__gte=start_date, date__lte=end_date)
+        if end_year:
+            end_date = '%s-12-31' % end_year
+            queryset = queryset.filter(date__lte=end_date)
 
         categories = self.request.query_params.get('categories')
         print('CATEGORIES:', categories)
 
-        if categories != '':
+        if categories:
             categories_list = categories.split(',')
             queryset = queryset.filter(category__in=categories_list)
 
@@ -200,7 +202,7 @@ class ArticleList(viewsets.GenericViewSet):
             serializer = self.serializer_class(paginate_queryset, many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
 
-        serializer = ArticlesShortSerializer(queryset, many=True)
+        serializer = ArticlesShortSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
     def update(self, request, pk=None):

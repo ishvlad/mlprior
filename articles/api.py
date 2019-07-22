@@ -13,6 +13,7 @@ from articles.models import Article, BlogPost, BlogPostUser, ArticleUser, GitHub
     NGramsMonth, Categories, DefaultStore, UserTags, ArticleSentence
 from articles.serializers import ArticleDetailedSerializer, BlogPostSerializer, ArticleUserSerializer, \
     GitHubSerializer, ArticlesShortSerializer, SummarySentenceSerializer
+from search.documents import ArticleDocument
 from services.github.repository import GitHubRepo
 from utils.http import _success, _error
 from utils.mixpanel import MixPanel, MixPanel_actions
@@ -161,6 +162,10 @@ class ArticleList(viewsets.GenericViewSet):
             queryset = author.articles.order_by('-date')
             print(queryset)
             mp.track(MixPanel_actions.load_articles_author)
+        elif 'search' == _type:
+            q = self.request.GET.get('q')
+            articles = ArticleDocument.search().query('multi_match', query=q, fields=['title', 'abstract'])
+            queryset = articles[:500].to_queryset()
         else:
             raise Exception('Unknown API link')
 

@@ -42,7 +42,6 @@ def update_github_info(github_id):
 
 @app.task(max_retries=10, name='mlprior.articles.tasks.update_blog_post_info')
 def update_blog_post_info(blogpost_id):
-    print('zopa!!!!')
     blog_post = BlogPost.objects.get(id=blogpost_id)
 
     title, description, image = web_preview(blog_post.url)
@@ -63,17 +62,17 @@ def update_blog_post_info(blogpost_id):
     blogpost_info.save()
 
 
-@app.task(name='mlprior.articles.tasks.trigger_github_updates')
-def trigger_github_updates():
-    print('trigger_github_updates')
-    for github in GitHubRepository.objects.all():
-        print(github.url)
-        update_github_info.delay(github.id)
-
-
-@app.task(name='mlprior.articles.tasks.trigger_resources_updates')
-def trigger_resources_updates():
-    print('trigger_resources_updates')
-    for blogpost in BlogPost.objects.all():
-        print(blogpost.url)
-        update_blog_post_info.delay(blogpost.id)
+# @app.task(name='mlprior.articles.tasks.trigger_github_updates')
+# def trigger_github_updates():
+#     print('trigger_github_updates')
+#     for github in GitHubRepository.objects.all():
+#         print(github.url)
+#         update_github_info.delay(github.id)
+#
+#
+# @app.task(name='mlprior.articles.tasks.trigger_resources_updates')
+# def trigger_resources_updates():
+#     print('trigger_resources_updates')
+#     for blogpost in BlogPost.objects.all():
+#         print(blogpost.url)
+#         update_blog_post_info.delay(blogpost.id)

@@ -1,78 +1,77 @@
 from rest_framework import serializers
 
 from core.serializers import UserSerializer
-from .models import BlogPost, Article, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author, GitHubInfo, \
-    BlogPostInfo, ArticleSentence
-from .services import is_article_in_lib, like_dislike, get_note, is_blogpost_like, is_github_like
+from .models import Article, ArticleUser, Author, ArticleSentence
+from .services import is_article_in_lib, like_dislike, get_note
 import numpy as np
 
 
-class BlogPostInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BlogPostInfo
-        fields = [
-            'title', 'description', 'image'
-        ]
-
-
-class BlogPostSerializer(serializers.ModelSerializer):
-    users = UserSerializer(many=True, read_only=True)
-    who_added = UserSerializer(many=False, read_only=True)
-    is_like = serializers.SerializerMethodField()
-    info = BlogPostInfoSerializer(many=False)
-    type = serializers.SerializerMethodField()
-
-    class Meta:
-        model = BlogPost
-        fields = [
-            'id', 'url', 'users', 'rating',
-            'approved', 'who_added', 'is_like',
-            'info', 'type'
-        ]
-
-    def get_is_like(self, obj):
-        user = self.context.get('request').user
-        return is_blogpost_like(obj.id, user)
-
-    def get_type(self, obj):
-        return 'resource'
-
-
-class GitHubInfoSerializer(serializers.ModelSerializer):
-    topics = serializers.SerializerMethodField()
-    languages = serializers.HStoreField()
-
-    class Meta:
-        model = GitHubInfo
-        fields = [
-            'title', 'framework', 'languages',
-            'n_stars', 'language', 'topics', 'description'
-        ]
-
-    def get_topics(self, obj):
-        return obj.topics.names()
-
-
-class GitHubSerializer(serializers.ModelSerializer):
-    users = UserSerializer(many=True, read_only=True)
-    who_added = UserSerializer(many=False, read_only=True)
-    is_like = serializers.SerializerMethodField()
-    info = GitHubInfoSerializer(many=False)
-    type = serializers.SerializerMethodField()
-
-    class Meta:
-        model = GitHubRepository
-        fields = [
-            'id', 'url', 'users', 'info',
-            'rating', 'who_added', 'is_like', 'type'
-        ]
-
-    def get_is_like(self, obj):
-        user = self.context.get('request').user
-        return is_github_like(obj.id, user)
-
-    def get_type(self, obj):
-        return 'github'
+# class BlogPostInfoSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = BlogPostInfo
+#         fields = [
+#             'title', 'description', 'image'
+#         ]
+#
+#
+# class BlogPostSerializer(serializers.ModelSerializer):
+#     users = UserSerializer(many=True, read_only=True)
+#     who_added = UserSerializer(many=False, read_only=True)
+#     is_like = serializers.SerializerMethodField()
+#     info = BlogPostInfoSerializer(many=False)
+#     type = serializers.SerializerMethodField()
+#
+#     class Meta:
+#         model = BlogPost
+#         fields = [
+#             'id', 'url', 'users', 'rating',
+#             'approved', 'who_added', 'is_like',
+#             'info', 'type'
+#         ]
+#
+#     def get_is_like(self, obj):
+#         user = self.context.get('request').user
+#         return is_blogpost_like(obj.id, user)
+#
+#     def get_type(self, obj):
+#         return 'resource'
+#
+#
+# class GitHubInfoSerializer(serializers.ModelSerializer):
+#     topics = serializers.SerializerMethodField()
+#     languages = serializers.HStoreField()
+#
+#     class Meta:
+#         model = GitHubInfo
+#         fields = [
+#             'title', 'framework', 'languages',
+#             'n_stars', 'language', 'topics', 'description'
+#         ]
+#
+#     def get_topics(self, obj):
+#         return obj.topics.names()
+#
+#
+# class GitHubSerializer(serializers.ModelSerializer):
+#     users = UserSerializer(many=True, read_only=True)
+#     who_added = UserSerializer(many=False, read_only=True)
+#     is_like = serializers.SerializerMethodField()
+#     info = GitHubInfoSerializer(many=False)
+#     type = serializers.SerializerMethodField()
+#
+#     class Meta:
+#         model = GitHubRepository
+#         fields = [
+#             'id', 'url', 'users', 'info',
+#             'rating', 'who_added', 'is_like', 'type'
+#         ]
+#
+#     def get_is_like(self, obj):
+#         user = self.context.get('request').user
+#         return is_github_like(obj.id, user)
+#
+#     def get_type(self, obj):
+#         return 'github'
 
 
 class SummarySentenceSerializer(serializers.ModelSerializer):
@@ -141,8 +140,8 @@ class ArticlesShortSerializer(serializers.ModelSerializer):
 
 
 class ArticleDetailedSerializer(serializers.ModelSerializer):
-    blog_posts = BlogPostSerializer(many=True, read_only=True)
-    githubs = GitHubSerializer(many=True, read_only=True)
+    # blog_posts = BlogPostSerializer(many=True, read_only=True)
+    # githubs = GitHubSerializer(many=True, read_only=True)
     note = serializers.CharField()
     in_lib = serializers.BooleanField()
     like_dislike = serializers.NullBooleanField()
@@ -153,19 +152,19 @@ class ArticleDetailedSerializer(serializers.ModelSerializer):
         model = Article
         fields = [
             'id', 'title', 'abstract', 'url', 'authors',
-            'blog_posts', 'githubs',
+            # 'blog_posts', 'githubs',
             'date', 'category', 'arxiv_id',
             'note', 'in_lib', 'like_dislike', 'summary_sentences', 'has_neighbors'
         ]
 
 
-class BlogPostUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BlogPostUser
-        fields = '__all__'
-
-
-class GitHubUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GithubRepoUser
-        fields = '__all__'
+# class BlogPostUserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = BlogPostUser
+#         fields = '__all__'
+#
+#
+# class GitHubUserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = GithubRepoUser
+#         fields = '__all__'

@@ -2,22 +2,21 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework.documentation import include_docs_urls
 
-from articles.api import BlogPostAPI, ArticleList, BlogPostUserList, GitHubAPI, GitHubUserList, StatsAPI, \
+from articles.api import ArticleList, StatsAPI, \
     TrendAPI, CategoriesAPI, SummaryAPI
-from articles.views import home
 from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView, FeedbackAPI, \
     MixPanelAPI
 
 # from core.forms import UserLoginForm
 
 router = routers.DefaultRouter()
-router.register(r'blogposts', BlogPostAPI, base_name='blogposts')
+# router.register(r'blogposts', BlogPostAPI, base_name='blogposts')
 router.register(r'articles', ArticleList, base_name='articleslist')
 router.register(r'articles/details', ArticleList, base_name='articleslist')
 router.register(r'summary/feedback', SummaryAPI, base_name='summaryfeedback')
-router.register(r'blogpostuser', BlogPostUserList, base_name='blogpostuser')
-router.register(r'githubuser', GitHubUserList, base_name='githubuser')
-router.register(r'githubs', GitHubAPI, base_name='githubs')
+# router.register(r'blogpostuser', BlogPostUserList, base_name='blogpostuser')
+# router.register(r'githubuser', GitHubUserList, base_name='githubuser')
+# router.register(r'githubs', GitHubAPI, base_name='githubs')
 
 apiurls = [
     path('api/', include(router.urls)),
@@ -33,6 +32,5 @@ apiurls = [
 
 urlpatterns = [
   path('', LandingView.as_view(), name='landing'),
-  path('home/', home, name='home'),
   path('docs/', include_docs_urls(title='ML p(r)ior API'))
 ] + apiurls

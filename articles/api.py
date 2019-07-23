@@ -9,10 +9,10 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from articles.models import Article, BlogPost, BlogPostUser, ArticleUser, GitHubRepository, GithubRepoUser, Author, \
+from articles.models import Article, ArticleUser, Author, \
     NGramsMonth, Categories, DefaultStore, UserTags, ArticleSentence
-from articles.serializers import ArticleDetailedSerializer, BlogPostSerializer, ArticleUserSerializer, \
-    GitHubSerializer, ArticlesShortSerializer, SummarySentenceSerializer
+from articles.serializers import ArticleDetailedSerializer, ArticleUserSerializer, ArticlesShortSerializer, SummarySentenceSerializer
+from search.documents import ArticleDocument
 from services.github.repository import GitHubRepo
 from utils.http import _success, _error
 from utils.mixpanel import MixPanel, MixPanel_actions
@@ -42,14 +42,14 @@ class StatsAPI(APIView):
         else:
             n_articles_in_lib = 0
 
-        n_blog_posts = BlogPost.objects.count()
-        n_github_repos = GitHubRepository.objects.count()
+        # n_blog_posts = BlogPost.objects.count()
+        # n_github_repos = GitHubRepository.objects.count()
 
         data = {
             'n_articles': n_articles,
             'n_articles_in_lib': n_articles_in_lib,
-            'n_blog_posts': n_blog_posts,
-            'n_githubs': n_github_repos,
+            'n_blog_posts': 0,
+            'n_githubs': 0,
         }
 
         return Response(data)
@@ -126,44 +126,74 @@ class ArticleList(viewsets.GenericViewSet):
 
     def get_queryset(self):
         mp = MixPanel(self.request.user)
-        mp.track(MixPanel_actions.load_dashboard)
 
-        if 'saved' in self.request.path:
+        params = self.request.query_params
+
+        _type = params.get('type')
+
+        if 'saved' == _type:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__in_lib=True)
             mp.track(MixPanel_actions.load_articles_library)
-        elif 'disliked' in self.request.path:
+        elif 'disliked' == _type:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=False)
-        elif 'liked' in self.request.path:
+        elif 'liked' == _type:
             queryset = Article.objects.filter(article_user__user=self.request.user, article_user__like_dislike=True)
             mp.track(MixPanel_actions.load_articles_liked)
-        elif 'recommended' in self.request.path:
+        elif 'recommended' == _type:
             queryset = get_recommended_articles(self.request)
             mp.track(MixPanel_actions.load_articles_recommended)
-        elif 'recent' in self.request.path:
+        elif 'recent' == _type:
             queryset = Article.objects.order_by('-date', 'id')
             mp.track(MixPanel_actions.load_articles_recent)
-        elif 'popular' in self.request.path:
+        elif 'popular' == _type:
             queryset = Article.objects.annotate(n_likes=Count(Case(
                 When(article_user__like_dislike=True, then=1),
                 output_field=IntegerField(),
             ))).order_by('-n_likes', 'title')
             mp.track(MixPanel_actions.load_articles_popular)
-        elif 'related' in self.request.path:
+        elif 'details' == _type:
             article_id = self.request.query_params.get('id')
             article = Article.objects.get(id=article_id)
             queryset = get_related_articles(article)
-        elif 'author' in self.request.path:
+        elif 'author' == _type:
             author_name = self.request.query_params.get('name')
             author = Author.objects.get(name=author_name)
             queryset = author.articles.order_by('-date')
+            print(queryset)
             mp.track(MixPanel_actions.load_articles_author)
+        elif 'search' == _type:
+            q = self.request.GET.get('q')
+            articles = ArticleDocument.search().query('multi_match', query=q, fields=['title', 'abstract'])
+            queryset = articles[:500].to_queryset()
         else:
             raise Exception('Unknown API link')
 
         return queryset
 
+    def filter_queryset(self, queryset):
+        start_year = self.request.query_params.get('startYear')
+        if start_year:
+            start_date = '%s-01-01' % start_year
+            queryset = queryset.filter(date__gte=start_date)
+
+        end_year = self.request.query_params.get('endYear')
+        if end_year:
+            end_date = '%s-12-31' % end_year
+            queryset = queryset.filter(date__lte=end_date)
+
+        categories = self.request.query_params.get('categories')
+        print('CATEGORIES:', categories)
+
+        if categories:
+            categories_list = categories.split(',')
+            queryset = queryset.filter(category__in=categories_list)
+
+        return queryset
+
     def list(self, request):
         queryset = self.get_queryset()
+
+        queryset = self.filter_queryset(queryset)
 
         page = request.query_params.get('page')
         if page is not None:
@@ -171,7 +201,7 @@ class ArticleList(viewsets.GenericViewSet):
             serializer = self.serializer_class(paginate_queryset, many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
 
-        serializer = ArticlesShortSerializer(queryset, many=True)
+        serializer = ArticlesShortSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
     def update(self, request, pk=None):
@@ -230,18 +260,19 @@ class ArticleList(viewsets.GenericViewSet):
             like_dislike = None
             note = ''
 
-        blogpost = BlogPost.objects.filter(article_id=pk)
-        github_repo = GitHubRepository.objects.filter(article_id=pk)
+        # blogpost = BlogPost.objects.filter(article_id=pk)
+        # github_repo = GitHubRepository.objects.filter(article_id=pk)
         authors = Author.objects.filter(articles__id=pk)
         summary_sentences = article.summary_sentences.order_by('?')
+        has_neighbors = article.has_neighbors
 
         serializer = ArticleDetailedSerializer({
             'id': article.id,
             'title': article.title,
             'abstract': article.abstract,
             'url': article.url,
-            'blog_posts': blogpost,
-            'githubs': github_repo,
+            # 'blog_posts': blogpost,
+            # 'githubs': github_repo,
             'date': article.date,
             'category': article.category,
             'arxiv_id': article.arxiv_id,
@@ -249,7 +280,8 @@ class ArticleList(viewsets.GenericViewSet):
             'in_lib': in_lib,
             'like_dislike': like_dislike,
             'authors': authors,
-            'summary_sentences': summary_sentences
+            'summary_sentences': summary_sentences,
+            'has_neighbors': has_neighbors
         }, context={'request': request})
 
         return Response(serializer.data)
@@ -274,191 +306,191 @@ class SummaryAPI(viewsets.GenericViewSet):
         return _success()
 
 
-class BlogPostAPI(viewsets.GenericViewSet):
-    # pagination_class = StandardResultsSetPagination
-    serializer_class = BlogPostSerializer
-    queryset = BlogPost.objects.all()
-
-    permission_classes = [
-        permissions.AllowAny
-    ]
-
-    def list(self, request):
-        blogpost_user = BlogPost.objects.filter(blogpostuser__user_id=request.user.id, blogpostuser__is_like=True)
-        queryset = blogpost_user
-
-        # queryset = self.paginate_queryset(queryset, request)
-
-        page = self.request.query_params.get('page')
-        if page is not None:
-            paginate_queryset = self.paginate_queryset(queryset)
-            serializer = self.serializer_class(paginate_queryset, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = BlogPostSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-    def update(self, request, pk=None):
-        print(request.user.id, pk, request.data)
-
-        blog_post = BlogPost.objects.get(id=pk)
-        blogpostuser, is_created = BlogPostUser.objects.get_or_create(user=request.user, blog_post=blog_post)
-
-        if is_created:
-            blogpostuser.is_like = True
-            blog_post.rating += 1
-        else:
-            if blogpostuser.is_like:
-                blogpostuser.is_like = False
-                blog_post.rating -= 1
-            else:
-                blogpostuser.is_like = True
-                blog_post.rating += 1
-
-        blogpostuser.save()
-        blog_post.save()
-
-        return _success()
-
-    def create(self, request):
-        print('create', request.user, request.data)
-        is_exists = BlogPost.objects.filter(url=request.data['url'], article_id=request.data['article_id']).count() > 0
-
-        if is_exists:
-            _error('Blog Post is already attached')
-
-        blogpost = BlogPost.objects.create(
-            title=request.data['title'],
-            url=request.data['url'],
-            article_id=request.data['article_id'],
-            who_added=request.user
-        )
-
-        blogpost.save()
-
-        return _success()
-
-
-class GitHubAPI(viewsets.ViewSet):
-    permission_classes = [
-        permissions.AllowAny
-    ]
-    serializer_class = GitHubSerializer
-    queryset = GitHubRepository.objects.all()
-
-    # def retrieve(self, request, pk):
-    #     repo = GitHubRepository.objects.get(id=pk)
-    #     serializer = GitHubSerializer(repo, many=False)
-    #     return Response(serializer.data)
-
-    # def list(self, request):
-    #     article_id = self.request.query_params.get('article_id')
-    #
-    #     Response({})
-
-    def update(self, request, pk=None):
-        print(request.user.id, pk, request.data)
-
-        github = GitHubRepository.objects.get(id=pk)
-        githubuser, is_created = GithubRepoUser.objects.get_or_create(user=request.user, github_repo=github)
-
-        if is_created:
-            githubuser.is_like = True
-            github.rating += 1
-        else:
-            if githubuser.is_like:
-                githubuser.is_like = False
-                github.rating -= 1
-            else:
-                githubuser.is_like = True
-                github.rating += 1
-
-        githubuser.save()
-        github.save()
-
-        return _success()
-
-    def create(self, request):
-        print(request.data)
-        url = request.data['url']
-
-        if not GitHubRepo.is_github_repo(url):
-            article_id = request.data['article_id']
-            is_exists = BlogPost.objects.filter(url=url, article_id=article_id).count() > 0
-            if is_exists:
-                return _error('The proposed GitHub repository is already attached :-)')
-
-            resource = BlogPost.objects.create(
-                url=url,
-                article_id=article_id,
-                who_added=request.user
-            )
-
-            resource.save()
-
-            print('pisya')
-
-            return _success()
-
-        if 'arxiv_id' in request.data.keys():
-            arxiv_id = request.data['arxiv_id']
-            article_exists = Article.objects.filter(arxiv_id=arxiv_id).count() > 0
-
-            if not article_exists:
-                return _error("Article with ArXiv ID %s doesn't exists" % arxiv_id)
-
-            article_id = Article.objects.get(arxiv_id=arxiv_id).id
-
-        else:
-            article_id = request.data['article_id']
-            is_exists = GitHubRepository.objects.filter(url=url, article_id=article_id).count() > 0
-
-            if is_exists:
-                return _error('The proposed GitHub repository is already attached :-)')
-
-
-
-        new_git = dict(
-            url=url,
-            article_id=article_id
-        )
-
-        if type(request.user) != AnonymousUser:
-            new_git.update({
-                'who_added': request.user
-            })
-
-        repo = GitHubRepository.objects.create(
-            **new_git
-        )
-
-        print('PIZDA')
-
-        repo.save()
-
-        return _success()
-
-
-class BlogPostUserList(viewsets.ViewSet):
-    permission_classes = [
-        permissions.AllowAny
-    ]
-
-    def list(self, request):
-        queryset = BlogPostUser.objects.filter(user=request.user, is_like=True)
-        queryset = queryset.values_list('blog_post', flat=True)
-        return Response(queryset)
-
-
-class GitHubUserList(viewsets.ViewSet):
-    permission_classes = [
-        permissions.AllowAny
-    ]
-
-    def list(self, request):
-        queryset = GithubRepoUser.objects.filter(user=request.user, is_like=True)
-        queryset = queryset.values_list('github_repo', flat=True)
-        return Response(queryset)
+# class BlogPostAPI(viewsets.GenericViewSet):
+#     # pagination_class = StandardResultsSetPagination
+#     serializer_class = BlogPostSerializer
+#     queryset = BlogPost.objects.all()
+#
+#     permission_classes = [
+#         permissions.AllowAny
+#     ]
+#
+#     def list(self, request):
+#         blogpost_user = BlogPost.objects.filter(blogpostuser__user_id=request.user.id, blogpostuser__is_like=True)
+#         queryset = blogpost_user
+#
+#         # queryset = self.paginate_queryset(queryset, request)
+#
+#         page = self.request.query_params.get('page')
+#         if page is not None:
+#             paginate_queryset = self.paginate_queryset(queryset)
+#             serializer = self.serializer_class(paginate_queryset, many=True)
+#             return self.get_paginated_response(serializer.data)
+#
+#         serializer = BlogPostSerializer(queryset, many=True)
+#         return Response(serializer.data)
+#
+#     def update(self, request, pk=None):
+#         print(request.user.id, pk, request.data)
+#
+#         blog_post = BlogPost.objects.get(id=pk)
+#         blogpostuser, is_created = BlogPostUser.objects.get_or_create(user=request.user, blog_post=blog_post)
+#
+#         if is_created:
+#             blogpostuser.is_like = True
+#             blog_post.rating += 1
+#         else:
+#             if blogpostuser.is_like:
+#                 blogpostuser.is_like = False
+#                 blog_post.rating -= 1
+#             else:
+#                 blogpostuser.is_like = True
+#                 blog_post.rating += 1
+#
+#         blogpostuser.save()
+#         blog_post.save()
+#
+#         return _success()
+#
+#     def create(self, request):
+#         print('create', request.user, request.data)
+#         is_exists = BlogPost.objects.filter(url=request.data['url'], article_id=request.data['article_id']).count() > 0
+#
+#         if is_exists:
+#             _error('Blog Post is already attached')
+#
+#         blogpost = BlogPost.objects.create(
+#             title=request.data['title'],
+#             url=request.data['url'],
+#             article_id=request.data['article_id'],
+#             who_added=request.user
+#         )
+#
+#         blogpost.save()
+#
+#         return _success()
+#
+#
+# class GitHubAPI(viewsets.ViewSet):
+#     permission_classes = [
+#         permissions.AllowAny
+#     ]
+#     serializer_class = GitHubSerializer
+#     queryset = GitHubRepository.objects.all()
+#
+#     # def retrieve(self, request, pk):
+#     #     repo = GitHubRepository.objects.get(id=pk)
+#     #     serializer = GitHubSerializer(repo, many=False)
+#     #     return Response(serializer.data)
+#
+#     # def list(self, request):
+#     #     article_id = self.request.query_params.get('article_id')
+#     #
+#     #     Response({})
+#
+#     def update(self, request, pk=None):
+#         print(request.user.id, pk, request.data)
+#
+#         github = GitHubRepository.objects.get(id=pk)
+#         githubuser, is_created = GithubRepoUser.objects.get_or_create(user=request.user, github_repo=github)
+#
+#         if is_created:
+#             githubuser.is_like = True
+#             github.rating += 1
+#         else:
+#             if githubuser.is_like:
+#                 githubuser.is_like = False
+#                 github.rating -= 1
+#             else:
+#                 githubuser.is_like = True
+#                 github.rating += 1
+#
+#         githubuser.save()
+#         github.save()
+#
+#         return _success()
+#
+#     def create(self, request):
+#         print(request.data)
+#         url = request.data['url']
+#
+#         if not GitHubRepo.is_github_repo(url):
+#             article_id = request.data['article_id']
+#             is_exists = BlogPost.objects.filter(url=url, article_id=article_id).count() > 0
+#             if is_exists:
+#                 return _error('The proposed GitHub repository is already attached :-)')
+#
+#             resource = BlogPost.objects.create(
+#                 url=url,
+#                 article_id=article_id,
+#                 who_added=request.user
+#             )
+#
+#             resource.save()
+#
+#             print('pisya')
+#
+#             return _success()
+#
+#         if 'arxiv_id' in request.data.keys():
+#             arxiv_id = request.data['arxiv_id']
+#             article_exists = Article.objects.filter(arxiv_id=arxiv_id).count() > 0
+#
+#             if not article_exists:
+#                 return _error("Article with ArXiv ID %s doesn't exists" % arxiv_id)
+#
+#             article_id = Article.objects.get(arxiv_id=arxiv_id).id
+#
+#         else:
+#             article_id = request.data['article_id']
+#             is_exists = GitHubRepository.objects.filter(url=url, article_id=article_id).count() > 0
+#
+#             if is_exists:
+#                 return _error('The proposed GitHub repository is already attached :-)')
+#
+#
+#
+#         new_git = dict(
+#             url=url,
+#             article_id=article_id
+#         )
+#
+#         if type(request.user) != AnonymousUser:
+#             new_git.update({
+#                 'who_added': request.user
+#             })
+#
+#         repo = GitHubRepository.objects.create(
+#             **new_git
+#         )
+#
+#         print('PIZDA')
+#
+#         repo.save()
+#
+#         return _success()
+#
+#
+# class BlogPostUserList(viewsets.ViewSet):
+#     permission_classes = [
+#         permissions.AllowAny
+#     ]
+#
+#     def list(self, request):
+#         queryset = BlogPostUser.objects.filter(user=request.user, is_like=True)
+#         queryset = queryset.values_list('blog_post', flat=True)
+#         return Response(queryset)
+#
+#
+# class GitHubUserList(viewsets.ViewSet):
+#     permission_classes = [
+#         permissions.AllowAny
+#     ]
+#
+#     def list(self, request):
+#         queryset = GithubRepoUser.objects.filter(user=request.user, is_like=True)
+#         queryset = queryset.values_list('github_repo', flat=True)
+#         return Response(queryset)
 
 
 class ArticleUserList(generics.RetrieveAPIView):

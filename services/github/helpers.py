@@ -11,7 +11,7 @@ def send_github_url_to_server(url, arxiv_id):
     :param arxiv_id: in form '1706.03762'
     :return:
     """
-    res = requests.post(API_HOST + 'api/githubs/', data={
+    res = requests.post(API_HOST + 'api/resources/', data={
             'url': url,
             'arxiv_id': arxiv_id,
             'type': 'github'

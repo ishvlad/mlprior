@@ -159,7 +159,7 @@ class ArticlesAPI(viewsets.GenericViewSet):
             mp.track(MixPanel_actions.load_articles_popular)
         elif 'details' == _type:
             article_id = self.request.query_params.get('id')
-            article = Article.objects.get(id=article_id)
+            article = Article.objects.get(id=article_id).order_by('-date', 'id')
             queryset = get_related_articles(article)
         elif 'author' == _type:
             author_name = self.request.query_params.get('name')

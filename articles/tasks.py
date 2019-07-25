@@ -129,17 +129,17 @@ def update_slides_info(blogpost_id):
     blog_post.save()
 
 
-@app.task(name='mlprior.articles.tasks.trigger_github_updates')
-def trigger_github_updates():
-    print('trigger_github_updates')
-    for github in GitHub.objects.all():
-        print(github.url)
-        update_github_info.delay(github.id, first_update=False)
-
-
-@app.task(name='mlprior.articles.tasks.trigger_resources_updates')
-def trigger_resources_updates():
-    print('trigger_resources_updates')
-    for blogpost in BlogPost.objects.all():
-        print(blogpost.url)
-        update_blog_post_info.delay(blogpost.id)
+# @app.task(name='mlprior.articles.tasks.trigger_github_updates')
+# def trigger_github_updates():
+#     print('trigger_github_updates')
+#     for github in GitHub.objects.all():
+#         print(github.url)
+#         update_github_info.delay(github.id, first_update=False)
+#
+#
+# @app.task(name='mlprior.articles.tasks.trigger_resources_updates')
+# def trigger_resources_updates():
+#     print('trigger_resources_updates')
+#     for blogpost in BlogPost.objects.all():
+#         print(blogpost.url)
+#         update_blog_post_info.delay(blogpost.id)

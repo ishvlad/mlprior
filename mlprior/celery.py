@@ -21,7 +21,7 @@ app.conf.beat_schedule = {
     # },
     # 'update_resources_each_week': {
     #     'task': 'mlprior.articles.tasks.trigger_resources_updates',
-    #     'schedule': crontab()
+    #     'schedule': crontab(day_of_week=1)
     # }
 }
 

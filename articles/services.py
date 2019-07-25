@@ -1,4 +1,4 @@
-from .models import ArticleUser
+from .models import ArticleUser, ResourceUser
 
 
 def is_article_in_lib(article_id, user):
@@ -43,29 +43,16 @@ def get_note(article_id, user):
     return article_user.note
 
 
-# def is_blogpost_like(blogpost_id, user):
-#     if not user.is_authenticated:
-#         return False
-#
-#     is_exists = BlogPostUser.objects.filter(blog_post_id=blogpost_id, user=user).count()
-#
-#     if not is_exists:
-#         return False
-#
-#     blogpost_user = BlogPostUser.objects.get(blog_post_id=blogpost_id, user=user)
-#
-#     return blogpost_user.is_like
-#
-#
-# def is_github_like(github_id, user):
-#     if not user.is_authenticated:
-#         return False
-#
-#     is_exists = GithubRepoUser.objects.filter(github_repo_id=github_id, user=user).count()
-#
-#     if not is_exists:
-#         return False
-#
-#     github_user = GithubRepoUser.objects.get(github_repo_id=github_id, user=user)
-#
-#     return github_user.is_like
+def is_resource_like(resource_id, user):
+    if not user.is_authenticated:
+        return False
+
+    is_exists = ResourceUser.objects.filter(resource_id=resource_id, user=user).count()
+
+    if not is_exists:
+        return False
+
+    resource_user = ResourceUser.objects.get(resource_id=resource_id, user=user)
+
+    return resource_user.is_like
+

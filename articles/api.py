@@ -10,8 +10,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from articles.models import Article, ArticleUser, Author, \
-    NGramsMonth, Categories, DefaultStore, UserTags, ArticleSentence
-from articles.serializers import ArticleDetailedSerializer, ArticleUserSerializer, ArticlesShortSerializer, SummarySentenceSerializer
+    NGramsMonth, Categories, DefaultStore, UserTags, ArticleSentence, BlogPost, GitHub, Resource, ResourceUser, YouTube, Reddit, WebSite, Slides
+from articles.serializers import ArticleDetailedSerializer, ArticleUserSerializer, ArticlesShortSerializer, \
+    SummarySentenceSerializer, GitHubSerializer, ResourceSerializer
 from search.documents import ArticleDocument
 from services.github.repository import GitHubRepo
 from utils.http import _success, _error
@@ -42,14 +43,14 @@ class StatsAPI(APIView):
         else:
             n_articles_in_lib = 0
 
-        # n_blog_posts = BlogPost.objects.count()
-        # n_github_repos = GitHubRepository.objects.count()
+        n_blog_posts = BlogPost.objects.count()
+        n_github_repos = GitHub.objects.count()
 
         data = {
             'n_articles': n_articles,
             'n_articles_in_lib': n_articles_in_lib,
-            'n_blog_posts': 0,
-            'n_githubs': 0,
+            'n_blog_posts': n_blog_posts,
+            'n_githubs': n_github_repos,
         }
 
         return Response(data)
@@ -116,7 +117,12 @@ def get_recommended_articles(request):
     return queryset
 
 
-class ArticleList(viewsets.GenericViewSet):
+# class ResourceSubClassFieldsMixin(object):
+#     def get_queryset(self):
+#         return Resource.objects.select_subclasses()
+
+
+class ArticlesAPI(viewsets.GenericViewSet):
     queryset = Article.objects.all()
     serializer_class = ArticlesShortSerializer
     pagination_class = StandardResultsSetPagination
@@ -260,8 +266,9 @@ class ArticleList(viewsets.GenericViewSet):
             like_dislike = None
             note = ''
 
-        # blogpost = BlogPost.objects.filter(article_id=pk)
-        # github_repo = GitHubRepository.objects.filter(article_id=pk)
+        resources = Resource.objects.filter(article_id=pk).select_subclasses(
+            GitHub, BlogPost, Reddit, YouTube, WebSite, Slides
+        )
         authors = Author.objects.filter(articles__id=pk)
         summary_sentences = article.summary_sentences.order_by('?')
         has_neighbors = article.has_neighbors
@@ -271,8 +278,7 @@ class ArticleList(viewsets.GenericViewSet):
             'title': article.title,
             'abstract': article.abstract,
             'url': article.url,
-            # 'blog_posts': blogpost,
-            # 'githubs': github_repo,
+            'resources': resources,
             'date': article.date,
             'category': article.category,
             'arxiv_id': article.arxiv_id,
@@ -371,104 +377,148 @@ class SummaryAPI(viewsets.GenericViewSet):
 #         return _success()
 #
 #
-# class GitHubAPI(viewsets.ViewSet):
-#     permission_classes = [
-#         permissions.AllowAny
-#     ]
-#     serializer_class = GitHubSerializer
-#     queryset = GitHubRepository.objects.all()
-#
-#     # def retrieve(self, request, pk):
-#     #     repo = GitHubRepository.objects.get(id=pk)
-#     #     serializer = GitHubSerializer(repo, many=False)
-#     #     return Response(serializer.data)
-#
-#     # def list(self, request):
-#     #     article_id = self.request.query_params.get('article_id')
-#     #
-#     #     Response({})
-#
-#     def update(self, request, pk=None):
-#         print(request.user.id, pk, request.data)
-#
-#         github = GitHubRepository.objects.get(id=pk)
-#         githubuser, is_created = GithubRepoUser.objects.get_or_create(user=request.user, github_repo=github)
-#
-#         if is_created:
-#             githubuser.is_like = True
-#             github.rating += 1
-#         else:
-#             if githubuser.is_like:
-#                 githubuser.is_like = False
-#                 github.rating -= 1
-#             else:
-#                 githubuser.is_like = True
-#                 github.rating += 1
-#
-#         githubuser.save()
-#         github.save()
-#
-#         return _success()
-#
-#     def create(self, request):
-#         print(request.data)
-#         url = request.data['url']
-#
-#         if not GitHubRepo.is_github_repo(url):
-#             article_id = request.data['article_id']
-#             is_exists = BlogPost.objects.filter(url=url, article_id=article_id).count() > 0
-#             if is_exists:
-#                 return _error('The proposed GitHub repository is already attached :-)')
-#
-#             resource = BlogPost.objects.create(
-#                 url=url,
-#                 article_id=article_id,
-#                 who_added=request.user
-#             )
-#
-#             resource.save()
-#
-#             print('pisya')
-#
-#             return _success()
-#
-#         if 'arxiv_id' in request.data.keys():
-#             arxiv_id = request.data['arxiv_id']
-#             article_exists = Article.objects.filter(arxiv_id=arxiv_id).count() > 0
-#
-#             if not article_exists:
-#                 return _error("Article with ArXiv ID %s doesn't exists" % arxiv_id)
-#
-#             article_id = Article.objects.get(arxiv_id=arxiv_id).id
-#
-#         else:
-#             article_id = request.data['article_id']
-#             is_exists = GitHubRepository.objects.filter(url=url, article_id=article_id).count() > 0
-#
-#             if is_exists:
-#                 return _error('The proposed GitHub repository is already attached :-)')
-#
-#
-#
-#         new_git = dict(
-#             url=url,
-#             article_id=article_id
-#         )
-#
-#         if type(request.user) != AnonymousUser:
-#             new_git.update({
-#                 'who_added': request.user
-#             })
-#
-#         repo = GitHubRepository.objects.create(
-#             **new_git
-#         )
-#
-#         print('PIZDA')
-#
-#         repo.save()
-#
-#         return _success()
+class ResourceAPI(viewsets.ViewSet):
+    permission_classes = [
+        permissions.AllowAny
+    ]
+    serializer_class = GitHubSerializer
+
+    # def retrieve(self, request, pk):
+    #     repo = GitHubRepository.objects.get(id=pk)
+    #     serializer = GitHubSerializer(repo, many=False)
+    #     return Response(serializer.data)
+
+    # def list(self, request):
+    #     article_id = self.request.query_params.get('article_id')
+    #
+    #     Response({})
+
+    def update(self, request, pk=None):
+        print(request.user.id, pk, request.data)
+
+        resource = Resource.objects.get(id=pk)
+        resource_user, is_created = ResourceUser.objects.get_or_create(user=request.user, github_repo=resource)
+
+        if is_created:
+            resource_user.is_like = True
+            resource.rating += 1
+        else:
+            if resource_user.is_like:
+                resource_user.is_like = False
+                resource.rating -= 1
+            else:
+                resource_user.is_like = True
+                resource.rating += 1
+
+        resource_user.save()
+        resource.save()
+
+        return _success()
+
+    def get_article_id(self):
+        if 'arxiv_id' in self.request.data.keys():
+            arxiv_id = self.request.data['arxiv_id']
+            article_exists = Article.objects.filter(arxiv_id=arxiv_id).count() > 0
+
+            if not article_exists:
+                return _error("Article with ArXiv ID %s doesn't exists" % arxiv_id)
+
+            article_id = Article.objects.get(arxiv_id=arxiv_id).id
+
+        else:
+            article_id = self.request.data['article_id']
+
+        return article_id
+
+    def create(self, request):
+        print(request.data)
+        url = request.data.get('url')
+        _type = request.data.get('type')
+
+        article_id = self.get_article_id()
+
+        if _type == 'blogpost':
+            is_exists = BlogPost.objects.filter(url=url, article_id=article_id).count() > 0
+            if is_exists:
+                return _error('The proposed resource is already attached :-)')
+            resource = BlogPost.objects.create(
+                url=url,
+                article_id=article_id,
+                who_added=request.user
+            )
+            resource.save()
+            return _success()
+        elif _type == 'github':
+            if not GitHubRepo.is_github_repo(url):
+                return _error('This is not github')
+            is_exists = GitHub.objects.filter(url=url, article_id=article_id).count() > 0
+
+            if is_exists:
+                return _error('The proposed GitHub repository is already attached :-)')
+
+            new_git = dict(
+                url=url,
+                article_id=article_id
+            )
+
+            if type(request.user) != AnonymousUser:
+                new_git.update({
+                    'who_added': request.user
+                })
+
+            repo = GitHub.objects.create(
+                **new_git
+            )
+            repo.save()
+            return _success()
+        elif _type == 'youtube':
+            is_exists = YouTube.objects.filter(url=url, article_id=article_id).count() > 0
+            if is_exists:
+                return _error('The proposed resource is already attached :-)')
+            resource = YouTube.objects.create(
+                url=url,
+                article_id=article_id,
+                who_added=request.user
+            )
+            resource.save()
+            return _success()
+        elif _type == 'reddit':
+            is_exists = Reddit.objects.filter(url=url, article_id=article_id).count() > 0
+            if is_exists:
+                return _error('The proposed resource is already attached :-)')
+            resource = Reddit.objects.create(
+                url=url,
+                article_id=article_id,
+                who_added=request.user
+            )
+            resource.save()
+            return _success()
+        elif _type == 'slides':
+            is_exists = Slides.objects.filter(url=url, article_id=article_id).count() > 0
+            if is_exists:
+                return _error('The proposed resource is already attached :-)')
+            resource = Slides.objects.create(
+                url=url,
+                article_id=article_id,
+                who_added=request.user
+            )
+            resource.save()
+            return _success()
+        elif _type == 'website':
+            is_exists = WebSite.objects.filter(url=url, article_id=article_id).count() > 0
+            if is_exists:
+                return _error('The proposed resource is already attached :-)')
+            resource = WebSite.objects.create(
+                url=url,
+                article_id=article_id,
+                who_added=request.user
+            )
+            resource.save()
+            return _success()
+        else:
+            return _error('Unsupported resource type')
+
+
 #
 #
 # class BlogPostUserList(viewsets.ViewSet):
@@ -478,7 +528,7 @@ class SummaryAPI(viewsets.GenericViewSet):
 #
 #     def list(self, request):
 #         queryset = BlogPostUser.objects.filter(user=request.user, is_like=True)
-#         queryset = queryset.values_list('blog_post', flat=True)
+#         queryset = queryset.values_list('blog_postц', flat=True)
 #         return Response(queryset)
 #
 #
@@ -491,6 +541,14 @@ class SummaryAPI(viewsets.GenericViewSet):
 #         queryset = GithubRepoUser.objects.filter(user=request.user, is_like=True)
 #         queryset = queryset.values_list('github_repo', flat=True)
 #         return Response(queryset)
+
+
+# class ResourceAPI(viewsets.ViewSet):
+#     permission_classes = [
+#         permissions.AllowAny
+#     ]
+#     serializer_class = ResourceSerializer
+#     queryset = Resource.objects.all()
 
 
 class ArticleUserList(generics.RetrieveAPIView):

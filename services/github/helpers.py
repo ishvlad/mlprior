@@ -13,7 +13,8 @@ def send_github_url_to_server(url, arxiv_id):
     """
     res = requests.post(API_HOST + 'api/githubs/', data={
             'url': url,
-            'arxiv_id': arxiv_id
+            'arxiv_id': arxiv_id,
+            'type': 'github'
         })
 
     return res

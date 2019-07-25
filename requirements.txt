@@ -28,3 +28,4 @@ redis
 celery[redis]
 mixpanel
 django-celery-beat
+django-model-utils

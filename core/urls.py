@@ -2,17 +2,17 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework.documentation import include_docs_urls
 
-from articles.api import ArticleList, StatsAPI, \
-    TrendAPI, CategoriesAPI, SummaryAPI
+from articles.api import ArticlesAPI, StatsAPI, \
+    TrendAPI, CategoriesAPI, SummaryAPI, ResourceAPI
 from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView, FeedbackAPI, \
     MixPanelAPI
 
 # from core.forms import UserLoginForm
 
 router = routers.DefaultRouter()
-# router.register(r'blogposts', BlogPostAPI, base_name='blogposts')
-router.register(r'articles', ArticleList, base_name='articleslist')
-router.register(r'articles/details', ArticleList, base_name='articleslist')
+router.register(r'resources', ResourceAPI, base_name='resources')
+router.register(r'articles', ArticlesAPI, base_name='articleslist')
+router.register(r'articles/details', ArticlesAPI, base_name='articleslist')
 router.register(r'summary/feedback', SummaryAPI, base_name='summaryfeedback')
 # router.register(r'blogpostuser', BlogPostUserList, base_name='blogpostuser')
 # router.register(r'githubuser', GitHubUserList, base_name='githubuser')

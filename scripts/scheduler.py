@@ -13,7 +13,7 @@ from uuid import uuid4
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--border', type=int, help='Difference for start', default=10)
-    parser.add_argument('--max_articles', type=int, help='Difference for start', default=100)
+    parser.add_argument('--max_articles', type=int, help='Difference for start', default=500)
     parser.add_argument('--path', type=str, default='/home/mlprior/git_app/')
     parser.add_argument('--python', type=str, default='/home/mlprior/anaconda3/envs/py37/bin/python ')
 

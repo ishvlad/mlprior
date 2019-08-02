@@ -164,7 +164,7 @@ class ArticlesAPI(viewsets.GenericViewSet):
         elif 'author' == _type:
             author_name = self.request.query_params.get('name')
             author = Author.objects.get(name=author_name)
-            queryset = author.articles.order_by('-date')
+            queryset = author.articles.order_by('-date', 'id')
             print(queryset)
             mp.track(MixPanel_actions.load_articles_author)
         elif 'search' == _type:
@@ -186,6 +186,10 @@ class ArticlesAPI(viewsets.GenericViewSet):
         if end_year:
             end_date = '%s-12-31' % end_year
             queryset = queryset.filter(date__lte=end_date)
+
+        with_code = self.request.query_params.get('code')
+        if with_code:
+            queryset = queryset.filter()
 
         categories = self.request.query_params.get('categories')
         print('CATEGORIES:', categories)

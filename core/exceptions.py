@@ -36,11 +36,9 @@ def core_exception_handler(exc, context):
 
 
 def _handle_exception(exc):
-    tb = traceback.extract_stack()
 
     data = {
         'error': str(exc),
-        'traceback': tb
     }
     return Response(data)
 

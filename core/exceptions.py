@@ -37,11 +37,13 @@ def core_exception_handler(exc, context):
 def _handle_exception(exc):
     _type, value, traceback = sys.exc_info()
 
-    data = {
-        'error': value,
-        'type': _type,
-        'traceback': traceback
-    }
+    data = {'error': str(exc)}
+
+    if _type:
+        data['type'] = _type
+
+    if traceback:
+        data['traceback'] = traceback
     return Response(data)
 
 

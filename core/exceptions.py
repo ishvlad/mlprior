@@ -36,7 +36,7 @@ def core_exception_handler(exc, context):
 
 
 def _handle_exception(exc):
-    data = {'error': str(exc)}
+    data = {'error': repr(exc)}
     return Response(data)
 
 

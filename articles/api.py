@@ -164,7 +164,7 @@ class ArticlesAPI(viewsets.GenericViewSet):
         elif 'author' == _type:
             author_name = self.request.query_params.get('name')
             author = Author.objects.get(name=author_name)
-            queryset = author.articles.order_by('-date')
+            queryset = author.articles.order_by('-date', 'id')
             print(queryset)
             mp.track(MixPanel_actions.load_articles_author)
         elif 'search' == _type:
@@ -451,7 +451,12 @@ class ResourceAPI(viewsets.ViewSet):
         elif _type == 'github':
             if not GitHubRepo.is_github_repo(url):
                 return _error('This is not github')
-            is_exists = GitHub.objects.filter(url=url, article_id=article_id).count() > 0
+
+            try:
+                GitHub.objects.get(url=url, article_id=article_id)
+                is_exists = True
+            except GitHub.DoesNotExist:
+                is_exists = False
 
             if is_exists:
                 return _error('The proposed GitHub repository is already attached :-)')

@@ -1,3 +1,4 @@
+import sys
 
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
@@ -34,7 +35,13 @@ def core_exception_handler(exc, context):
 
 
 def _handle_exception(exc):
-    data = {'error': str(exc)}
+    _type, value, traceback = sys.exc_info()
+
+    data = {
+        'error': value,
+        'type': _type,
+        'traceback': traceback
+    }
     return Response(data)
 
 

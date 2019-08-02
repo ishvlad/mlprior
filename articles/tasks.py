@@ -129,11 +129,6 @@ def update_slides_info(blogpost_id):
     blog_post.save()
 
 
-def get_all_githubs_from_paperswithcode():
-    url = 'https://paperswithcode.com/media/about/links-between-papers-and-code.json.gz'
-
-
-
 # @app.task(name='mlprior.articles.tasks.trigger_github_updates')
 # def trigger_github_updates():
 #     print('trigger_github_updates')

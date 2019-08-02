@@ -35,8 +35,11 @@ def core_exception_handler(exc, context):
     return _handle_exception(exc)
 
 
-def _handle_exception(exc):
-    data = {'error': repr(exc)}
+def _handle_exception(exc: Exception):
+    data = {
+        'error': repr(exc),
+        'traceback': traceback.format_exc()
+    }
     return Response(data)
 
 

@@ -188,11 +188,17 @@ class ArticlesAPI(viewsets.GenericViewSet):
             queryset = queryset.filter(date__lte=end_date)
 
         categories = self.request.query_params.get('categories')
-        print('CATEGORIES:', categories)
-
         if categories:
             categories_list = categories.split(',')
             queryset = queryset.filter(category__in=categories_list)
+
+        with_github = self.request.query_params.get('withGitHub') == 'true'
+        if with_github:
+            queryset = queryset.filter(resources__url__contains='github.com')
+
+        with_resources = self.request.query_params.get('withResources') == 'true'
+        if with_resources:
+            queryset = queryset.filter(resources__isnull=False)
 
         return queryset
 

@@ -8,7 +8,7 @@ from webpreview import web_preview
 
 @app.task(max_retries=10, name='mlprior.articles.tasks.update_github_info', rate_limit='100/h')
 def update_github_info(github_id, first_update=True):
-    print(github_id, first_update)
+    print('Updating GitHub with id=%s' % github_id)
     repo = GitHub.objects.get(id=github_id)
 
     url = repo.url

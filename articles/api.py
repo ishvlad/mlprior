@@ -18,6 +18,8 @@ from services.github.repository import GitHubRepo
 from utils.http import _success, _error
 from utils.mixpanel import MixPanel, MixPanel_actions
 from utils.recommendation import RelationModel
+from datetime import timedelta
+from django.utils import timezone
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -199,6 +201,22 @@ class ArticlesAPI(viewsets.GenericViewSet):
         with_resources = self.request.query_params.get('withResources') == 'true'
         if with_resources:
             queryset = queryset.filter(resources__isnull=False)
+
+        last = self.request.query_params.get('last')
+        if last == 'all':
+            pass
+        elif last == 'day':
+            start_date = timezone.now().date() - timedelta(days=1)
+            queryset = queryset.filter(date__gte=start_date)
+        elif last == 'week':
+            start_date = timezone.now().date() - timedelta(days=7)
+            queryset = queryset.filter(date__gte=start_date)
+        elif last == 'month':
+            start_date = timezone.now().date() - timedelta(days=31)
+            queryset = queryset.filter(date__gte=start_date)
+        elif last == 'year':
+            start_date = timezone.now().date() - timedelta(days=365)
+            queryset = queryset.filter(date__gte=start_date)
 
         return queryset
 

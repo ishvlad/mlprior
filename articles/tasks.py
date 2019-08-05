@@ -1,3 +1,5 @@
+from celery.schedules import crontab
+from celery.task import periodic_task
 from github import UnknownObjectException
 
 from articles.models import GitHub, BlogPost, YouTube, Reddit, Slides, WebSite
@@ -129,12 +131,17 @@ def update_slides_info(blogpost_id):
     blog_post.save()
 
 
-# @app.task(name='mlprior.articles.tasks.trigger_github_updates')
-# def trigger_github_updates():
-#     print('trigger_github_updates')
-#     for github in GitHub.objects.all():
-#         print(github.url)
-#         update_github_info.delay(github.id, first_update=False)
+@periodic_task(
+    run_every=(crontab(day_of_month='1')),
+    name="trigger_github_updates",
+    ignore_result=True
+)
+def trigger_github_updates():
+    print('Triggering update of all GitHubs')
+    for github in GitHub.objects.all():
+        update_github_info.delay(github.id, first_update=False)
+
+
 #
 #
 # @app.task(name='mlprior.articles.tasks.trigger_resources_updates')

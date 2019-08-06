@@ -48,7 +48,11 @@ class SummarizationModel:
         if len(sentences) <= 1:
             return []
 
-        summary = summarize('\n'.join(sentences), ratio=self.num_sentences/len(sentences), split=True)
+        try:
+            summary = summarize('\n'.join(sentences), ratio=min(0.5, self.num_sentences/len(sentences)), split=True)
+        except ValueError:
+            print(sentences)
+            return []
 
         # tuples (chronology, sentence)
         result = list(enumerate(summary))

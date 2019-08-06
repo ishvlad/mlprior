@@ -194,13 +194,13 @@ class ArticlesAPI(viewsets.GenericViewSet):
             categories_list = categories.split(',')
             queryset = queryset.filter(category__in=categories_list)
 
-        with_github = self.request.query_params.get('withGitHub') == 'true'
-        if with_github:
-            queryset = queryset.filter(resources__url__contains='github.com')
-
         with_resources = self.request.query_params.get('withResources') == 'true'
         if with_resources:
             queryset = queryset.filter(resources__isnull=False)
+
+        with_github = self.request.query_params.get('withGitHub') == 'true'
+        if with_github:
+            queryset = queryset.filter(resources__url__contains='github.com')
 
         last = self.request.query_params.get('last')
         if last == 'all':
@@ -218,11 +218,12 @@ class ArticlesAPI(viewsets.GenericViewSet):
             start_date = timezone.now().date() - timedelta(days=365)
             queryset = queryset.filter(date__gte=start_date)
 
-        return queryset
+        return queryset.annotate(
+           resources_count=Count('resources')
+        ).order_by('-resources_count')
 
     def list(self, request):
         queryset = self.get_queryset()
-
         queryset = self.filter_queryset(queryset)
 
         page = request.query_params.get('page')

@@ -1,11 +1,11 @@
 from .base import *
 
-DEBUG = True
+DEBUG = False
 
 # STATICFILES_DIRS = [
 #     STATICFILE_DIR,
 # ]
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost:8000', 'localhost']
 
 DATABASES = {
     'default': {
@@ -29,4 +29,5 @@ CORS_ORIGIN_WHITELIST = [
     'http://127.0.0.1:4200',
     'http://127.0.0.1:4000',
     'http://localhost:4000',
+    'http://localhost',
 ]

@@ -157,6 +157,9 @@ class ArticleUser(models.Model):
     like_dislike = models.NullBooleanField()
     in_lib = models.BooleanField(default=False)
 
+    def __str__(self):
+        return '%s | %s' % (self.user.email, self.article.title)
+
     class Meta:
         unique_together = (('article', 'user'),)
 

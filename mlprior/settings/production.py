@@ -18,7 +18,7 @@ DATABASES = {
 }
 
 
-API_HOST = 'http://mlprior.com/'
+API_HOST = 'https://mlprior.com/'
 
 
 LOGGING = {

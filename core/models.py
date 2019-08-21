@@ -90,16 +90,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     # objects of this type.
     objects = UserManager()
 
+    def __repr__(self):
+        if self.profile:
+            return '%s | %s %s' % (self.email, self.profile.first_name, self.profile.second_name)
+        return self.email
+
     def __str__(self):
         """
         Returns a string representation of this `User`.
 
         This string is used when a `User` is printed in the console.
         """
-        return self.email
-
-    def __repr__(self):
-        return '%s | %s %s' % (self.email, self.profile.first_name, self.profile.second_name)
+        return self.__repr__()
 
     @property
     def token(self):

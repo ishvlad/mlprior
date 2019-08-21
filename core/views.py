@@ -121,8 +121,26 @@ class SubscriptionAPI(APIView):
 
         return Response({
             'premium': True,
-            'endDate': request.user.subscription.end_date
+            'endDate': request.user.subscription.end_date,
+            'dailyMail': request.user.subscription.is_daily_mail,
+            'weeklyMail': request.user.subscription.is_weekly_mail,
         })
+
+    def put(self, request):
+        print(request.data)
+        if request.user.is_anonymous:
+            return _error('The user should be logged in')
+
+        if not request.user.subscription:
+            return _error('There is no subscription')
+
+        subscription = PremiumSubscription.objects.get(user=request.user)
+        subscription.is_daily_mail = request.data.get('dailyMail')
+        subscription.is_weekly_mail = request.data.get('weeklyMail')
+
+        subscription.save()
+
+        return _success()
 
     def post(self, request):
         if request.user.is_anonymous:

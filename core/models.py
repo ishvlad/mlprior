@@ -98,6 +98,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         """
         return self.email
 
+    def __repr__(self):
+        return '%s | %s %s' % (self.email, self.profile.first_name, self.profile.second_name)
+
     @property
     def token(self):
         """
@@ -167,7 +170,7 @@ class Profile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.user.email
+        return repr(self.user)
 
 
 class PremiumSubscription(models.Model):
@@ -178,6 +181,12 @@ class PremiumSubscription(models.Model):
 
     is_active = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
+
+    is_daily_mail = models.BooleanField(default=True, verbose_name='Is daily mail')
+    is_weekly_mail = models.BooleanField(default=True, verbose_name='Is weekly mail')
+
+    def __str__(self):
+        return repr(self.user)
 
 
 class Feedback(models.Model):

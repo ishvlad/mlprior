@@ -91,7 +91,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     def __repr__(self):
-        if self.profile:
+        if hasattr(self, 'profile'):
             return '%s | %s %s' % (self.email, self.profile.first_name, self.profile.second_name)
         return self.email
 

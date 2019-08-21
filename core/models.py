@@ -170,6 +170,16 @@ class Profile(models.Model):
         return self.user.email
 
 
+class PremiumSubscription(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, related_name='subscription')
+
+    start_date = models.DateField(verbose_name='Start date', null=True)
+    end_date = models.DateField(verbose_name='End date', null=True)
+
+    is_active = models.BooleanField(default=False)
+    is_trial = models.BooleanField(default=False)
+
+
 class Feedback(models.Model):
     type = models.IntegerField(default=0)
 

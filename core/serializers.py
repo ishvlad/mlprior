@@ -1,7 +1,16 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
-from .models import User, Profile
+from .models import User, Profile, PremiumSubscription
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    email = serializers.CharField(source='user.email')
+
+    class Meta:
+        model = PremiumSubscription
+        fields = ['email', 'is_premium']
+        read_only_fields = ('email',)
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -12,7 +21,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ('email', 'first_name', 'second_name')
-        read_only_fields = ('email',)
+        read_only_fields = ('email', )
 
 
 class UserSerializer(serializers.ModelSerializer):

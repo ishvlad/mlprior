@@ -1,4 +1,6 @@
 # Create your views here.
+import datetime
+
 from django.views.generic import TemplateView
 from rest_framework import status, permissions
 from rest_framework.generics import RetrieveUpdateAPIView, RetrieveAPIView
@@ -8,11 +10,12 @@ from rest_framework.views import APIView
 
 # from core.forms import FeedbackForm
 from core.exceptions import ProfileDoesNotExist
-from core.models import Profile, Feedback
+from core.models import Profile, Feedback, PremiumSubscription
 from utils.http import _success, _error
 from utils.mixpanel import MixPanel, MixPanel_actions
 from .renderers import UserJSONRenderer, ProfileJSONRenderer
-from .serializers import LoginSerializer, RegistrationSerializer, UserSerializer, ProfileSerializer
+from .serializers import LoginSerializer, RegistrationSerializer, UserSerializer, ProfileSerializer, \
+    SubscriptionSerializer
 
 
 class RegistrationAPIView(APIView):
@@ -94,25 +97,49 @@ class ProfileRetrieveAPIView(RetrieveAPIView):
     renderer_classes = (ProfileJSONRenderer,)
     serializer_class = ProfileSerializer
 
-    def retrieve(self, request, email, *args, **kwargs):
-        # Try to retrieve the requested profile and throw an exception if the
-        # profile could not be found.
-        try:
-            # We use the `select_related` method to avoid making unnecessary
-            # database calls.
-            profile = Profile.objects.select_related('user').get(
-                user__email=email
-            )
-        except Profile.DoesNotExist:
-            raise ProfileDoesNotExist
+    def retrieve(self, request, *args, **kwargs):
+        if request.user.is_anonymous:
+            return _error('The user should be logged in')
 
-        serializer = self.serializer_class(profile)
+        serializer = self.serializer_class(request.user.profile)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class LandingView(TemplateView):
-    template_name = 'landing.html'
+class SubscriptionAPI(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = SubscriptionSerializer
+
+    def get(self, request):
+        if request.user.is_anonymous:
+            return _error('The user should be logged in')
+
+        if not request.user.subscription:
+            return Response({
+                'premium': False,
+            })
+
+        return Response({
+            'premium': True,
+            'endDate': request.user.subscription.end_date
+        })
+
+    def post(self, request):
+        if request.user.is_anonymous:
+            return _error('The user should be logged in')
+
+        start_date = datetime.date.today()
+
+        subscription, is_created = PremiumSubscription.objects.get_or_create(user=request.user)
+
+        subscription.is_active = True
+        subscription.is_trial = True
+        subscription.start_date = start_date
+        subscription.end_date = start_date + datetime.timedelta(days=14)
+
+        subscription.save()
+
+        return _success()
 
 
 class MixPanelAPI(APIView):

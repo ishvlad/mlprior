@@ -44,6 +44,13 @@ class MixPanel_actions:
     action_article_blogpts = 'SHOW article.blogposts'
     action_article_related = 'SHOW article.related'             # done
 
+    ###############
+    #   Premium   #
+    ###############
+
+    open_premium_description = 'PREMIUM open description'       # done
+    start_premium_trial = 'PREMIUM start trial'                 # done
+
 
 class MixPanel:
     actions = MixPanel_actions()

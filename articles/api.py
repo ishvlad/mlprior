@@ -206,7 +206,7 @@ class ArticlesAPI(viewsets.GenericViewSet):
         if last == 'all':
             pass
         elif last == 'day':
-            start_date = timezone.now().date() - timedelta(days=1)
+            start_date = timezone.now().date() - timedelta(days=2)
             queryset = queryset.filter(date__gte=start_date)
         elif last == 'week':
             start_date = timezone.now().date() - timedelta(days=7)

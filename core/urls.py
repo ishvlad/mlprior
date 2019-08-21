@@ -4,8 +4,8 @@ from rest_framework.documentation import include_docs_urls
 
 from articles.api import ArticlesAPI, StatsAPI, \
     TrendAPI, CategoriesAPI, SummaryAPI, ResourceAPI
-from core.views import LandingView, RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView, FeedbackAPI, \
-    MixPanelAPI
+from core.views import RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView, FeedbackAPI, \
+    MixPanelAPI, SubscriptionAPI, ProfileRetrieveAPIView
 
 # from core.forms import UserLoginForm
 
@@ -23,6 +23,8 @@ apiurls = [
     path('api/stats', StatsAPI.as_view()),
     path('api/feedback', FeedbackAPI.as_view()),
     path('api/mplog', MixPanelAPI.as_view()),
+    path('api/premium', SubscriptionAPI.as_view()),
+    path('api/profile', ProfileRetrieveAPIView.as_view()),
     path('api/user', UserRetrieveUpdateAPIView.as_view()),
     path('api/auth/signup', RegistrationAPIView.as_view()),
     path('api/auth/login', LoginAPIView.as_view()),
@@ -31,6 +33,5 @@ apiurls = [
 ]
 
 urlpatterns = [
-  path('', LandingView.as_view(), name='landing'),
   path('docs/', include_docs_urls(title='ML p(r)ior API'))
 ] + apiurls

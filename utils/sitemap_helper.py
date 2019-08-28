@@ -62,7 +62,10 @@ class SitemapHelper:
         # find the last appropriate sitemap
         sitemaps = self.root_map.findall('./*[@mode="' + str(mode) + '"]')
         sitemap = max(sitemaps, key=self._get_date)
-        sitemap_path = sitemap.find(self.prefix + 'loc').text.split('/')[-1]
+        loc = sitemap.find(self.prefix + 'loc')
+        if loc is None:
+            loc = sitemap.find('loc')
+        sitemap_path = loc.text.split('/')[-1]
 
         sm = ET.parse(os.path.join(self.sitemap_dir, sitemap_path))
         root = sm.getroot()
@@ -74,10 +77,9 @@ class SitemapHelper:
                 # save all
                 self._saveXML(sm, os.path.join(self.sitemap_dir, sitemap_path))
                 lastmod = sitemap.find(self.prefix + 'lastmod')
-                if lastmod is not None:
-                    lastmod.text = self.today
-                else:
-                    sitemap.find('lastmod').text = self.today
+                if lastmod is None:
+                    lastmod = sitemap.find('lastmod')
+                lastmod.text = self.today
 
                 # define new name of sitemap
                 strs = sitemap_path.split('.')[0].split('_')
@@ -103,10 +105,9 @@ class SitemapHelper:
         # update time and save
         self._saveXML(sm, os.path.join(self.sitemap_dir, sitemap_path))
         lastmod = sitemap.find(self.prefix + 'lastmod')
-        if lastmod is not None:
-            lastmod.text = self.today
-        else:
-            sitemap.find('lastmod').text = self.today
+        if lastmod is None:
+            lastmod = sitemap.find('lastmod')
+        lastmod.text = self.today
         self._saveXML(self.root_map, os.path.join(self.sitemap_dir, 'sitemapindex.xml'))
 
     def update_articles(self, id_list):

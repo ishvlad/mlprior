@@ -66,7 +66,7 @@ class SitemapHelper:
         while len(urls) != 0:
             new_elem = urls.pop(0)
 
-            if len(root.getchildren()) > 6:
+            if len(root.getchildren()) > 49990:
                 # save all
                 self._saveXML(sm, os.path.join(self.sitemap_dir, sitemap_path))
                 lastmod = sitemap.find(self.prefix + 'lastmod')

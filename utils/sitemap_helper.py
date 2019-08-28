@@ -24,7 +24,11 @@ class SitemapHelper:
         self.priorities = [1.0, 0.67, 0.33]
         self.today = datetime.date.today().strftime("%Y-%m-%d")
 
-        self.get_date = lambda x: int(x.find(self.prefix + 'loc').text.split('/')[-1].split('_')[-1][:-4])
+    def _get_date(self, x):
+        loc = x.find(self.prefix + 'loc')
+        if loc is None:
+            loc = x.find('loc')
+        return int(loc.text.split('/')[-1].split('_')[-1][:-4])
 
     def _url2xml(self, url, mode):
         result = "<url>\n\t<loc>" + url + "</loc>\n\t<changefreq>daily</changefreq>\n\t<priority>"
@@ -57,7 +61,7 @@ class SitemapHelper:
 
         # find the last appropriate sitemap
         sitemaps = self.root_map.findall('./*[@mode="' + str(mode) + '"]')
-        sitemap = max(sitemaps, key=self.get_date)
+        sitemap = max(sitemaps, key=self._get_date)
         sitemap_path = sitemap.find(self.prefix + 'loc').text.split('/')[-1]
 
         sm = ET.parse(os.path.join(self.sitemap_dir, sitemap_path))

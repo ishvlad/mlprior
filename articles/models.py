@@ -25,6 +25,7 @@ class Article(models.Model):
     has_txt = models.NullBooleanField(default=False)
     has_inner_vector = models.BooleanField(default=False)
     has_summary = models.BooleanField(default=False)
+    has_sitemap = models.BooleanField(default=False)
     has_neighbors = models.BooleanField(default=False)
     has_category_bar = models.BooleanField(default=False)
     has_ngram_stat = models.BooleanField(default=False)
@@ -50,6 +51,8 @@ class Author(models.Model):
     name = models.CharField(max_length=100, verbose_name='Author name', primary_key=True)
 
     articles = models.ManyToManyField(Article, 'authors')
+
+    has_sitemap = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'Author'

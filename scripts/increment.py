@@ -29,6 +29,7 @@ from urllib.request import urlopen
 from utils.constants import GLOBAL__CATEGORIES
 from utils.recommendation import RelationModel
 from utils.summarization import SummarizationModel
+from utils.sitemap_helper import SitemapHelper
 
 import log.logging
 
@@ -70,6 +71,7 @@ def overall_stats():
     logger.info('\tNumber of articles:                          %d' % articles.count())
     logger.info('\tNumber of articles with pdf:                 %d' % articles.filter(has_pdf=True).count())
     logger.info('\tNumber of articles with txt:                 %d (%d OK, %d null)' % txt_batch)
+    logger.info('\tNumber of articles in sitemap:               %d' % articles.filter(has_sitemap=True).count())
     logger.info('\tNumber of articles with summary:             %d' % articles.filter(has_summary=True).count())
     logger.info('\tNumber of articles with inner vector:        %d' % articles.filter(has_inner_vector=True).count())
     logger.info('\tNumber of articles with neighbors:           %d' % articles.filter(has_neighbors=True).count())
@@ -318,6 +320,12 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
     if len(ok_list) != 0:
         db.bulk_create(new_items)
         Article.objects.filter(pk__in=ok_list).update(has_txt=True)
+
+        logger.info('OK. Now update sitemaps')
+        sm = SitemapHelper()
+        sm.update_articles(ok_list)
+        logger.info('FINISH updating sitemaps')
+
     if len(null_list) != 0:
         Article.objects.filter(pk__in=null_list).update(has_txt=None)
     for idx in idx_list:
@@ -325,6 +333,7 @@ def pdf2txt(args, path_pdf='data/pdfs', path_txt='data/txts'):
         if os.path.exists(f):
             cmd = "rm -rf %s" % f
             os.system(cmd)
+
 
 
 @log.logging.timeit(logger, 'Calculate Inner Vector Time', level=logging.INFO)
@@ -372,6 +381,7 @@ def calc_inner_vector(args):
         Article.objects.filter(pk=id).update(has_inner_vector=True, has_summary=has_summary)
 
     logger.info('FINISH making relations')
+
 
 @log.logging.timeit(logger, 'Calculate nearest articles', level=logging.INFO)
 def calc_nearest_articles(args):

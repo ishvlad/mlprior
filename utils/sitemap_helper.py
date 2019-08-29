@@ -12,7 +12,7 @@ class SitemapHelper:
         if IS_DEBUG:
             self.sitemap_dir = 'data/sitemaps/'
         else:
-            self.sitemap_dir = '/home/mlprior/mlprior-frontend/src/sitemaps/'
+            self.sitemap_dir = '/home/mlprior/git_app/data/sitemaps/'
 
         # Info about sitemaps of sitemaps
         self.root_map_path = os.path.join(self.sitemap_dir, 'sitemapindex.xml')

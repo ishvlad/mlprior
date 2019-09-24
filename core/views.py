@@ -241,17 +241,17 @@ class RequestDemoAPI(APIView):
 
     def post(self, request):
         # 1 -- from landing page
-        source = request.query_params.get('source', 0)
-        name = request.query_params.get('name', None)
-        email = request.query_params.get('email', None)
-        message = request.query_params.get('message', None)
+        source = request.data.get('source', 0)
+        name = request.data.get('name', None)
+        email = request.data.get('email', None)
+        message = request.data.get('message', None)
 
         # 1 -- Not cited
         # 2 -- Formulas
         # 3 -- Skipped parts
         # 4 -- Fit to a conference
         # 5 -- Acceptance prediction
-        feature = request.query_params.get('feature', 0)
+        feature = request.data.get('feature', 0)
 
         if name is None or email is None or int(source) < 0 or int(feature) < 0:
             example = "https://mlprior.com/api/requestdemo?"

@@ -216,3 +216,53 @@ class Feedback(models.Model):
 
     class Meta:
         ordering = ['-date']
+
+
+class RequestDemo(models.Model):
+    # 0 -- undefined
+    # 1 -- from landing page
+    source = models.IntegerField(default=0)
+
+    name = models.CharField(max_length=1000)
+    email = models.CharField(max_length=1000)
+
+    feature = models.IntegerField(default=0)
+    message = models.TextField(max_length=10000)
+
+    date = models.DateTimeField(default=datetime.now)
+
+    def __str__(self):
+        result = self.name + ' at ' + str(self.date) + ' from '
+        if self.source == 0:
+            result += 'Undefined'
+        elif self.source == 1:
+            result += 'landing page'
+        else:
+            result += 'Unknown source'
+
+        # 0 -- undefined
+        # 1 -- Not cited
+        # 2 -- Formulas
+        # 3 -- Skipped parts
+        # 4 -- Fit to a conference
+        # 5 -- Acceptance prediction
+        result += '. Feature: '
+        if self.feature == 0:
+            result += 'Undefined'
+        elif self.feature == 1:
+            result += 'Not cited'
+        elif self.feature == 2:
+            result += 'Formulas'
+        elif self.feature == 3:
+            result += 'Skipped parts'
+        elif self.feature == 4:
+            result += 'Fit to a conference'
+        elif self.feature == 5:
+            result += 'Acceptance prediction'
+        else:
+            result += 'Unknown feature'
+
+        return result
+
+    class Meta:
+        ordering = ['-date']

@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 
 # from core.forms import FeedbackForm
 from core.exceptions import ProfileDoesNotExist
-from core.models import Profile, Feedback, PremiumSubscription
+from core.models import Profile, Feedback, PremiumSubscription, RequestDemo
 from utils.http import _success, _error
 from utils.mixpanel import MixPanel, MixPanel_actions
 from .renderers import UserJSONRenderer, ProfileJSONRenderer
@@ -229,6 +229,46 @@ class FeedbackAPI(APIView):
 
         # save to DB
         item = Feedback(type=type, name=name, email=email, message=message)
+        item.save()
+
+        return _success()
+
+
+class RequestDemoAPI(APIView):
+    permission_classes = [
+        permissions.AllowAny
+    ]
+
+    def post(self, request):
+        # 1 -- from landing page
+        source = request.query_params.get('source', 0)
+        name = request.query_params.get('name', None)
+        email = request.query_params.get('email', None)
+        message = request.query_params.get('message', None)
+
+        # 1 -- Not cited
+        # 2 -- Formulas
+        # 3 -- Skipped parts
+        # 4 -- Fit to a conference
+        # 5 -- Acceptance prediction
+        feature = request.query_params.get('feature', 0)
+
+        if name is None or email is None or int(source) < 0 or int(feature) < 0:
+            example = "https://mlprior.com/api/requestdemo?"
+            example += "source=1&name=user_name&email=user_email&message=I want to buy&feature=1"
+            return Response(status=400, data={'example': example})
+        else:
+            source = int(source)
+            feature = int(feature)
+
+        if message is None:
+            message = ""
+
+        mp = MixPanel(request.user)
+        mp.track(MixPanel_actions.request_demo, {'source': source, 'feature': feature})
+
+        # save to DB
+        item = RequestDemo(source=source, name=name, email=email, message=message, feature=feature)
         item.save()
 
         return _success()

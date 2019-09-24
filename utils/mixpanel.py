@@ -15,6 +15,8 @@ class MixPanel_actions:
     feedback = 'FEEDBACK'                                       # done
     search = 'SEARCH'                                           # done
 
+    request_demo = "REQUEST DEMO"
+
     ###############
     #  DASHBOARD  #
     ###############

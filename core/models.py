@@ -266,3 +266,18 @@ class RequestDemo(models.Model):
 
     class Meta:
         ordering = ['-date']
+
+
+class FileUpload(models.Model):
+    file_id = models.AutoField(primary_key=True)
+    file = models.FileField(blank=False, null=False)
+    info = models.TextField(max_length=10000)
+
+    date_created = models.DateTimeField(default=datetime.now)
+
+    def __str__(self):
+        res = '[' + str(self.file_id) + '] '
+        res += self.file.name + ' at ' + str(self.date_created)
+        res += '. Text: ' + str(self.info)
+
+        return res

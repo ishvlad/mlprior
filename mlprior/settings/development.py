@@ -31,3 +31,5 @@ CORS_ORIGIN_WHITELIST = [
     'http://localhost:4000',
     'http://localhost',
 ]
+
+MEDIA_URL = 'media/'

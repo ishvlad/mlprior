@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
-from .models import User, Profile, PremiumSubscription
+from .models import User, Profile, PremiumSubscription, FileUpload
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
@@ -182,3 +182,7 @@ class LoginSerializer(serializers.Serializer):
         }
 
 
+class FileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FileUpload
+        fields = ['file', 'info']

@@ -5,6 +5,7 @@ from django.views.generic import TemplateView
 from rest_framework import status, permissions
 from rest_framework.generics import RetrieveUpdateAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -15,7 +16,7 @@ from utils.http import _success, _error
 from utils.mixpanel import MixPanel, MixPanel_actions
 from .renderers import UserJSONRenderer, ProfileJSONRenderer
 from .serializers import LoginSerializer, RegistrationSerializer, UserSerializer, ProfileSerializer, \
-    SubscriptionSerializer
+    SubscriptionSerializer, FileSerializer
 
 
 class RegistrationAPIView(APIView):
@@ -255,7 +256,7 @@ class RequestDemoAPI(APIView):
 
         if name is None or email is None or int(source) < 0 or int(feature) < 0:
             example = "https://mlprior.com/api/requestdemo?"
-            example += "source=1&name=user_name&email=user_email&message=I want to buy&feature=1"
+            example += "source=0&name=user_name&email=user_email&message=I want to buy&feature=0"
             return Response(status=400, data={'example': example})
         else:
             source = int(source)
@@ -272,3 +273,15 @@ class RequestDemoAPI(APIView):
         item.save()
 
         return _success()
+
+
+class FileUploadView(APIView):
+
+    def post(self, request, *args, **kwargs):
+        file_serializer = FileSerializer(data=request.data)
+
+        if file_serializer.is_valid():
+            file_serializer.save()
+            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)

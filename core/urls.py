@@ -5,7 +5,7 @@ from rest_framework.documentation import include_docs_urls
 from articles.api import ArticlesAPI, StatsAPI, \
     TrendAPI, CategoriesAPI, SummaryAPI, ResourceAPI
 from core.views import RegistrationAPIView, LoginAPIView, UserRetrieveUpdateAPIView, FeedbackAPI, \
-    MixPanelAPI, SubscriptionAPI, ProfileRetrieveAPIView, RequestDemoAPI
+    MixPanelAPI, SubscriptionAPI, ProfileRetrieveAPIView, RequestDemoAPI, FileUploadView
 
 # from core.forms import UserLoginForm
 
@@ -30,7 +30,8 @@ apiurls = [
     path('api/auth/signup', RegistrationAPIView.as_view()),
     path('api/auth/login', LoginAPIView.as_view()),
     path('api/visualization/trends', TrendAPI.as_view()),
-    path('api/visualization/categories', CategoriesAPI.as_view())
+    path('api/visualization/categories', CategoriesAPI.as_view()),
+    path('api/upload', FileUploadView.as_view())
 ]
 
 urlpatterns = [

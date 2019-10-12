@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
+from django.core.files.storage import FileSystemStorage
 from django.db import models
 
 
@@ -268,9 +269,17 @@ class RequestDemo(models.Model):
         ordering = ['-date']
 
 
+class MyFileSystemStorage(FileSystemStorage):
+    def get_available_name(self, name, max_length):
+        ''' name is the current file name '''
+
+        stamp = datetime.utcnow().strftime('acc_pred_%Y-%m-%d-%H-%M-%S-%f')
+        ext = name.split('.')[-1]
+        return str(stamp) + '.' + ext
+
 class FileUpload(models.Model):
     file_id = models.AutoField(primary_key=True)
-    file = models.FileField(blank=False, null=False)
+    file = models.FileField(blank=False, null=False, storage=MyFileSystemStorage())
     info = models.TextField(max_length=10000)
 
     date_created = models.DateTimeField(default=datetime.now)
@@ -281,3 +290,6 @@ class FileUpload(models.Model):
         res += '. Text: ' + str(self.info)
 
         return res
+
+
+

@@ -1,5 +1,9 @@
 # Create your views here.
 import datetime
+import os
+import json
+import uuid
+
 
 from django.views.generic import TemplateView
 from rest_framework import status, permissions
@@ -11,12 +15,14 @@ from rest_framework.views import APIView
 
 # from core.forms import FeedbackForm
 from core.exceptions import ProfileDoesNotExist
-from core.models import Profile, Feedback, PremiumSubscription, RequestDemo
+from core.models import Profile, Feedback, PremiumSubscription, RequestDemo, FileUpload
+from mlprior.settings import MEDIA_ROOT
 from utils.http import _success, _error
 from utils.mixpanel import MixPanel, MixPanel_actions
+from utils.acceptance_utils import Acceptance
 from .renderers import UserJSONRenderer, ProfileJSONRenderer
 from .serializers import LoginSerializer, RegistrationSerializer, UserSerializer, ProfileSerializer, \
-    SubscriptionSerializer, FileSerializer
+    SubscriptionSerializer
 
 
 class RegistrationAPIView(APIView):
@@ -276,12 +282,37 @@ class RequestDemoAPI(APIView):
 
 
 class FileUploadView(APIView):
-
     def post(self, request, *args, **kwargs):
-        file_serializer = FileSerializer(data=request.data)
+        mp = MixPanel(request.user)
 
-        if file_serializer.is_valid():
-            file_serializer.save()
-            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        info = {
+            'info': request.POST['info']
+        }
+
+        new_item = FileUpload(
+            info=json.dumps(info),
+            file=request.FILES['file']
+        )
+        new_item.save()
+        name = new_item.file.name
+
+        try:
+            model = Acceptance()
+
+            conf_names = ['ICML', 'ICLR', 'ACL', 'NeurIPS', 'AAAI', 'WWW']
+            probas = model.predict_acceptance_proba(os.path.join(MEDIA_ROOT, name), conf_names)
+
+            info['acceptance_prediction'] = dict(zip(conf_names, probas))
+            new_item.info = json.dumps(info)
+            new_item.save()
+
+            svg = model.get_figure_acceptance_proba(probas, conf_names)
+        except Exception as e:
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
+
+            mp.track(MixPanel_actions.acceptance_prediction, {'status': status_code})
+            return Response(str(e), status=status_code)
+
+        status_code = status.HTTP_202_ACCEPTED
+        mp.track(MixPanel_actions.acceptance_prediction, {'status': status_code})
+        return Response({'result_svg': svg}, status=status_code)

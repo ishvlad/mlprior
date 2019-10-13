@@ -1,18 +1,25 @@
 # Create your views here.
 import datetime
+import os
+import json
+import uuid
+
 
 from django.views.generic import TemplateView
 from rest_framework import status, permissions
 from rest_framework.generics import RetrieveUpdateAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 # from core.forms import FeedbackForm
 from core.exceptions import ProfileDoesNotExist
-from core.models import Profile, Feedback, PremiumSubscription, RequestDemo
+from core.models import Profile, Feedback, PremiumSubscription, RequestDemo, FileUpload
+from mlprior.settings import MEDIA_ROOT
 from utils.http import _success, _error
 from utils.mixpanel import MixPanel, MixPanel_actions
+from utils.acceptance_utils import Acceptance
 from .renderers import UserJSONRenderer, ProfileJSONRenderer
 from .serializers import LoginSerializer, RegistrationSerializer, UserSerializer, ProfileSerializer, \
     SubscriptionSerializer
@@ -255,7 +262,7 @@ class RequestDemoAPI(APIView):
 
         if name is None or email is None or int(source) < 0 or int(feature) < 0:
             example = "https://mlprior.com/api/requestdemo?"
-            example += "source=1&name=user_name&email=user_email&message=I want to buy&feature=1"
+            example += "source=0&name=user_name&email=user_email&message=I want to buy&feature=0"
             return Response(status=400, data={'example': example})
         else:
             source = int(source)
@@ -272,3 +279,40 @@ class RequestDemoAPI(APIView):
         item.save()
 
         return _success()
+
+
+class FileUploadView(APIView):
+    def post(self, request, *args, **kwargs):
+        mp = MixPanel(request.user)
+
+        info = {
+            'info': request.POST['info']
+        }
+
+        new_item = FileUpload(
+            info=json.dumps(info),
+            file=request.FILES['file']
+        )
+        new_item.save()
+        name = new_item.file.name
+
+        try:
+            model = Acceptance()
+
+            conf_names = ['ICML', 'ICLR', 'ACL', 'NeurIPS', 'AAAI', 'WWW']
+            probas = model.predict_acceptance_proba(os.path.join(MEDIA_ROOT, name), conf_names)
+
+            info['acceptance_prediction'] = dict(zip(conf_names, probas))
+            new_item.info = json.dumps(info)
+            new_item.save()
+
+            svg = model.get_figure_acceptance_proba(probas, conf_names)
+        except Exception as e:
+            status_code = status.HTTP_406_NOT_ACCEPTABLE
+
+            mp.track(MixPanel_actions.acceptance_prediction, {'status': status_code})
+            return Response(str(e), status=status_code)
+
+        status_code = status.HTTP_202_ACCEPTED
+        mp.track(MixPanel_actions.acceptance_prediction, {'status': status_code})
+        return Response({'result_svg': svg}, status=status_code)

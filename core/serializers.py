@@ -180,5 +180,3 @@ class LoginSerializer(serializers.Serializer):
             'email': user.email,
             'token': user.token
         }
-
-

@@ -18,6 +18,12 @@ class MixPanel_actions:
     request_demo = "REQUEST DEMO"
 
     ###############
+    # NEW PRODUCT #
+    ###############
+
+    acceptance_prediction = 'USE acceptance_prediction'
+
+    ###############
     #  DASHBOARD  #
     ###############
 

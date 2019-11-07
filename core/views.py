@@ -289,6 +289,10 @@ class FileUploadView(APIView):
             'info': request.POST['info']
         }
 
+        for feature in ['info', 'name', 'request']:
+            if feature in request.POST:
+                info[feature] = request.POST[feature]
+
         new_item = FileUpload(
             info=json.dumps(info),
             file=request.FILES['file']

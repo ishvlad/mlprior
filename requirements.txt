@@ -33,3 +33,4 @@ paypalrestsdk
 matplotlib
 slugify
 selenium
+fasttext==0.9.1

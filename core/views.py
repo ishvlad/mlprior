@@ -303,7 +303,7 @@ class FileUploadView(APIView):
         try:
             model = Acceptance()
 
-            conf_names = ['ICML', 'ICLR', 'ACL', 'NeurIPS', 'AAAI', 'WWW']
+            conf_names = ['ICML', 'ICLR', 'ACL', 'NIPS', 'AAAI', 'WWW']
             probas = model.predict_acceptance_proba(os.path.join(MEDIA_ROOT, name), conf_names)
 
             info['acceptance_prediction'] = dict(zip(conf_names, probas))

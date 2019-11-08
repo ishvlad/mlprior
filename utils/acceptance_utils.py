@@ -18,8 +18,8 @@ class Acceptance:
         self.pdf2txt = PDF2TXT()
         self.ENGLISH_STOPS = set(stopwords.words('english'))
         self.porter = nltk.PorterStemmer()
-        self.phrases = pickle.load(open('../model_data/phrases.pkl', 'rb'))
-        self.model = fasttext.load_model('../model_data/accept_model.bin')
+        self.phrases = pickle.load(open('/home/mlprior/git_app/model_data/phrases.pkl', 'rb'))
+        self.model = fasttext.load_model('/home/mlprior/git_app/model_data/accept_model.bin')
 
 
     def _random_value(self, m, b=5):

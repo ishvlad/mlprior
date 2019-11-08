@@ -4,7 +4,7 @@ from scipy.stats import beta
 from io import BytesIO
 import base64
 
-from pdf2txt import PDF2TXT
+from .pdf2txt import PDF2TXT
 
 from nltk.corpus import stopwords
 from nltk import word_tokenize
